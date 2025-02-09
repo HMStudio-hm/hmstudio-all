@@ -1,5 +1,5 @@
-// src/scripts/all.js test
-// HMStudio Combined Features (Quick View v2.3.1 & Announcement Bar v1.2.9)
+// src/scripts/both.js v1.0.1 test wkan, ila khdm alytics hna sf ghir rkez 3la all scripts version
+// HMStudio Combined Features (Quick View v2.3.2 & Announcement Bar v1.2.9)
 
 ;(() => {
   function getStoreIdFromUrl() {
@@ -16,6 +16,37 @@
   const storeId = getStoreIdFromUrl()
   if (!storeId) {
     return
+  }
+
+  // Quick View Stats Implementation
+  const QuickViewStats = {
+    async trackEvent(eventName, eventData) {
+      const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackQuickViewEvent?storeId=${storeId}`
+      const data = {
+        eventName,
+        eventData,
+        storeId,
+        timestamp: new Date().toISOString(),
+      }
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        return await response.json()
+      } catch (error) {
+        console.error("Failed to track event:", error)
+      }
+    },
   }
 
   // Quick View Implementation
@@ -451,7 +482,7 @@
       const formData = new FormData(form)
 
       try {
-        // Assuming zid is a global object or imported elsewhere.  This is the fix for the undeclared variable.
+        // Assuming zid is a global object or imported elsewhere.  Adding this line to address the undeclared variable error.
         if (typeof zid === "undefined") {
           console.error("Error: zid is undefined. Please ensure zid is defined or imported correctly.")
           return
@@ -472,7 +503,9 @@
                   quantity: Number.parseInt(formData.get("quantity")),
                   productName: typeof productData.name === "object" ? productData.name[currentLang] : productData.name,
                 })
-              } catch (trackingError) {}
+              } catch (trackingError) {
+                console.error("Failed to track cart_add event:", trackingError)
+              }
 
               if (typeof setCartBadge === "function") {
                 setCartBadge(response.data.cart.products_count)
@@ -512,7 +545,9 @@
           productId: productData.id,
           productName: typeof productData.name === "object" ? productData.name[currentLang] : productData.name,
         })
-      } catch (trackingError) {}
+      } catch (trackingError) {
+        console.error("Failed to track modal_open event:", trackingError)
+      }
 
       const existingModal = document.querySelector(".quick-view-modal")
       if (existingModal) {
@@ -897,6 +932,8 @@
         height: 20px;
         border: 2px solid rgba(255,255,255,0.3);
         border-radius: 50%;
+        border-top-color: #rgba(255,255,255,0.3);
+        border-radius: 50%;
         border-top-color: #fff;
         animation: spin 0.8s linear infinite;
       `
@@ -938,7 +975,9 @@
       try {
         const productData = await this.fetchProductData(productId)
         this.displayQuickViewModal(productData)
-      } catch (error) {}
+      } catch (error) {
+        console.error("Failed to open Quick View:", error)
+      }
     },
 
     addQuickViewButtons() {
@@ -1038,6 +1077,7 @@
         const data = await response.json()
         return data
       } catch (error) {
+        console.error("Failed to fetch announcement settings:", error)
         return null
       }
     },
@@ -1203,7 +1243,9 @@
     try {
       QuickView.initialize()
       AnnouncementBar.initialize()
-    } catch (error) {}
+    } catch (error) {
+      console.error("Failed to initialize features:", error)
+    }
   }
 
   initializeFeatures()
