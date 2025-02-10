@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.0.6 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
+// all.js - HMStudio Combined Features v1.0.7 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
 
 (function() {
     console.log('HMStudio All Features script initialized');
@@ -1129,113 +1129,202 @@ console.log('HMStudioQuickView object exposed to window');
 // ==========================================
   
     // Announcement Bar Feature
-// ==========================================
-console.log('Announcement Bar script initialized');
+  // ==========================================
+  console.log('Announcement Bar script initialized');
 
-let announcementBarSettings = null;
+  let announcementBarSettings = null;
 
-async function fetchAnnouncementBarSettings() {
-  try {
-    const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getAnnouncementSettings?storeId=${storeId}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  async function fetchAnnouncementSettings() {
+    try {
+      const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getAnnouncementSettings?storeId=${storeId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Fetched announcement bar settings:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching announcement bar settings:', error);
+      return null;
     }
-    const data = await response.json();
-    console.log('Fetched announcement bar settings:', data);
-    return data;
-  } catch (error) {
-    console.error('Error fetching announcement bar settings:', error);
-    return null;
-  }
-}
-
-function createAnnouncementBar(settings) {
-  if (!settings || !settings.enabled) {
-    console.log('Announcement bar is disabled or settings are missing');
-    return;
   }
 
-  const existingBar = document.getElementById('hm-announcement-bar');
-  if (existingBar) {
-    existingBar.remove();
-  }
-
-  const bar = document.createElement('div');
-  bar.id = 'hm-announcement-bar';
-  bar.style.cssText = `
-    background-color: ${settings.backgroundColor || '#000000'};
-    color: ${settings.textColor || '#ffffff'};
-    padding: 10px;
-    text-align: center;
-    font-family: ${settings.fontFamily || 'Arial, sans-serif'};
-    font-size: ${settings.fontSize || '14px'};
-    position: relative;
-    z-index: 1000;
-  `;
-
-  const content = document.createElement('div');
-  content.innerHTML = settings.message || '';
-  bar.appendChild(content);
-
-  if (settings.showCloseButton) {
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = '&times;';
-    closeButton.style.cssText = `
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: ${settings.textColor || '#ffffff'};
-      font-size: 20px;
-      cursor: pointer;
-    `;
-    closeButton.addEventListener('click', () => {
-      bar.style.display = 'none';
-      if (settings.hideForSession) {
-        sessionStorage.setItem('hm-announcement-bar-hidden', 'true');
-      }
-    });
-    bar.appendChild(closeButton);
-  }
-
-  if (settings.linkUrl) {
-    bar.style.cursor = 'pointer';
-    bar.addEventListener('click', (e) => {
-      if (e.target !== bar.querySelector('button')) {
-        window.location.href = settings.linkUrl;
-      }
-    });
-  }
-
-  document.body.insertBefore(bar, document.body.firstChild);
-}
-
-async function initAnnouncementBar() {
-  announcementBarSettings = await fetchAnnouncementBarSettings();
-  if (announcementBarSettings && announcementBarSettings.enabled) {
-    if (announcementBarSettings.hideForSession && sessionStorage.getItem('hm-announcement-bar-hidden') === 'true') {
-      console.log('Announcement bar hidden for this session');
+  function createAnnouncementBar(settings) {
+    if (!settings || !settings.enabled) {
+      console.log('Announcement bar is disabled or settings are missing');
       return;
     }
-    createAnnouncementBar(announcementBarSettings);
+
+    const existingBar = document.getElementById('hm-announcement-bar');
+    if (existingBar) {
+      existingBar.remove();
+    }
+
+    const bar = document.createElement('div');
+    bar.id = 'hm-announcement-bar';
+    bar.style.cssText = `
+      background-color: ${settings.backgroundColor || '#000000'};
+      color: ${settings.textColor || '#ffffff'};
+      overflow: hidden;
+      height: 40px;
+      position: relative;
+      z-index: 999999;
+    `;
+
+    // Create content container
+    const tickerContent = document.createElement('div');
+    tickerContent.id = 'tickerContent';
+    tickerContent.style.cssText = `
+      position: absolute;
+      white-space: nowrap;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      will-change: transform;
+      transform: translateX(0);
+    `;
+
+    // Calculate number of copies needed (initial)
+    const tempSpan = document.createElement('span');
+    tempSpan.textContent = settings.text;
+    tempSpan.style.cssText = `
+      display: inline-block;
+      padding: 0 3rem;
+      visibility: hidden;
+      position: absolute;
+    `;
+    document.body.appendChild(tempSpan);
+    const textWidth = tempSpan.offsetWidth;
+    document.body.removeChild(tempSpan);
+
+    // Create enough copies to fill twice the viewport width
+    const viewportWidth = window.innerWidth;
+    const copiesNeeded = Math.ceil((viewportWidth * 3) / textWidth) + 2;
+
+    for (let i = 0; i < copiesNeeded; i++) {
+      const textSpan = document.createElement('span');
+      textSpan.textContent = settings.text;
+      textSpan.style.cssText = `
+        display: inline-block;
+        padding: 0 3rem;
+      `;
+      tickerContent.appendChild(textSpan);
+    }
+
+    // Add content to bar
+    bar.appendChild(tickerContent);
+
+    // Insert at the top of the page
+    const targetLocation = document.querySelector('.header');
+    if (targetLocation) {
+      targetLocation.insertBefore(bar, targetLocation.firstChild);
+    } else {
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+
+    // Animation variables
+    let currentPosition = 0;
+    let lastTimestamp = 0;
+    let animationId;
+    let isPaused = false;
+
+    // Convert speed setting to pixels per second
+    const minSpeed = 10; // Minimum speed in pixels per second
+    const maxSpeed = 100; // Maximum speed in pixels per second
+    const speedRange = maxSpeed - minSpeed;
+    const speedPercentage = (60 - settings.speed) / 55; // Convert 5-60 range to 0-1
+    const pixelsPerSecond = minSpeed + (speedRange * speedPercentage);
+
+    function updateAnimation(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      
+      if (!isPaused) {
+        const deltaTime = (timestamp - lastTimestamp) / 1000;
+        const movement = pixelsPerSecond * deltaTime;
+        currentPosition += movement;
+
+        if (currentPosition >= textWidth) {
+          currentPosition = currentPosition % textWidth;
+          const firstItem = tickerContent.children[0];
+          tickerContent.appendChild(firstItem.cloneNode(true));
+          tickerContent.removeChild(firstItem);
+        }
+
+        tickerContent.style.transform = `translate3d(${currentPosition}px, 0, 0)`;
+      }
+
+      lastTimestamp = timestamp;
+      animationId = requestAnimationFrame(updateAnimation);
+    }
+
+    // Start animation with a slight delay
+    setTimeout(() => {
+      lastTimestamp = 0;
+      animationId = requestAnimationFrame(updateAnimation);
+    }, 100);
+
+    // Add hover pause functionality
+    bar.addEventListener('mouseenter', () => {
+      isPaused = true;
+    });
+
+    bar.addEventListener('mouseleave', () => {
+      isPaused = false;
+      lastTimestamp = 0;
+    });
+
+    // Handle cleanup
+    function cleanup() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    }
+
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isPaused = true;
+      } else {
+        isPaused = false;
+        lastTimestamp = 0;
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      const newViewportWidth = window.innerWidth;
+      const newCopiesNeeded = Math.ceil((newViewportWidth * 3) / textWidth) + 2;
+
+      while (tickerContent.children.length < newCopiesNeeded) {
+        const clone = tickerContent.children[0].cloneNode(true);
+        tickerContent.appendChild(clone);
+      }
+
+      currentPosition = 0;
+      lastTimestamp = 0;
+      tickerContent.style.transform = `translate3d(${currentPosition}px, 0, 0)`;
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('unload', cleanup);
   }
-}
 
-// Initialize the announcement bar
-initAnnouncementBar();
-
-// Expose the function to recreate the announcement bar
-window.HMStudioAnnouncementBar = {
-  recreate: () => {
-    if (announcementBarSettings) {
+  async function initAnnouncementBar() {
+    announcementBarSettings = await fetchAnnouncementSettings();
+    if (announcementBarSettings && announcementBarSettings.enabled) {
       createAnnouncementBar(announcementBarSettings);
     }
   }
-};
 
-// ==========================================
+  // Initialize the announcement bar
+  window.HMStudioAnnouncementBar = {
+    recreate: () => {
+      if (announcementBarSettings) {
+        createAnnouncementBar(announcementBarSettings);
+      }
+    }
+  };
+  // ==========================================
   
     // Smart Cart Feature
     // ==========================================
