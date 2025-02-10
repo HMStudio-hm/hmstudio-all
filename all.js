@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.0.5 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
+// all.js - HMStudio Combined Features v1.0.6 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
 
 (function() {
     console.log('HMStudio All Features script initialized');
@@ -1263,50 +1263,19 @@ window.HMStudioAnnouncementBar = {
   
     // Initialize all features
     async function initializeFeatures() {
-      try {
-        // Fetch feature settings
-        const settingsResponse = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getFeatureSettings?storeId=${storeId}`);
-        if (!settingsResponse.ok) {
-          throw new Error('Failed to fetch feature settings');
-        }
-        
-        const settings = await settingsResponse.json();
-        console.log('Feature settings:', settings);
-  
-        // Initialize features based on settings
-        if (settings.quickViewSettings?.enabled) {
+        try {
+          // Each feature will check its own settings
           if (typeof QuickView !== 'undefined') {
             QuickView.initialize();
           }
-        }
-  
-        if (settings.announcementSettings?.enabled) {
+      
           if (typeof AnnouncementBar !== 'undefined') {
             AnnouncementBar.initialize();
           }
+        } catch (error) {
+          console.error('Error initializing features:', error);
         }
-  
-        if (settings.smartCartSettings?.enabled) {
-          if (typeof SmartCart !== 'undefined') {
-            SmartCart.initialize();
-          }
-        }
-  
-        if (settings.slidingCartSettings?.enabled) {
-          if (typeof SlidingCart !== 'undefined') {
-            SlidingCart.initialize();
-          }
-        }
-  
-        if (settings.upsellSettings?.enabled) {
-          if (typeof Upsell !== 'undefined') {
-            Upsell.initialize();
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing features:', error);
       }
-    }
   
     // Handle events from the store
     function handleStoreEvents() {
