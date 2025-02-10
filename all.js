@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.0.4 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
+// all.js - HMStudio Combined Features v1.0.5 testing just quick view and announcement bar for now, ila khdmat nkmel m3a daskhi lakhur
 
 (function() {
     console.log('HMStudio All Features script initialized');
@@ -1136,7 +1136,7 @@ let announcementBarSettings = null;
 
 async function fetchAnnouncementBarSettings() {
   try {
-    const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getAnnouncementBarSettings?storeId=${storeId}`);
+    const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getAnnouncementSettings?storeId=${storeId}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
