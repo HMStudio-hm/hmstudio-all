@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.0.8
+// all.js - HMStudio Combined Features v1.0.9
 
 (function() {
     console.log('HMStudio All Features script initialized');
@@ -1373,11 +1373,10 @@ const announcementObserver = new MutationObserver((mutations) => {
   });
   
   announcementObserver.observe(document.body, { childList: true, subtree: true });
-      // Add at the end of Announcement Bar section
-window.HMStudioAnnouncementBar = {
-    initialize: initAnnouncementBar
-  };
-  
+
+  // ==========================================================
+
+
     // Smart Cart Feature
     // ==========================================
     // PASTE SMART CART SCRIPT HERE
