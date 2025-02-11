@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.1.0
+// all.js - HMStudio Combined Features v1.1.1
 
 (function() {
     console.log('HMStudio All Features script initialized');
@@ -3298,8 +3298,7 @@
     } else {
       SlidingCart.initialize.call(SlidingCart)
     }
-  })()
-  
+  })();
     // =============== UPSELL FEATURE ===============
     // src/scripts/upsell.js v2.4.7
 // HMStudio Upsell Feature
