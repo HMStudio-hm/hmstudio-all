@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.1.6
+// all.js - HMStudio Combined Features v1.1.7
 
 (function() {
   console.log('HMStudio All Features script initialized');
