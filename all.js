@@ -1,6 +1,20 @@
-// all.js - HMStudio Combined Features v1.1.8
+// all.js - HMStudio Combined Features v1.1.9
 
 (function() {
+  // Verify settings exist
+  if (!window.HMStudioSettings) {
+    console.error('HMStudio settings not found. Features will not be initialized.');
+    return;
+  }
+
+  console.log('HMStudio All Features script initialized with settings:', window.HMStudioSettings);
+
+  // Store settings in local variables for easier access
+  const settings = window.HMStudioSettings;
+  const features = settings.features;
+
+
+  // Add cache control meta tags
   const metaNoCache = document.createElement('meta');
   metaNoCache.httpEquiv = 'Cache-Control';
   metaNoCache.content = 'no-cache, no-store, must-revalidate, max-age=0';
