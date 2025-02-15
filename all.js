@@ -1,6 +1,21 @@
-// all.js - HMStudio Combined Features v1.1.7
+// all.js - HMStudio Combined Features v1.1.8
 
 (function() {
+  const metaNoCache = document.createElement('meta');
+  metaNoCache.httpEquiv = 'Cache-Control';
+  metaNoCache.content = 'no-cache, no-store, must-revalidate, max-age=0';
+  document.head.appendChild(metaNoCache);
+
+  const metaPragma = document.createElement('meta');
+  metaPragma.httpEquiv = 'Pragma';
+  metaPragma.content = 'no-cache';
+  document.head.appendChild(metaPragma);
+
+  const metaExpires = document.createElement('meta');
+  metaExpires.httpEquiv = 'Expires';
+  metaExpires.content = '0';
+  document.head.appendChild(metaExpires);
+
   console.log('HMStudio All Features script initialized');
 
   // Common utility to get URL parameters
