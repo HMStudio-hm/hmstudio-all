@@ -1,35 +1,6 @@
-// all.js - HMStudio Combined Features v1.1.9
+// all.js - HMStudio Combined Features v1.2.0
 
 (function() {
-  // Verify settings exist
-  if (!window.HMStudioSettings) {
-    console.error('HMStudio settings not found. Features will not be initialized.');
-    return;
-  }
-
-  console.log('HMStudio All Features script initialized with settings:', window.HMStudioSettings);
-
-  // Store settings in local variables for easier access
-  const settings = window.HMStudioSettings;
-  const features = settings.features;
-
-
-  // Add cache control meta tags
-  const metaNoCache = document.createElement('meta');
-  metaNoCache.httpEquiv = 'Cache-Control';
-  metaNoCache.content = 'no-cache, no-store, must-revalidate, max-age=0';
-  document.head.appendChild(metaNoCache);
-
-  const metaPragma = document.createElement('meta');
-  metaPragma.httpEquiv = 'Pragma';
-  metaPragma.content = 'no-cache';
-  document.head.appendChild(metaPragma);
-
-  const metaExpires = document.createElement('meta');
-  metaExpires.httpEquiv = 'Expires';
-  metaExpires.content = '0';
-  document.head.appendChild(metaExpires);
-
   console.log('HMStudio All Features script initialized');
 
   // Common utility to get URL parameters
@@ -4133,24 +4104,29 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           console.warn('Invalid campaign data:', campaign);
           return;
         }
-        // Track popup open
-    try {
-      await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storeId,
-          eventType: 'popup_open',
-          campaignId: campaign.id,
-          campaignName: campaign.name,
-          timestamp: new Date().toISOString()
-        })
-      });
-    } catch (error) {
-      console.error('Failed to track upsell popup open:', error);
-    }
+      
+        // Only track if modal isn't already showing
+        if (!this.currentModal) {
+          try {
+            await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                storeId,
+                eventType: 'popup_open',
+                productId: productCart.id || productCart.product_id,
+                productName: productCart.name,
+                campaignId: campaign.id,
+                campaignName: campaign.name,
+                timestamp: new Date().toISOString()
+              })
+            });
+          } catch (error) {
+            console.error('Failed to track upsell popup open:', error);
+          }
+        }
       
         const currentLang = getCurrentLanguage();
         const isRTL = currentLang === 'ar';
@@ -4424,6 +4400,12 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
   
       initialize() {
         console.log('Initializing Upsell');
+        
+        // Clear any existing modal on initialization
+        if (this.currentModal) {
+          this.currentModal.remove();
+          this.currentModal = null;
+        }
         
         // Make sure the global object is available
         if (!window.HMStudioUpsell) {
