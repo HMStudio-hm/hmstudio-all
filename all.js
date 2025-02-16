@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.0
+// all.js - HMStudio Combined Features v1.2.1
 
 (function() {
   console.log('HMStudio All Features script initialized');
@@ -4105,27 +4105,23 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           return;
         }
       
-        // Only track if modal isn't already showing
-        if (!this.currentModal) {
-          try {
-            await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                storeId,
-                eventType: 'popup_open',
-                productId: productCart.id || productCart.product_id,
-                productName: productCart.name,
-                campaignId: campaign.id,
-                campaignName: campaign.name,
-                timestamp: new Date().toISOString()
-              })
-            });
-          } catch (error) {
-            console.error('Failed to track upsell popup open:', error);
-          }
+        // Single tracking point for popup open
+        try {
+          await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              storeId,
+              eventType: 'popup_open',
+              campaignId: campaign.id,
+              campaignName: campaign.name,
+              timestamp: new Date().toISOString()
+            })
+          });
+        } catch (error) {
+          console.error('Failed to track upsell popup open:', error);
         }
       
         const currentLang = getCurrentLanguage();
@@ -4275,7 +4271,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                         },
                         body: JSON.stringify({
                           storeId,
-                          eventType: 'cart_add',  // Add this line
+                          eventType: 'cart_add',
                           productId,
                           productName,
                           quantity,
@@ -4296,7 +4292,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             }
           
             modal.remove();
-      
             this.closeModal();
           });
       
@@ -4400,12 +4395,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
   
       initialize() {
         console.log('Initializing Upsell');
-        
-        // Clear any existing modal on initialization
-        if (this.currentModal) {
-          this.currentModal.remove();
-          this.currentModal = null;
-        }
         
         // Make sure the global object is available
         if (!window.HMStudioUpsell) {
