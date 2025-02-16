@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.1
+// all.js - HMStudio Combined Features v1.2.2
 
 (function() {
   console.log('HMStudio All Features script initialized');
@@ -4105,28 +4105,9 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           return;
         }
       
-        // Single tracking point for popup open
-        try {
-          await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              storeId,
-              eventType: 'popup_open',
-              campaignId: campaign.id,
-              campaignName: campaign.name,
-              timestamp: new Date().toISOString()
-            })
-          });
-        } catch (error) {
-          console.error('Failed to track upsell popup open:', error);
-        }
-      
         const currentLang = getCurrentLanguage();
         const isRTL = currentLang === 'ar';
-      
+        
         try {
           if (this.currentModal) {
             this.currentModal.remove();
@@ -4322,9 +4303,30 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       
           // Add modal to document and animate in
           document.body.appendChild(modal);
-          requestAnimationFrame(() => {
+      
+          // Show modal and track event after it's visible
+          requestAnimationFrame(async () => {
             modal.style.opacity = '1';
             content.style.transform = 'translateY(0)';
+      
+            // Track popup open only after modal is visible
+            try {
+              await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  storeId,
+                  eventType: 'popup_open',
+                  campaignId: campaign.id,
+                  campaignName: campaign.name,
+                  timestamp: new Date().toISOString()
+                })
+              });
+            } catch (error) {
+              console.error('Failed to track upsell popup open:', error);
+            }
           });
       
           this.currentModal = modal;
