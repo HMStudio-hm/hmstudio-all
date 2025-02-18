@@ -1,4 +1,5 @@
-// all.js - HMStudio Combined Features v1.2.2
+// all.js - HMStudio Combined Features v1.2.3
+// this for the one thing(li fbalk) approach.
 
 (function() {
   console.log('HMStudio All Features script initialized');
@@ -1087,84 +1088,122 @@
 
   function addQuickViewButtons() {
     console.log('Adding Quick View buttons');
-    const productCards = document.querySelectorAll('.product-item.position-relative');
+    
+    // Support both Soft theme and Perfect theme selectors
+    const productCardSelectors = [
+        '.product-item.position-relative', // Soft theme
+        '.card.card-product' // Perfect theme
+    ];
+
+    let productCards = [];
+    // Try each selector
+    for (const selector of productCardSelectors) {
+        const cards = document.querySelectorAll(selector);
+        if (cards.length > 0) {
+            productCards = cards;
+            break;
+        }
+    }
+
     console.log('Found product cards:', productCards.length);
     
     productCards.forEach(card => {
-      if (card.querySelector('.quick-view-btn')) {
-        console.log('Quick View button already exists for a product, skipping');
-        return;
-      }
-
-      // Get product ID from data-wishlist-id
-      const productId = card.querySelector('[data-wishlist-id]')?.getAttribute('data-wishlist-id');
-      
-      if (productId) {
-        console.log('Found product ID:', productId);
-        
-        // Find the button container - it's the div with text-align: center
-        const buttonContainer = card.querySelector('div[style*="text-align: center"]');
-if (buttonContainer) {
-  // Update the button container styles to ensure horizontal alignment
-  buttonContainer.className = 'hmstudio-buttons-container';  // Add this class
-buttonContainer.style.cssText = `
-    text-align: center;
-    display: inline-flex;  
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-`;
-
-  const button = document.createElement('button');
-  button.className = 'quick-view-btn';
-  button.style.cssText = `
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #ffffff;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: inline-flex;  /* Changed to inline-flex */
-    align-items: center;
-    justify-content: center;
-    vertical-align: middle;  /* Added this */
-  `;
-
-          // Add eye icon using SVG
-          button.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          `;
-
-          button.addEventListener('mouseover', () => {
-            button.style.backgroundColor = '#f0f0f0';
-          });
-
-          button.addEventListener('mouseout', () => {
-            button.style.backgroundColor = '#ffffff';
-          });
-
-          button.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Quick View button clicked for product ID:', productId);
-            openQuickView(productId);
-          });
-
-          // Insert before the first button in the container
-          const firstButton = buttonContainer.querySelector('a, button');
-          if (firstButton) {
-            buttonContainer.insertBefore(button, firstButton);
-          } else {
-            buttonContainer.appendChild(button);
-          }
+        if (card.querySelector('.quick-view-btn')) {
+            console.log('Quick View button already exists for a product, skipping');
+            return;
         }
-      }
+
+        // Support different product ID data attributes for different themes
+        let productId = null;
+        const wishlistBtn = card.querySelector('[data-wishlist-id]');
+        const productForm = card.querySelector('form[data-product-id]');
+        
+        if (wishlistBtn) {
+            productId = wishlistBtn.getAttribute('data-wishlist-id');
+        } else if (productForm) {
+            productId = productForm.getAttribute('data-product-id');
+        }
+        
+        if (productId) {
+            console.log('Found product ID:', productId);
+            
+            // Find the button container - support both themes
+            let buttonContainer = card.querySelector('.card-footer') || 
+                                card.querySelector('div[style*="text-align: center"]');
+
+            // If no container found, create one for Perfect theme
+            if (!buttonContainer) {
+                buttonContainer = document.createElement('div');
+                buttonContainer.className = 'card-footer bg-transparent border-0';
+                card.appendChild(buttonContainer);
+            }
+
+            // Update container styles
+            buttonContainer.style.cssText += `
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                width: 100%;
+            `;
+
+            const button = document.createElement('button');
+            button.className = 'quick-view-btn';
+            button.style.cssText = `
+                width: 35px;
+                height: 35px;
+                padding: 0;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background-color: #ffffff;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                vertical-align: middle;
+                margin: 5px;
+            `;
+
+            // Add eye icon using SVG
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            `;
+
+            button.addEventListener('mouseover', () => {
+                button.style.backgroundColor = '#f0f0f0';
+            });
+
+            button.addEventListener('mouseout', () => {
+                button.style.backgroundColor = '#ffffff';
+            });
+
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Quick View button clicked for product ID:', productId);
+                openQuickView(productId);
+            });
+
+            // Safer insertion logic
+            try {
+                // For Perfect theme
+                if (buttonContainer.classList.contains('card-footer')) {
+                    buttonContainer.appendChild(button);
+                } else {
+                    // For Soft theme
+                    buttonContainer.insertBefore(button, buttonContainer.firstChild);
+                }
+            } catch (error) {
+                console.warn('Failed to insert button normally, appending instead', error);
+                buttonContainer.appendChild(button);
+            }
+        }
     });
-  }
+}
 
   // Initial setup
   console.log('Running initial setup');
@@ -1271,13 +1310,30 @@ buttonContainer.style.cssText = `
     // Add content to bar
     bar.appendChild(tickerContent);
 
-    // Insert at the top of the page
-    const targetLocation = document.querySelector('.header');
-    if (targetLocation) {
+    // NEW CODE: Try multiple possible header locations
+    const possibleSelectors = [
+      '.header',                 // Soft theme
+      'header[role="banner"]',   // Perfect theme
+      'nav.navbar',             // Alternative Perfect theme selector
+      '#navbar'                 // Another possible Perfect theme selector
+  ];
+
+  let targetLocation = null;
+  for (const selector of possibleSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+          targetLocation = element;
+          break;
+      }
+  }
+
+  // Insert the bar in the appropriate location
+  if (targetLocation) {
       targetLocation.insertBefore(bar, targetLocation.firstChild);
-    } else {
+  } else {
+      // Fallback: Insert at the start of the body
       document.body.insertBefore(bar, document.body.firstChild);
-    }
+  }
 
     // Animation variables
     let currentPosition = 0;
@@ -1419,38 +1475,12 @@ if (params.smartCart) {
 
   const SmartCart = {
     settings: null,
-    campaigns: (() => {
-      const campaignsData = params.campaigns;
-      if (!campaignsData) {
-        console.log('No smart cart campaigns data found');
-        return [];
-      }
-
-      try {
-        const decodedData = atob(campaignsData);
-        const parsedData = JSON.parse(decodedData);
-        
-        return parsedData.map(campaign => ({
-          ...campaign,
-          timerSettings: {
-            ...campaign.timerSettings,
-            textAr: decodeURIComponent(campaign.timerSettings.textAr || ''),
-            textEn: decodeURIComponent(campaign.timerSettings.textEn || ''),
-            autoRestart: campaign.timerSettings.autoRestart || false
-          }
-        }));
-      } catch (error) {
-        console.error('Error parsing smart cart campaigns data:', error);
-        return [];
-      }
-    })(),
-
-    
+    campaigns: getCampaignsFromUrl(),
+    stickyCartElement: null,
     currentProductId: null,
     activeTimers: new Map(),
     updateInterval: null,
     originalDurations: new Map(),
-    
 
     createStickyCart() {
       if (this.stickyCartElement) {
@@ -1706,9 +1736,9 @@ if (params.smartCart) {
         if (!campaign.products || !Array.isArray(campaign.products)) {
           return false;
         }
-
+    
         const hasProduct = campaign.products.some(p => p.id === productId);
-        
+    
         let endTime;
         try {
           endTime = campaign.endTime?._seconds ? 
@@ -1717,26 +1747,14 @@ if (params.smartCart) {
         } catch (error) {
           return false;
         }
-
+    
         if (!(endTime instanceof Date && !isNaN(endTime))) {
           return false;
         }
-
-        if (hasProduct && !this.originalDurations.has(campaign.id)) {
-          const startTime = campaign.startTime?._seconds ? 
-            new Date(campaign.startTime._seconds * 1000) :
-            new Date(campaign.startTime.seconds * 1000);
-          
-          const duration = endTime - startTime;
-          this.originalDurations.set(campaign.id, duration);
-        }
-
-        const isNotEnded = now <= endTime || campaign.timerSettings.autoRestart;
-        const isActive = campaign.status === 'active';
-
-        return hasProduct && isNotEnded && isActive;
+    
+        return hasProduct && (now <= endTime || campaign.timerSettings.autoRestart) && campaign.status === 'active';
       });
-
+    
       return activeCampaign;
     },
 
@@ -1821,7 +1839,6 @@ if (params.smartCart) {
         background: ${campaign.timerSettings.backgroundColor};
         color: ${campaign.timerSettings.textColor};
         padding: 4px;
-        margin-top: 30px !important;
         border-bottom-right-radius: 8px;
         border-bottom-left-radius: 8px;
         text-align: center;
@@ -1997,88 +2014,171 @@ if (params.smartCart) {
     },
 
     setupProductCardTimers() {
-      const productCards = document.querySelectorAll('.product-item');
+      const productCardSelectors = [
+        '.product-item',
+        '.card.card-product'
+      ];
+    
       const processedCards = new Set();
       
-      productCards.forEach(card => {
-        let productId = null;
-        const wishlistBtn = card.querySelector('[data-wishlist-id]');
-        if (wishlistBtn) {
-          productId = wishlistBtn.getAttribute('data-wishlist-id');
+      // Use one querySelector for all cards to minimize DOM operations
+      let allProductCards = [];
+      for (const selector of productCardSelectors) {
+        const cards = document.querySelectorAll(selector);
+        if (cards.length) {
+          allProductCards = Array.from(cards);
+          break;
         }
-
-        if (productId && !processedCards.has(productId)) {
-          processedCards.add(productId);
-          const activeCampaign = this.findActiveCampaignForProduct(productId);
-          if (activeCampaign) {
-            const timer = this.createProductCardTimer(activeCampaign, productId);
-            const imageContainer = card.querySelector('.content');
-            if (imageContainer && !document.getElementById(`hmstudio-card-countdown-${productId}`)) {
-              imageContainer.parentNode.insertBefore(timer, imageContainer.nextSibling);
-            }
+      }
+      
+      allProductCards.forEach(card => {
+        let productId = null;
+        const idSelectors = [
+          '[data-wishlist-id]',
+          'input[name="product_id"]',
+          '#product-id',
+          '.js-add-to-cart'
+        ];
+    
+        // Try to get product ID
+        for (const idSelector of idSelectors) {
+          const element = card.querySelector(idSelector);
+          if (element) {
+            productId = element.getAttribute('data-wishlist-id') || 
+                       element.getAttribute('onclick')?.match(/\'(.*?)\'/)?.[1] || 
+                       element.value;
+            break;
           }
+        }
+    
+        // Skip if product already processed or no ID found
+        if (!productId || processedCards.has(productId)) {
+          return;
+        }
+    
+        processedCards.add(productId);
+        
+        // Skip if no active campaign
+        const activeCampaign = this.findActiveCampaignForProduct(productId);
+        if (!activeCampaign) {
+          return;
+        }
+    
+        // Skip if timer already exists
+        const existingTimer = document.getElementById(`hmstudio-card-countdown-${productId}`);
+        if (existingTimer) {
+          return;
+        }
+    
+        const timer = this.createProductCardTimer(activeCampaign, productId);
+    
+        // Perfect theme
+        const cardBody = card.querySelector('.card-body');
+        if (cardBody) {
+          requestAnimationFrame(() => {
+            cardBody.parentNode.insertBefore(timer, cardBody);
+          });
+          return;
+        }
+    
+        // Soft theme
+        const productTitle = card.querySelector('.product-title');
+        if (productTitle) {
+          requestAnimationFrame(() => {
+            productTitle.parentNode.insertBefore(timer, productTitle);
+          });
         }
       });
     },
 
     setupProductTimer() {
-      console.log('Setting up product timer...');
-
-      let productId;
-      const wishlistBtn = document.querySelector('[data-wishlist-id]');
-      if (wishlistBtn) {
-        productId = wishlistBtn.getAttribute('data-wishlist-id');
-      }
-
-      if (!productId) {
-        const productForm = document.querySelector('form[data-product-id]');
-        if (productForm) {
-          productId = productForm.getAttribute('data-product-id');
+      let productId = null;
+      
+      const idSelectors = [
+        {
+          selector: '[data-wishlist-id]',
+          attribute: 'data-wishlist-id'
+        },
+        {
+          selector: '#product-form input[name="product_id"]',
+          attribute: 'value'
+        },
+        {
+          selector: '#product-id',
+          attribute: 'value'
+        },
+        {
+          selector: 'form#product-form input#product-id',
+          attribute: 'value'
         }
-      }
-
-      if (!productId) {
-        return;
-      }
-
-      this.currentProductId = productId;
-      const activeCampaign = this.findActiveCampaignForProduct(productId);
-
-      if (!activeCampaign) {
-        return;
-      }
-
-      const timer = this.createCountdownTimer(activeCampaign, productId);
-
-      const priceSelectors = [
-        'h2.product-formatted-price.theme-text-primary',
-        '.product-formatted-price',
-        '.product-formatted-price.theme-text-primary',
-        '.product-price',
-        'h2.theme-text-primary',
-        '.theme-text-primary'
       ];
-
-      let inserted = false;
-      for (const selector of priceSelectors) {
-        const priceContainer = document.querySelector(selector);
-        
-        if (priceContainer?.parentElement) {
-          priceContainer.parentElement.insertBefore(timer, priceContainer);
-          inserted = true;
+    
+      for (const {selector, attribute} of idSelectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          productId = element.getAttribute(attribute) || element.value;
           break;
         }
       }
+    
+      if (!productId) return;
+    
+      this.currentProductId = productId;
+      const activeCampaign = this.findActiveCampaignForProduct(productId);
+    
+      if (!activeCampaign) return;
 
-      if (!inserted) {
-        const productDetails = document.querySelector('.products-details');
-        if (productDetails) {
-          productDetails.insertBefore(timer, productDetails.firstChild);
+      const timer = this.createCountdownTimer(activeCampaign, productId);
+    
+      // First try to find the card element that comes before the list-group
+      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
+      
+      if (cardElement) {
+        // Insert the timer right after the card element
+        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+      } else {
+        // Fallback to other insertion points if the card element is not found
+        const insertionPoints = [
+          {
+            container: '.js-product-price',
+            method: 'before'
+          },
+          {
+            container: '.product-formatted-price',
+            method: 'before'
+          },
+          {
+            container: '.js-details-section',
+            method: 'prepend'
+          },
+          {
+            container: '.js-product-old-price',
+            method: 'before'
+          },
+          {
+            container: '.hmstudio-cart-buttons',
+            method: 'before'
+          }
+        ];
+    
+        for (const point of insertionPoints) {
+          const container = document.querySelector(point.container);
+          if (container) {
+            if (point.method === 'before') {
+              container.parentNode.insertBefore(timer, container);
+            } else {
+              container.insertBefore(timer, container.firstChild);
+            }
+            break;
+          }
         }
       }
-
-      // Create sticky cart after setting up timer
+    
       this.createStickyCart();
+    
+      if (this.activeTimers.size > 0) {
+        this.startTimerUpdates();
+      }
     },
 
     startTimerUpdates() {
@@ -2096,21 +2196,21 @@ if (params.smartCart) {
     },
 
     initialize() {
-      console.log('Initializing Smart Cart with campaigns:', this.campaigns);
+      console.log('Initializing Smart Cart');
       
       this.stopTimerUpdates();
       
-      if (document.querySelector('.product.products-details-page')) {
-        console.log('On product page');
-        // Create sticky cart regardless of campaigns
+      const isProductPage = document.querySelector('.product.products-details-page') || 
+                           document.querySelector('.js-details-section') ||
+                           document.querySelector('#productId');
+      
+      if (isProductPage) {
         this.createStickyCart();
-
-        // Setup timer if there's an active campaign
         const wishlistBtn = document.querySelector('[data-wishlist-id]');
         const productForm = document.querySelector('form[data-product-id]');
         const productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
-                       productForm?.getAttribute('data-product-id');
-
+                         productForm?.getAttribute('data-product-id');
+    
         if (productId) {
           const activeCampaign = this.findActiveCampaignForProduct(productId);
           if (activeCampaign) {
@@ -2120,46 +2220,49 @@ if (params.smartCart) {
             }
           }
         }
-
-        const observer = new MutationObserver((mutations) => {
-          // Check if sticky cart needs to be recreated
-          if (!document.getElementById('hmstudio-sticky-cart')) {
-            this.createStickyCart();
+      } else {
+        const productCards = document.querySelectorAll('.product-item, .card.card-product');
+        if (productCards.length > 0) {
+          this.setupProductCardTimers();
+          if (this.activeTimers.size > 0) {
+            this.startTimerUpdates();
           }
-
-          // Check if timer needs to be updated (only if there's an active campaign)
-          if (this.currentProductId && !document.getElementById(`hmstudio-countdown-${this.currentProductId}`)) {
-            const activeCampaign = this.findActiveCampaignForProduct(this.currentProductId);
-            if (activeCampaign) {
-              this.setupProductTimer();
-              if (this.activeTimers.size > 0 && !this.updateInterval) {
-                this.startTimerUpdates();
-              }
-            }
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-      } else if (document.querySelector('.product-item')) {
-        console.log('On product listing page, setting up card timers');
-        this.setupProductCardTimers();
-
-        if (this.activeTimers.size > 0) {
-          this.startTimerUpdates();
         }
-
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.addedNodes.length) {
-              this.setupProductCardTimers();
-              if (this.activeTimers.size > 0 && !this.updateInterval) {
-                this.startTimerUpdates();
-              }
+      }
+    
+      // Add debounced observer
+      let timeout;
+      const observer = new MutationObserver((mutations) => {
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        
+        timeout = setTimeout(() => {
+          if (isProductPage) {
+            if (!document.getElementById('hmstudio-sticky-cart')) {
+              this.createStickyCart();
             }
-          });
-        });
+    
+            if (this.currentProductId && !document.getElementById(`hmstudio-countdown-${this.currentProductId}`)) {
+              this.setupProductTimer();
+            }
+          } else {
+            const currentCards = document.querySelectorAll('.product-item, .card.card-product');
+            if (currentCards.length > 0) {
+              this.setupProductCardTimers();
+            }
+          }
+        }, 100); // Debounce time of 100ms
+      });
+    
+      observer.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+      });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+      // Start timer updates if needed
+      if (this.activeTimers.size > 0) {
+        this.startTimerUpdates();
       }
     }
   };
@@ -4104,10 +4207,28 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           console.warn('Invalid campaign data:', campaign);
           return;
         }
+        // Track popup open
+    try {
+      await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storeId,
+          eventType: 'popup_open',
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          timestamp: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Failed to track upsell popup open:', error);
+    }
       
         const currentLang = getCurrentLanguage();
         const isRTL = currentLang === 'ar';
-        
+      
         try {
           if (this.currentModal) {
             this.currentModal.remove();
@@ -4252,7 +4373,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                         },
                         body: JSON.stringify({
                           storeId,
-                          eventType: 'cart_add',
+                          eventType: 'cart_add',  // Add this line
                           productId,
                           productName,
                           quantity,
@@ -4273,6 +4394,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             }
           
             modal.remove();
+      
             this.closeModal();
           });
       
@@ -4303,30 +4425,9 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       
           // Add modal to document and animate in
           document.body.appendChild(modal);
-      
-          // Show modal and track event after it's visible
-          requestAnimationFrame(async () => {
+          requestAnimationFrame(() => {
             modal.style.opacity = '1';
             content.style.transform = 'translateY(0)';
-      
-            // Track popup open only after modal is visible
-            try {
-              await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  storeId,
-                  eventType: 'popup_open',
-                  campaignId: campaign.id,
-                  campaignName: campaign.name,
-                  timestamp: new Date().toISOString()
-                })
-              });
-            } catch (error) {
-              console.error('Failed to track upsell popup open:', error);
-            }
           });
       
           this.currentModal = modal;
