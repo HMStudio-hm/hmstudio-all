@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.3
+// all.js - HMStudio Combined Features v1.2.4
 // this for the one thing(li fbalk) approach.
 
 (function() {
@@ -1475,13 +1475,37 @@ if (params.smartCart) {
 
   const SmartCart = {
     settings: null,
-    campaigns: getCampaignsFromUrl(),
-    stickyCartElement: null,
+    campaigns: (() => {
+      const campaignsData = params.campaigns;
+      if (!campaignsData) {
+        console.log('No smart cart campaigns data found');
+        return [];
+      }
+
+      try {
+        const decodedData = atob(campaignsData);
+        const parsedData = JSON.parse(decodedData);
+        
+        return parsedData.map(campaign => ({
+          ...campaign,
+          timerSettings: {
+            ...campaign.timerSettings,
+            textAr: decodeURIComponent(campaign.timerSettings.textAr || ''),
+            textEn: decodeURIComponent(campaign.timerSettings.textEn || ''),
+            autoRestart: campaign.timerSettings.autoRestart || false
+          }
+        }));
+      } catch (error) {
+        console.error('Error parsing smart cart campaigns data:', error);
+        return [];
+      }
+    })(),
+
     currentProductId: null,
     activeTimers: new Map(),
     updateInterval: null,
     originalDurations: new Map(),
-
+    
     createStickyCart() {
       if (this.stickyCartElement) {
         this.stickyCartElement.remove();
