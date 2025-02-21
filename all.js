@@ -1,30 +1,7 @@
-// all.js - HMStudio Combined Features v1.2.5
+// all.js - HMStudio Combined Features v1.2.6
 // this for the one thing(li fbalk) approach.
 
 (function() {
-  async function checkCurrentState() {
-    const scriptTag = document.currentScript;
-    const scriptUrl = new URL(scriptTag.src);
-    const storeId = scriptUrl.searchParams.get('storeId');
-    
-    if (!storeId) return;
-
-    try {
-      // Fetch current state from your API
-      const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getFeatureStates?storeId=${storeId}`);
-      if (!response.ok) return;
-
-      const states = await response.json();
-      
-      // Clean up any disabled features
-      if (!states.quickViewEnabled) cleanupQuickView();
-      if (!states.smartCartEnabled) cleanupSmartCart();
-      if (!states.upsellEnabled) cleanupUpsell();
-      // ... other features
-    } catch (error) {
-      console.error('Error checking feature states:', error);
-    }
-  }
   console.log('HMStudio All Features script initialized');
 
   // Common utility to get URL parameters
@@ -2061,81 +2038,102 @@ if (params.smartCart) {
     },
 
     setupProductCardTimers() {
-      const productCardSelectors = [
-        '.product-item',
-        '.card.card-product'
-      ];
-    
-      const processedCards = new Set();
-      
-      // Use one querySelector for all cards to minimize DOM operations
-      let allProductCards = [];
-      for (const selector of productCardSelectors) {
-        const cards = document.querySelectorAll(selector);
-        if (cards.length) {
-          allProductCards = Array.from(cards);
-          break;
-        }
+      // Add a delay to prevent multiple rapid executions
+      if (this.setupInProgress) {
+        return;
       }
-      
-      allProductCards.forEach(card => {
-        let productId = null;
-        const idSelectors = [
-          '[data-wishlist-id]',
-          'input[name="product_id"]',
-          '#product-id',
-          '.js-add-to-cart'
+      this.setupInProgress = true;
+    
+      setTimeout(() => {
+        const productCardSelectors = [
+          '.product-item',
+          '.card.card-product'
         ];
     
-        // Try to get product ID
-        for (const idSelector of idSelectors) {
-          const element = card.querySelector(idSelector);
-          if (element) {
-            productId = element.getAttribute('data-wishlist-id') || 
-                       element.getAttribute('onclick')?.match(/\'(.*?)\'/)?.[1] || 
-                       element.value;
+        const processedCards = new Set();
+        
+        // Use one querySelector for all cards to minimize DOM operations
+        let allProductCards = [];
+        for (const selector of productCardSelectors) {
+          const cards = document.querySelectorAll(selector);
+          if (cards.length) {
+            allProductCards = Array.from(cards);
             break;
           }
         }
-    
-        // Skip if product already processed or no ID found
-        if (!productId || processedCards.has(productId)) {
-          return;
-        }
-    
-        processedCards.add(productId);
         
-        // Skip if no active campaign
-        const activeCampaign = this.findActiveCampaignForProduct(productId);
-        if (!activeCampaign) {
-          return;
-        }
+        // First, remove any duplicate timers
+        allProductCards.forEach(card => {
+          const timers = card.querySelectorAll('[id^="hmstudio-card-countdown-"]');
+          if (timers.length > 1) {
+            // Keep only the first timer, remove others
+            for (let i = 1; i < timers.length; i++) {
+              timers[i].remove();
+            }
+          }
+        });
     
-        // Skip if timer already exists
-        const existingTimer = document.getElementById(`hmstudio-card-countdown-${productId}`);
-        if (existingTimer) {
-          return;
-        }
+        allProductCards.forEach(card => {
+          let productId = null;
+          const idSelectors = [
+            '[data-wishlist-id]',
+            'input[name="product_id"]',
+            '#product-id',
+            '.js-add-to-cart'
+          ];
     
-        const timer = this.createProductCardTimer(activeCampaign, productId);
+          // Try to get product ID
+          for (const idSelector of idSelectors) {
+            const element = card.querySelector(idSelector);
+            if (element) {
+              productId = element.getAttribute('data-wishlist-id') || 
+                         element.getAttribute('onclick')?.match(/\'(.*?)\'/)?.[1] || 
+                         element.value;
+              break;
+            }
+          }
     
-        // Perfect theme
-        const cardBody = card.querySelector('.card-body');
-        if (cardBody) {
-          requestAnimationFrame(() => {
-            cardBody.parentNode.insertBefore(timer, cardBody);
-          });
-          return;
-        }
+          // Skip if product already processed or no ID found
+          if (!productId || processedCards.has(productId)) {
+            return;
+          }
     
-        // Soft theme
-        const productTitle = card.querySelector('.product-title');
-        if (productTitle) {
-          requestAnimationFrame(() => {
-            productTitle.parentNode.insertBefore(timer, productTitle);
-          });
-        }
-      });
+          processedCards.add(productId);
+          
+          // Skip if no active campaign
+          const activeCampaign = this.findActiveCampaignForProduct(productId);
+          if (!activeCampaign) {
+            return;
+          }
+    
+          // Double check for existing timer
+          const existingTimer = document.getElementById(`hmstudio-card-countdown-${productId}`);
+          if (existingTimer) {
+            return;
+          }
+    
+          const timer = this.createProductCardTimer(activeCampaign, productId);
+    
+          // Perfect theme
+          const cardBody = card.querySelector('.card-body');
+          if (cardBody) {
+            requestAnimationFrame(() => {
+              cardBody.parentNode.insertBefore(timer, cardBody);
+            });
+            return;
+          }
+    
+          // Soft theme
+          const productTitle = card.querySelector('.product-title');
+          if (productTitle) {
+            requestAnimationFrame(() => {
+              productTitle.parentNode.insertBefore(timer, productTitle);
+            });
+          }
+        });
+    
+        this.setupInProgress = false;
+      }, 100); // Add small delay to allow DOM to settle
     },
 
     setupProductTimer() {
@@ -2247,6 +2245,16 @@ if (params.smartCart) {
       
       this.stopTimerUpdates();
       
+      // Track initialization state
+      if (this.initializationInProgress) {
+        return;
+      }
+      this.initializationInProgress = true;
+    
+      // Clean up any existing timers first
+      const existingTimers = document.querySelectorAll('[id^="hmstudio-card-countdown-"]');
+      existingTimers.forEach(timer => timer.remove());
+      
       const isProductPage = document.querySelector('.product.products-details-page') || 
                            document.querySelector('.js-details-section') ||
                            document.querySelector('#productId');
@@ -2270,21 +2278,45 @@ if (params.smartCart) {
       } else {
         const productCards = document.querySelectorAll('.product-item, .card.card-product');
         if (productCards.length > 0) {
-          this.setupProductCardTimers();
-          if (this.activeTimers.size > 0) {
-            this.startTimerUpdates();
-          }
+          // Delay setup slightly to ensure DOM is ready
+          setTimeout(() => {
+            this.setupProductCardTimers();
+            if (this.activeTimers.size > 0) {
+              this.startTimerUpdates();
+            }
+          }, 50);
         }
       }
     
-      // Add debounced observer
+      // Enhanced debounced observer with cleanup
       let timeout;
+      let lastUpdate = Date.now();
+      const minUpdateInterval = 200; // Minimum time between updates in ms
+    
       const observer = new MutationObserver((mutations) => {
         if (timeout) {
           clearTimeout(timeout);
         }
         
         timeout = setTimeout(() => {
+          const now = Date.now();
+          if (now - lastUpdate < minUpdateInterval) {
+            return;
+          }
+          lastUpdate = now;
+    
+          // Clean up duplicate timers before updating
+          const timers = document.querySelectorAll('[id^="hmstudio-card-countdown-"]');
+          const timerIds = new Set();
+          timers.forEach(timer => {
+            const id = timer.id;
+            if (timerIds.has(id)) {
+              timer.remove();
+            } else {
+              timerIds.add(id);
+            }
+          });
+    
           if (isProductPage) {
             if (!document.getElementById('hmstudio-sticky-cart')) {
               this.createStickyCart();
@@ -2296,27 +2328,30 @@ if (params.smartCart) {
           } else {
             const currentCards = document.querySelectorAll('.product-item, .card.card-product');
             if (currentCards.length > 0) {
-              this.setupProductCardTimers();
+              requestAnimationFrame(() => {
+                this.setupProductCardTimers();
+              });
             }
           }
-        }, 100); // Debounce time of 100ms
+        }, 150); // Increased debounce time
       });
     
       observer.observe(document.body, { 
         childList: true, 
-        subtree: true 
+        subtree: true,
+        subtreeModified: false // Reduce unnecessary triggers
       });
-
+    
       // Start timer updates if needed
       if (this.activeTimers.size > 0) {
         this.startTimerUpdates();
       }
-    }
-  };
-
-  window.addEventListener('beforeunload', () => {
-    SmartCart.stopTimerUpdates();
-  });
+    
+      // Reset initialization state
+      setTimeout(() => {
+        this.initializationInProgress = false;
+      }, 200);
+    }};
 
   // Handle mobile viewport changes
   window.addEventListener('resize', () => {
