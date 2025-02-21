@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.6
+// all.js - HMStudio Combined Features v1.2.7
 // this for the one thing(li fbalk) approach.
 
 (function() {
@@ -2245,16 +2245,6 @@ if (params.smartCart) {
       
       this.stopTimerUpdates();
       
-      // Track initialization state
-      if (this.initializationInProgress) {
-        return;
-      }
-      this.initializationInProgress = true;
-    
-      // Clean up any existing timers first
-      const existingTimers = document.querySelectorAll('[id^="hmstudio-card-countdown-"]');
-      existingTimers.forEach(timer => timer.remove());
-      
       const isProductPage = document.querySelector('.product.products-details-page') || 
                            document.querySelector('.js-details-section') ||
                            document.querySelector('#productId');
@@ -2278,80 +2268,55 @@ if (params.smartCart) {
       } else {
         const productCards = document.querySelectorAll('.product-item, .card.card-product');
         if (productCards.length > 0) {
-          // Delay setup slightly to ensure DOM is ready
-          setTimeout(() => {
-            this.setupProductCardTimers();
-            if (this.activeTimers.size > 0) {
-              this.startTimerUpdates();
-            }
-          }, 50);
+          this.setupProductCardTimers();
+          if (this.activeTimers.size > 0) {
+            this.startTimerUpdates();
+          }
         }
       }
     
-      // Enhanced debounced observer with cleanup
-      let timeout;
-      let lastUpdate = Date.now();
-      const minUpdateInterval = 200; // Minimum time between updates in ms
+      // Add debounced observer
+      let debounceTimeout;
+  const observer = new MutationObserver((mutations) => {
+    // Clear any pending updates
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
     
-      const observer = new MutationObserver((mutations) => {
-        if (timeout) {
-          clearTimeout(timeout);
+    // Set a new debounced update
+    debounceTimeout = setTimeout(() => {
+      if (isProductPage) {
+        if (!document.getElementById('hmstudio-sticky-cart')) {
+          this.createStickyCart();
         }
-        
-        timeout = setTimeout(() => {
-          const now = Date.now();
-          if (now - lastUpdate < minUpdateInterval) {
-            return;
-          }
-          lastUpdate = now;
-    
-          // Clean up duplicate timers before updating
-          const timers = document.querySelectorAll('[id^="hmstudio-card-countdown-"]');
-          const timerIds = new Set();
-          timers.forEach(timer => {
-            const id = timer.id;
-            if (timerIds.has(id)) {
-              timer.remove();
-            } else {
-              timerIds.add(id);
-            }
-          });
-    
-          if (isProductPage) {
-            if (!document.getElementById('hmstudio-sticky-cart')) {
-              this.createStickyCart();
-            }
-    
-            if (this.currentProductId && !document.getElementById(`hmstudio-countdown-${this.currentProductId}`)) {
-              this.setupProductTimer();
-            }
-          } else {
-            const currentCards = document.querySelectorAll('.product-item, .card.card-product');
-            if (currentCards.length > 0) {
-              requestAnimationFrame(() => {
-                this.setupProductCardTimers();
-              });
-            }
-          }
-        }, 150); // Increased debounce time
-      });
-    
-      observer.observe(document.body, { 
-        childList: true, 
-        subtree: true,
-        subtreeModified: false // Reduce unnecessary triggers
-      });
-    
+
+        if (this.currentProductId && !document.getElementById(`hmstudio-countdown-${this.currentProductId}`)) {
+          this.setupProductTimer();
+        }
+      } else {
+        const currentCards = document.querySelectorAll('.product-item, .card.card-product');
+        if (currentCards.length > 0) {
+          this.setupProductCardTimers();
+        }
+      }
+    }, 150); // Increased debounce time
+  });
+
+  observer.observe(document.body, { 
+    childList: true, 
+    subtree: true 
+  });
+
       // Start timer updates if needed
       if (this.activeTimers.size > 0) {
         this.startTimerUpdates();
       }
-    
-      // Reset initialization state
-      setTimeout(() => {
-        this.initializationInProgress = false;
-      }, 200);
-    }};
+    }
+  };
+
+  window.addEventListener('beforeunload', () => {
+    SmartCart.stopTimerUpdates();
+  });
 
   // Handle mobile viewport changes
   window.addEventListener('resize', () => {
