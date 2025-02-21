@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.9
+// all.js - HMStudio Combined Features v1.3.0
 // this for the one thing(li fbalk) approach.
 
 (function() {
@@ -1805,7 +1805,7 @@ if (params.smartCart) {
           this.activeTimers.delete(productId);
         }
       }
-
+    
       const container = document.createElement('div');
       container.id = `hmstudio-countdown-${productId}`;
       container.style.cssText = `
@@ -1825,7 +1825,7 @@ if (params.smartCart) {
         flex-wrap: ${isMobile() ? 'wrap' : 'nowrap'};
         width: ${isMobile() ? '100%' : 'auto'};
       `;
-
+    
       const textElement = document.createElement('span');
       const timerText = getCurrentLanguage() === 'ar' ? 
         campaign.timerSettings.textAr : 
@@ -1847,21 +1847,42 @@ if (params.smartCart) {
         background: rgba(255, 255, 255, 0.15);
         ${isMobile() ? 'width: 100%; justify-content: center;' : ''}
       `;
-
+    
       container.appendChild(textElement);
       container.appendChild(timeElement);
-
+    
+      // Calculate initial end time
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
-
+    
+      // Calculate start time and original duration
+      let startTime = campaign.startTime?._seconds ? 
+        new Date(campaign.startTime._seconds * 1000) :
+        new Date(campaign.startTime.seconds * 1000);
+    
+      // If no valid start time exists, use campaign creation time or current time
+      if (!startTime || isNaN(startTime.getTime())) {
+        startTime = campaign.createdAt?._seconds ? 
+          new Date(campaign.createdAt._seconds * 1000) :
+          campaign.createdAt?.seconds ?
+            new Date(campaign.createdAt.seconds * 1000) :
+            new Date();
+      }
+    
+      // Calculate original duration in milliseconds
+      const originalDuration = endTime - startTime;
+    
+      // Set up timer with all needed information
       this.activeTimers.set(productId, {
         element: timeElement,
         endTime: endTime,
         campaign: campaign,
-        originalDuration: this.originalDurations.get(campaign.id)
+        originalDuration: originalDuration,
+        isFlashing: false,
+        autoRestart: campaign.timerSettings?.autoRestart || false
       });
-
+    
       return container;
     },
 
@@ -1870,7 +1891,7 @@ if (params.smartCart) {
       if (existingTimer) {
         return existingTimer;
       }
-
+    
       const container = document.createElement('div');
       container.id = `hmstudio-card-countdown-${productId}`;
       container.style.cssText = `
@@ -1889,7 +1910,7 @@ if (params.smartCart) {
         width: 100%;
         overflow: hidden;
       `;
-
+    
       const timeElement = document.createElement('div');
       timeElement.style.cssText = `
         display: flex;
@@ -1898,27 +1919,41 @@ if (params.smartCart) {
         flex-wrap: wrap;
         gap: ${isMobile() ? '2px' : '4px'};
       `;
-
+    
       container.appendChild(timeElement);
-
+    
+      // Calculate initial end time
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
-
-      const startTime = campaign.startTime?._seconds ? 
+    
+      // Calculate start time
+      let startTime = campaign.startTime?._seconds ? 
         new Date(campaign.startTime._seconds * 1000) :
         new Date(campaign.startTime.seconds * 1000);
-
+    
+      // If no valid start time exists, use campaign creation time or current time
+      if (!startTime || isNaN(startTime.getTime())) {
+        startTime = campaign.createdAt?._seconds ? 
+          new Date(campaign.createdAt._seconds * 1000) :
+          campaign.createdAt?.seconds ?
+            new Date(campaign.createdAt.seconds * 1000) :
+            new Date();
+      }
+    
+      // Calculate original duration in milliseconds
       const originalDuration = endTime - startTime;
-
+    
+      // Set up timer with all needed information
       this.activeTimers.set(`card-${productId}`, {
         element: timeElement,
         endTime: endTime,
         campaign: campaign,
         originalDuration: originalDuration,
-        isFlashing: false
+        isFlashing: false,
+        autoRestart: campaign.timerSettings?.autoRestart || false
       });
-
+    
       return container;
     },
 
@@ -1946,14 +1981,16 @@ if (params.smartCart) {
       
       this.activeTimers.forEach((timer, id) => {
         if (!timer.element || !timer.endTime) return;
-
+  
         let timeDiff = timer.endTime - now;
-
-        // Handle auto-restart
+  
+        // Handle auto-restart with proper original duration tracking
         if (timeDiff <= 0 && timer.campaign?.timerSettings?.autoRestart && timer.originalDuration) {
-          const newEndTime = new Date(now.getTime() + timer.originalDuration);
+          // Calculate new end time based on how many cycles have passed
+          const cyclesPassed = Math.floor(Math.abs(timeDiff) / timer.originalDuration) + 1;
+          const newEndTime = new Date(timer.endTime.getTime() + (cyclesPassed * timer.originalDuration));
           timer.endTime = newEndTime;
-          timeDiff = timer.originalDuration;
+          timeDiff = newEndTime - now;
           timer.isFlashing = false;
           console.log(`Timer restarted for ${id}, new end time:`, newEndTime);
         } else if (timeDiff <= 0 && !timer.campaign?.timerSettings?.autoRestart) {
@@ -1969,87 +2006,72 @@ if (params.smartCart) {
         // Check if we're in the last 5 minutes
         const isLastFiveMinutes = timeDiff <= 300000; // 5 minutes in milliseconds
 
-        // Update flashing state if needed
-        if (isLastFiveMinutes && !timer.isFlashing) {
-          timer.isFlashing = true;
-        } else if (!isLastFiveMinutes && timer.isFlashing) {
-          timer.isFlashing = false;
-        }
+      // Update flashing state if needed
+      if (isLastFiveMinutes && !timer.isFlashing) {
+        timer.isFlashing = true;
+      } else if (!isLastFiveMinutes && timer.isFlashing) {
+        timer.isFlashing = false;
+      }
 
-        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
-        // Always include all time units
-        const timeUnits = [
-          {
-            value: days,
-            label: getCurrentLanguage() === 'ar' ? 'ي' : 'd'
-          },
-          {
-            value: hours,
-            label: getCurrentLanguage() === 'ar' ? 'س' : 'h'
-          },
-          {
-            value: minutes,
-            label: getCurrentLanguage() === 'ar' ? 'د' : 'm'
-          },
-          {
-            value: seconds,
-            label: getCurrentLanguage() === 'ar' ? 'ث' : 's'
-          }
-        ];
+      // Update display
+      let html = `
+        <div class="countdown-units-wrapper ${timer.isFlashing ? 'countdown-flash' : ''}" style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: ${id.startsWith('card-') ? '2px' : '4px'};
+          transform: scale(${id.startsWith('card-') ? (isMobile() ? 0.85 : 1) : 1});
+          flex-wrap: ${id.startsWith('card-') ? 'wrap' : 'nowrap'};
+          ${id.startsWith('card-') ? 'max-width: 100%; padding: 2px;' : ''}
+        ">
+      `;
 
-        const isCard = id.startsWith('card-');
-        const scale = isCard ? (isMobile() ? 0.85 : 1) : 1;
-        
-        let html = `
-          <div class="countdown-units-wrapper ${timer.isFlashing ? 'countdown-flash' : ''}" style="
-            display: flex;
+      const timeUnits = [
+        { value: days, label: getCurrentLanguage() === 'ar' ? 'ي' : 'd' },
+        { value: hours, label: getCurrentLanguage() === 'ar' ? 'س' : 'h' },
+        { value: minutes, label: getCurrentLanguage() === 'ar' ? 'د' : 'm' },
+        { value: seconds, label: getCurrentLanguage() === 'ar' ? 'ث' : 's' }
+      ];
+
+      timeUnits.forEach((unit, index) => {
+        html += `
+          <div class="hmstudio-countdown-unit" style="
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: ${isCard ? '2px' : '4px'};
-            transform: scale(${scale});
-            flex-wrap: ${isCard ? 'wrap' : 'nowrap'};
-            ${isCard ? 'max-width: 100%; padding: 2px;' : ''}
+            white-space: nowrap;
+            gap: ${id.startsWith('card-') ? '1px' : '2px'};
+            ${index < timeUnits.length - 1 ? `margin-${getCurrentLanguage() === 'ar' ? 'left' : 'right'}: ${id.startsWith('card-') ? '2px' : '4px'};` : ''}
+            ${id.startsWith('card-') && index % 2 === 1 ? 'margin-right: 8px;' : ''}
           ">
-        `;
-
-        timeUnits.forEach((unit, index) => {
-          html += `
-            <div class="hmstudio-countdown-unit" style="
-              display: inline-flex;
-              align-items: center;
-              white-space: nowrap;
-              gap: ${isCard ? '1px' : '2px'};
-              ${index < timeUnits.length - 1 ? `margin-${getCurrentLanguage() === 'ar' ? 'left' : 'right'}: ${isCard ? '2px' : '4px'};` : ''}
-              ${isCard && index % 2 === 1 ? 'margin-right: 8px;' : ''}
-            ">
+            <span style="
+              font-weight: bold;
+              min-width: ${id.startsWith('card-') ? '14px' : '20px'};
+              text-align: center;
+              font-size: ${id.startsWith('card-') ? (isMobile() ? '11px' : '12px') : (isMobile() ? '12px' : '14px')};
+            ">${String(unit.value).padStart(2, '0')}</span>
+            <span style="
+              font-size: ${id.startsWith('card-') ? (isMobile() ? '9px' : '10px') : (isMobile() ? '10px' : '12px')};
+              opacity: 0.8;
+            ">${unit.label}</span>
+            ${index < timeUnits.length - 1 ? `
               <span style="
-                font-weight: bold;
-                min-width: ${isCard ? '14px' : '20px'};
-                text-align: center;
-                font-size: ${isCard ? (isMobile() ? '11px' : '12px') : (isMobile() ? '12px' : '14px')};
-              ">${String(unit.value).padStart(2, '0')}</span>
-              <span style="
-                font-size: ${isCard ? (isMobile() ? '9px' : '10px') : (isMobile() ? '10px' : '12px')};
+                margin-${getCurrentLanguage() === 'ar' ? 'right' : 'left'}: ${id.startsWith('card-') ? '2px' : '4px'};
                 opacity: 0.8;
-              ">${unit.label}</span>
-              ${index < timeUnits.length - 1 ? `
-                <span style="
-                  margin-${getCurrentLanguage() === 'ar' ? 'right' : 'left'}: ${isCard ? '2px' : '4px'};
-                  opacity: 0.8;
-                ">:</span>
-              ` : ''}
-            </div>
-          `;
-        });
-
-        html += '</div>';
-        timer.element.innerHTML = html;
+              ">:</span>
+            ` : ''}
+          </div>
+        `;
       });
-    },
+
+      html += '</div>';
+      timer.element.innerHTML = html;
+    });
+  },
 
     setupProductCardTimers() {
       console.log('Setting up product card timers...');
