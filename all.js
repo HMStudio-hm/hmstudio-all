@@ -1,4 +1,4 @@
-// all.js - HMStudio Combined Features v1.2.8
+// all.js - HMStudio Combined Features v1.2.9
 // this for the one thing(li fbalk) approach.
 
 (function() {
@@ -1774,6 +1774,20 @@ if (params.smartCart) {
     
         if (!(endTime instanceof Date && !isNaN(endTime))) {
           return false;
+        }
+
+        // For auto-restart campaigns, calculate the number of restarts and adjust endTime
+        if (campaign.timerSettings.autoRestart && now > endTime) {
+          const startTime = campaign.startTime?._seconds ? 
+            new Date(campaign.startTime._seconds * 1000) :
+            new Date(campaign.startTime.seconds * 1000);
+          
+          const originalDuration = endTime - startTime;
+          const timeSinceStart = now - startTime;
+          const cycles = Math.floor(timeSinceStart / originalDuration);
+          
+          // Update endTime to next cycle
+          endTime = new Date(startTime.getTime() + (cycles + 1) * originalDuration);
         }
     
         return hasProduct && (now <= endTime || campaign.timerSettings.autoRestart) && campaign.status === 'active';
