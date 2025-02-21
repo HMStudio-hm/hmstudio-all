@@ -1,7 +1,30 @@
-// all.js - HMStudio Combined Features v1.2.4
+// all.js - HMStudio Combined Features v1.2.5
 // this for the one thing(li fbalk) approach.
 
 (function() {
+  async function checkCurrentState() {
+    const scriptTag = document.currentScript;
+    const scriptUrl = new URL(scriptTag.src);
+    const storeId = scriptUrl.searchParams.get('storeId');
+    
+    if (!storeId) return;
+
+    try {
+      // Fetch current state from your API
+      const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getFeatureStates?storeId=${storeId}`);
+      if (!response.ok) return;
+
+      const states = await response.json();
+      
+      // Clean up any disabled features
+      if (!states.quickViewEnabled) cleanupQuickView();
+      if (!states.smartCartEnabled) cleanupSmartCart();
+      if (!states.upsellEnabled) cleanupUpsell();
+      // ... other features
+    } catch (error) {
+      console.error('Error checking feature states:', error);
+    }
+  }
   console.log('HMStudio All Features script initialized');
 
   // Common utility to get URL parameters
