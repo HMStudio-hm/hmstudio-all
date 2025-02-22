@@ -1,5 +1,5 @@
-// all.js - HMStudio Combined Features v1.3.1
-// this for the one thing(li fbalk) approach.
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.2 | 7iydgh giss kulu logs daytban
+// Created by HMStudio
 
 (function() {
   console.log('HMStudio All Features script initialized');
@@ -38,21 +38,16 @@
     console.log('Initializing Quick View feature');
     
   function getCurrentLanguage() {
-    return document.documentElement.lang || 'ar'; // Default to Arabic if not found
+    return document.documentElement.lang || 'ar';
   }
   const config = {
     ...window.HMStudioQuickViewConfig,
     storeId: storeId
   };
-
-  console.log('Quick View config:', config);
-
-  // Add Analytics object
+  
   const QuickViewStats = {
     async trackEvent(eventType, data) {
       try {
-        console.log('Starting Quick View stats tracking for event:', eventType);
-        
         const timestamp = new Date();
         const month = timestamp.toISOString().slice(0, 7);
   
@@ -64,8 +59,6 @@
           ...data
         };
   
-        console.log('Sending Quick View stats data:', eventData);
-  
         const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackQuickViewStats`, {
           method: 'POST',
           headers: {
@@ -75,20 +68,17 @@
         });
   
         const responseData = await response.json();
-        console.log('Quick View stats response:', responseData);
   
         if (!response.ok) {
           throw new Error(`Quick View stats tracking failed: ${responseData.error || response.statusText}`);
         }
   
       } catch (error) {
-        console.error('Quick View stats tracking error:', error);
       }
     }
   };
-
+  
   async function fetchProductData(productId) {
-    console.log('Fetching product data for ID:', productId);
     const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
     
     try {
@@ -97,16 +87,13 @@
         throw new Error(`Failed to fetch product data: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Received product data:', data);
       return data;
     } catch (error) {
-      console.error('Error fetching product data:', error);
       throw error;
     }
   }
-
+  
   function createImageGallery(images) {
-    console.log('Creating gallery with images:', images);
     const galleryContainer = document.createElement('div');
     galleryContainer.className = 'quick-view-gallery';
     galleryContainer.style.cssText = `
@@ -115,8 +102,7 @@
       gap: 10px;
       margin-bottom: 20px;
     `;
-
-    // Main image display
+  
     const mainImageContainer = document.createElement('div');
     mainImageContainer.style.cssText = `
       width: 100%;
@@ -125,7 +111,7 @@
       border-radius: 8px;
       position: relative;
     `;
-
+  
     const mainImage = document.createElement('img');
     if (images && images.length > 0) {
       mainImage.src = images[0].url;
@@ -140,7 +126,7 @@
       object-fit: contain;
     `;
     mainImageContainer.appendChild(mainImage);
-
+  
     if (images && images.length > 1) {
       const thumbnailsContainer = document.createElement('div');
       thumbnailsContainer.style.cssText = `
@@ -149,7 +135,7 @@
         overflow-x: auto;
         padding: 5px 0;
       `;
-
+  
       images.forEach((image, index) => {
         const thumbnail = document.createElement('img');
         thumbnail.src = image.thumbnail;
@@ -162,7 +148,7 @@
           cursor: pointer;
           border: 2px solid ${index === 0 ? '#4CAF50' : 'transparent'};
         `;
-
+  
         thumbnail.addEventListener('click', () => {
           mainImage.src = image.url;
           thumbnailsContainer.querySelectorAll('img').forEach(thumb => {
@@ -170,17 +156,17 @@
           });
           thumbnail.style.border = '2px solid #4CAF50';
         });
-
+  
         thumbnailsContainer.appendChild(thumbnail);
       });
-
+  
       galleryContainer.appendChild(thumbnailsContainer);
     }
-
+  
     galleryContainer.insertBefore(mainImageContainer, galleryContainer.firstChild);
     return galleryContainer;
   }
-
+  
   function createVariantsSection(productData) {
     const currentLang = getCurrentLanguage();
     const variantsContainer = document.createElement('div');
@@ -189,9 +175,8 @@
       margin-top: 15px;
       padding: 10px 0;
     `;
-
+  
     if (productData.variants && productData.variants.length > 0) {
-      // Get unique variants and their values
       const variantAttributes = new Map();
       
       productData.variants.forEach(variant => {
@@ -208,8 +193,7 @@
           });
         }
       });
-
-      // Create dropdowns for each attribute type
+  
       variantAttributes.forEach(attr => {
         const select = document.createElement('select');
         select.className = 'variant-select';
@@ -220,7 +204,7 @@
           border-radius: 4px;
           width: 100%;
         `;
-
+  
         const labelText = currentLang === 'ar' ? attr.slug : attr.name;
         
         const label = document.createElement('label');
@@ -230,7 +214,7 @@
           margin-bottom: 5px;
           font-weight: bold;
         `;
-
+  
         const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
         
         let optionsHTML = `<option value="">${placeholderText}</option>`;
@@ -240,20 +224,19 @@
         });
         
         select.innerHTML = optionsHTML;
-
+  
         select.addEventListener('change', () => {
-          console.log('Selected:', attr.name, select.value);
           updateSelectedVariant(productData);
         });
-
+  
         variantsContainer.appendChild(label);
         variantsContainer.appendChild(select);
       });
     }
-
+  
     return variantsContainer;
   }
-
+  
   function createQuantitySelector(currentLang) {
     const quantityContainer = document.createElement('div');
     quantityContainer.style.cssText = `
@@ -262,14 +245,14 @@
       align-items: center;
       gap: 10px;
     `;
-
+  
     const quantityLabel = document.createElement('label');
     quantityLabel.textContent = currentLang === 'ar' ? 'الكمية:' : 'Quantity:';
     quantityLabel.style.cssText = `
       font-weight: bold;
       color: #333;
     `;
-
+  
     const quantityWrapper = document.createElement('div');
     quantityWrapper.style.cssText = `
       display: flex;
@@ -278,8 +261,7 @@
       border-radius: 4px;
       overflow: hidden;
     `;
-
-    // Decrease button
+  
     const decreaseBtn = document.createElement('button');
     decreaseBtn.type = 'button';
     decreaseBtn.textContent = '-';
@@ -296,8 +278,7 @@
       color: #333;
       transition: background-color 0.3s ease;
     `;
-
-    // Quantity input
+  
     const quantityInput = document.createElement('input');
     quantityInput.type = 'number';
     quantityInput.name = 'quantity';
@@ -314,10 +295,8 @@
       font-size: 14px;
       -moz-appearance: textfield;
     `;
-    // Remove spinner arrows
     quantityInput.addEventListener('mousewheel', (e) => e.preventDefault());
-
-    // Increase button
+  
     const increaseBtn = document.createElement('button');
     increaseBtn.type = 'button';
     increaseBtn.textContent = '+';
@@ -334,8 +313,7 @@
       color: #333;
       transition: background-color 0.3s ease;
     `;
-
-    // Add event listeners
+  
     decreaseBtn.addEventListener('mouseover', () => {
       decreaseBtn.style.backgroundColor = '#e0e0e0';
     });
@@ -348,7 +326,7 @@
         quantityInput.value = currentValue - 1;
       }
     });
-
+  
     increaseBtn.addEventListener('mouseover', () => {
       increaseBtn.style.backgroundColor = '#e0e0e0';
     });
@@ -359,64 +337,54 @@
       const currentValue = parseInt(quantityInput.value);
       quantityInput.value = currentValue + 1;
     });
-
-    // Validate input
+  
     quantityInput.addEventListener('input', () => {
       let value = parseInt(quantityInput.value);
       if (isNaN(value) || value < 1) {
         quantityInput.value = 1;
       }
     });
-
+  
     quantityInput.addEventListener('blur', () => {
       if (quantityInput.value === '') {
         quantityInput.value = 1;
       }
     });
-
-    // Assemble quantity selector
+  
     quantityWrapper.appendChild(decreaseBtn);
     quantityWrapper.appendChild(quantityInput);
     quantityWrapper.appendChild(increaseBtn);
     
     quantityContainer.appendChild(quantityLabel);
     quantityContainer.appendChild(quantityWrapper);
-
+  
     return quantityContainer;
   }
-
+  
   function updateSelectedVariant(productData) {
     const form = document.getElementById('product-form');
     if (!form) {
-      console.error('Product form not found');
       return;
     }
-
+  
     const currentLang = getCurrentLanguage();
     const selectedValues = {};
-
-    // Get all selected values
+  
     form.querySelectorAll('.variant-select').forEach(select => {
       if (select.value) {
         const labelText = select.previousElementSibling.textContent;
         selectedValues[labelText] = select.value;
       }
     });
-
-    console.log('Selected values:', selectedValues);
-
-    // Find matching variant
+  
     const selectedVariant = productData.variants.find(variant => {
       return variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
         return selectedValues[attrLabel] === attr.value[currentLang];
       });
     });
-
-    console.log('Found variant:', selectedVariant);
-
+  
     if (selectedVariant) {
-      // Update product ID input
       let productIdInput = form.querySelector('input[name="product_id"]');
       if (!productIdInput) {
         productIdInput = document.createElement('input');
@@ -425,9 +393,7 @@
         form.appendChild(productIdInput);
       }
       productIdInput.value = selectedVariant.id;
-      console.log('Updated product ID to:', selectedVariant.id);
-
-      // Update price display
+  
       const priceElement = form.querySelector('#product-price');
       const oldPriceElement = form.querySelector('#product-old-price');
       
@@ -445,8 +411,7 @@
           }
         }
       }
-
-      // Update add to cart button
+  
       const addToCartBtn = form.querySelector('.add-to-cart-btn');
       if (addToCartBtn) {
         if (!selectedVariant.unavailable) {
@@ -461,12 +426,11 @@
       }
     }
   }
-
+  
   async function handleAddToCart(productData) {
     const currentLang = getCurrentLanguage();
     const form = document.getElementById('product-form');
     
-    // Get the quantity value
     const quantityInput = form.querySelector('#product-quantity');
     const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
     
@@ -478,11 +442,7 @@
       return;
     }
   
-    // Check if product has variants
     if (productData.variants && productData.variants.length > 0) {
-      console.log('Product has variants:', productData.variants);
-      
-      // Get all variant selections
       const selectedVariants = {};
       const missingSelections = [];
       
@@ -494,7 +454,6 @@
         selectedVariants[labelText] = select.value;
       });
   
-      // Check if all variants are selected
       if (missingSelections.length > 0) {
         const message = currentLang === 'ar' 
           ? `الرجاء اختيار ${missingSelections.join(', ')}`
@@ -503,9 +462,6 @@
         return;
       }
   
-      console.log('Selected variants:', selectedVariants);
-  
-      // Find the matching variant
       const selectedVariant = productData.variants.find(variant => {
         return variant.attributes.every(attr => {
           const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
@@ -514,8 +470,6 @@
       });
   
       if (!selectedVariant) {
-        console.error('No matching variant found');
-        console.log('Selected combinations:', selectedVariants);
         const message = currentLang === 'ar' 
           ? 'هذا المنتج غير متوفر بالمواصفات المختارة'
           : 'This product variant is not available';
@@ -523,17 +477,12 @@
         return;
       }
   
-      console.log('Found matching variant:', selectedVariant);
-      
-      // Update product ID to selected variant ID
       const productIdInput = form.querySelector('input[name="product_id"]');
       if (productIdInput) {
         productIdInput.value = selectedVariant.id;
-        console.log('Updated product ID to variant ID:', selectedVariant.id);
       }
     }
   
-    // Ensure required hidden inputs exist and are populated
     let productIdInput = form.querySelector('input[name="product_id"]');
     if (!productIdInput) {
       productIdInput = document.createElement('input');
@@ -541,8 +490,8 @@
       productIdInput.name = 'product_id';
       form.appendChild(productIdInput);
     }
-    
-    // Update quantity in form
+    productIdInput.value = productData.id;
+  
     let formQuantityInput = form.querySelector('input[name="quantity"]');
     if (!formQuantityInput) {
       formQuantityInput = document.createElement('input');
@@ -552,18 +501,11 @@
     }
     formQuantityInput.value = quantity;
   
-    // Show loading spinner
     const loadingSpinners = document.querySelectorAll('.add-to-cart-progress');
     loadingSpinners.forEach(spinner => spinner.classList.remove('d-none'));
   
-    // Get the form data
     const formData = new FormData(form);
-    console.log('Form data being submitted:', {
-      product_id: formData.get('product_id'),
-      quantity: formData.get('quantity')
-    });
   
-    // Call Zid's cart function
     try {
       zid.store.cart.addProduct({ 
         formId: 'product-form',
@@ -573,9 +515,7 @@
         }
       })
       .then(async function (response) {
-        console.log('Add to cart response:', response);
         if (response.status === 'success') {
-          // Track successful cart addition
           try {
             await QuickViewStats.trackEvent('cart_add', {
               productId: formData.get('product_id'),
@@ -585,19 +525,16 @@
                 productData.name
             });
           } catch (trackingError) {
-            console.warn('Quick View stats tracking error:', trackingError);
           }
   
           if (typeof setCartBadge === 'function') {
             setCartBadge(response.data.cart.products_count);
           }
-          // Close modal immediately without alert
           const modal = document.querySelector('.quick-view-modal');
           if (modal) {
             modal.remove();
           }
         } else {
-          console.error('Add to cart failed:', response);
           const errorMessage = currentLang === 'ar' 
             ? response.data.message || 'فشل إضافة المنتج إلى السلة'
             : response.data.message || 'Failed to add product to cart';
@@ -605,28 +542,22 @@
         }
       })
       .catch(function(error) {
-        console.error('Error adding to cart:', error);
         const errorMessage = currentLang === 'ar' 
           ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
           : 'Error occurred while adding product to cart';
         alert(errorMessage);
       })
       .finally(function() {
-        // Hide loading spinner
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
       });
     } catch (error) {
-      console.error('Critical error in add to cart:', error);
       loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
     }
   }
-
-
+  
   async function displayQuickViewModal(productData) {
     const currentLang = getCurrentLanguage();
-    console.log('Displaying Quick View modal for product:', productData);
-
-    // Track modal open event
+  
     try {
       await QuickViewStats.trackEvent('modal_open', {
         productId: productData.id,
@@ -635,22 +566,20 @@
           productData.name
       });
     } catch (trackingError) {
-      console.warn('Quick View stats tracking error:', trackingError);
     }
     
     const existingModal = document.querySelector('.quick-view-modal');
     if (existingModal) {
       existingModal.remove();
     }
-
-    // Add viewport meta tag if it doesn't exist
+  
     if (!document.querySelector('meta[name="viewport"]')) {
       const viewport = document.createElement('meta');
       viewport.name = 'viewport';
       viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0';
       document.head.appendChild(viewport);
     }
-
+  
     const modal = document.createElement('div');
     modal.className = 'quick-view-modal';
     modal.style.cssText = `
@@ -666,7 +595,7 @@
       z-index: 1000;
       padding: 16px;
     `;
-
+  
     const content = document.createElement('div');
     content.className = 'quick-view-content';
     content.style.cssText = `
@@ -681,8 +610,7 @@
       max-width: 1000px;
       overflow: hidden;
     `;
-
-    // Create form
+  
     const form = document.createElement('form');
     form.id = 'product-form';
     form.style.cssText = `
@@ -692,8 +620,7 @@
       flex-direction: column;
       overflow-y: auto;
     `;
-
-    // Add media query styles
+  
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
       @media screen and (min-width: 768px) {
@@ -723,11 +650,10 @@
       }
     `;
     document.head.appendChild(styleSheet);
-
+  
     form.className = 'quick-view-form';
     content.appendChild(form);
-
-    // Left side - Image Gallery
+  
     const gallerySection = document.createElement('div');
     gallerySection.className = 'quick-view-gallery';
     gallerySection.style.cssText = `
@@ -737,8 +663,7 @@
       flex-direction: column;
       align-items: center;
     `;
-
-    // Create and append the image gallery
+  
     if (productData.images && productData.images.length > 0) {
       const gallery = createImageGallery(productData.images);
       gallery.style.cssText = `
@@ -750,8 +675,7 @@
       `;
       gallerySection.appendChild(gallery);
     }
-
-    // Right side - Product Details
+  
     const detailsSection = document.createElement('div');
     detailsSection.className = 'quick-view-details';
     detailsSection.style.cssText = `
@@ -762,8 +686,7 @@
       text-align: ${currentLang === 'ar' ? 'right' : 'left'};
       direction: ${currentLang === 'ar' ? 'rtl' : 'ltr'};
     `;
-
-    // Close button
+  
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -796,8 +719,7 @@
     `;
     closeBtn.addEventListener('click', () => modal.remove());
     content.appendChild(closeBtn);
-
-    // Create and append the title
+  
     const title = document.createElement('h2');
     title.className = 'quick-view-title';
     title.textContent = productData.name[currentLang] || productData.name;
@@ -809,8 +731,7 @@
       line-height: 1.3;
     `;
     detailsSection.appendChild(title);
-
-    // Add rating if available
+  
     if (productData.rating) {
       const ratingContainer = document.createElement('div');
       ratingContainer.className = 'quick-view-rating';
@@ -821,40 +742,39 @@
         margin-bottom: 16px;
         font-size: 14px;
       `;
-
+  
       const starRating = document.createElement('div');
       starRating.style.cssText = `
         display: flex;
         align-items: center;
       `;
-
+  
       const fullStars = Math.floor(productData.rating.average);
       const remainingStars = 5 - fullStars;
-
+  
       for (let i = 0; i < fullStars; i++) {
         const star = document.createElement('span');
         star.textContent = '★';
         star.style.color = '#fbbf24';
         starRating.appendChild(star);
       }
-
+  
       for (let i = 0; i < remainingStars; i++) {
         const star = document.createElement('span');
         star.textContent = '☆';
         star.style.color = '#e5e7eb';
         starRating.appendChild(star);
       }
-
+  
       const ratingText = document.createElement('span');
       ratingText.textContent = `(${productData.rating.average.toFixed(1)})`;
       ratingText.style.color = '#6b7280';
-
+  
       ratingContainer.appendChild(starRating);
       ratingContainer.appendChild(ratingText);
       detailsSection.appendChild(ratingContainer);
     }
-
-    // Add price display elements
+  
     const priceContainer = document.createElement('div');
     priceContainer.className = 'quick-view-price-container';
     priceContainer.style.cssText = `
@@ -863,9 +783,9 @@
       gap: 12px;
       margin-bottom: 20px;
     `;
-
+  
     const currencySymbol = currentLang === 'ar' ? 'ر.س' : 'SAR';
-
+  
     if (productData.sale_price) {
       const salePrice = document.createElement('span');
       salePrice.className = 'quick-view-sale-price';
@@ -875,7 +795,7 @@
         color: #059669;
       `;
       salePrice.textContent = `${productData.sale_price} ${currencySymbol}`;
-
+  
       const originalPrice = document.createElement('span');
       originalPrice.className = 'quick-view-original-price';
       originalPrice.style.cssText = `
@@ -884,7 +804,7 @@
         font-size: 16px;
       `;
       originalPrice.textContent = `${productData.price} ${currencySymbol}`;
-
+  
       priceContainer.appendChild(salePrice);
       priceContainer.appendChild(originalPrice);
     } else {
@@ -898,10 +818,9 @@
       price.textContent = `${productData.price} ${currencySymbol}`;
       priceContainer.appendChild(price);
     }
-
+  
     detailsSection.appendChild(priceContainer);
-
-    // Add short description
+  
     if (productData.short_description && productData.short_description[currentLang]) {
       const description = document.createElement('p');
       description.className = 'quick-view-description';
@@ -914,8 +833,7 @@
       description.textContent = productData.short_description[currentLang];
       detailsSection.appendChild(description);
     }
-
-    // Add variants section if product has variants
+  
     if (productData.variants && productData.variants.length > 0) {
       const variantsSection = createVariantsSection(productData);
       variantsSection.style.cssText += `
@@ -929,8 +847,7 @@
       `;
       detailsSection.appendChild(variantsSection);
     }
-
-    // Add quantity selector
+  
     const quantitySelector = createQuantitySelector(currentLang);
     quantitySelector.className = 'quick-view-quantity-selector';
     quantitySelector.style.cssText = `
@@ -938,14 +855,12 @@
       justify-content: center;
       width: 100%;
     `;
-
-    // Remove the quantity label
+  
     const quantityLabel = quantitySelector.querySelector('label');
     if (quantityLabel) {
       quantityLabel.remove();
     }
-
-    // Style the quantity input and buttons
+  
     const quantityWrapper = quantitySelector.querySelector('div');
     if (quantityWrapper) {
       quantityWrapper.style.cssText = `
@@ -956,11 +871,11 @@
         border-radius: 8px;
         overflow: hidden;
       `;
-
+  
       const decreaseBtn = quantityWrapper.querySelector('button:first-child');
       const increaseBtn = quantityWrapper.querySelector('button:last-child');
       const quantityInput = quantityWrapper.querySelector('input');
-
+  
       if (decreaseBtn && increaseBtn && quantityInput) {
         const buttonStyle = `
           width: 48px;
@@ -975,7 +890,7 @@
         `;
         decreaseBtn.style.cssText = buttonStyle;
         increaseBtn.style.cssText = buttonStyle;
-
+  
         quantityInput.style.cssText = `
           flex: 1;
           height: 100%;
@@ -986,8 +901,7 @@
         `;
       }
     }
-
-    // Add buttons container
+  
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'quick-view-purchase-controls';
     buttonsContainer.style.cssText = `
@@ -997,8 +911,7 @@
       margin-top: auto;
       padding-top: 20px;
     `;
-
-    // Add to Cart button
+  
     const addToCartBtn = document.createElement('button');
     addToCartBtn.textContent = currentLang === 'ar' ? 'أضف إلى السلة' : 'Add to Cart';
     addToCartBtn.className = 'btn btn-primary add-to-cart-btn quick-view-add-to-cart-btn';
@@ -1023,8 +936,7 @@
         background-color: #047857;
       }
     `;
-
-    // Add loading spinner
+  
     const loadingSpinner = document.createElement('div');
     loadingSpinner.className = 'add-to-cart-progress d-none';
     loadingSpinner.style.cssText = `
@@ -1036,67 +948,54 @@
       animation: spin 0.8s linear infinite;
     `;
     addToCartBtn.appendChild(loadingSpinner);
-
+  
     addToCartBtn.addEventListener('click', () => {
       handleAddToCart(productData);
     });
-
-    // Move quantitySelector inside buttonsContainer
+  
     buttonsContainer.appendChild(quantitySelector);
     buttonsContainer.appendChild(addToCartBtn);
     detailsSection.appendChild(buttonsContainer);
-
-    // Add hidden inputs
+  
     const productIdInput = document.createElement('input');
     productIdInput.type = 'hidden';
     productIdInput.id = 'product-id';
     productIdInput.name = 'product_id';
     productIdInput.value = productData.id;
     form.appendChild(productIdInput);
-
-    // Assemble the modal
+  
     form.appendChild(gallerySection);
     form.appendChild(detailsSection);
     modal.appendChild(content);
-
-    // Close modal when clicking outside
+  
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.remove();
       }
     });
-
+  
     document.body.appendChild(modal);
     
-    // Initialize price display
     if (productData.selected_product) {
       updateSelectedVariant(productData);
     }
-
-    console.log('Quick View modal added to DOM');
   }
   
   async function openQuickView(productId) {
-    console.log('Opening Quick View for product ID:', productId);
     try {
       const productData = await fetchProductData(productId);
       displayQuickViewModal(productData);
     } catch (error) {
-      console.error('Failed to open quick view:', error);
     }
   }
-
+  
   function addQuickViewButtons() {
-    console.log('Adding Quick View buttons');
-    
-    // Support both Soft theme and Perfect theme selectors
     const productCardSelectors = [
-        '.product-item.position-relative', // Soft theme
-        '.card.card-product' // Perfect theme
+        '.product-item.position-relative',
+        '.card.card-product'
     ];
-
+  
     let productCards = [];
-    // Try each selector
     for (const selector of productCardSelectors) {
         const cards = document.querySelectorAll(selector);
         if (cards.length > 0) {
@@ -1104,16 +1003,12 @@
             break;
         }
     }
-
-    console.log('Found product cards:', productCards.length);
     
     productCards.forEach(card => {
         if (card.querySelector('.quick-view-btn')) {
-            console.log('Quick View button already exists for a product, skipping');
             return;
         }
-
-        // Support different product ID data attributes for different themes
+  
         let productId = null;
         const wishlistBtn = card.querySelector('[data-wishlist-id]');
         const productForm = card.querySelector('form[data-product-id]');
@@ -1125,20 +1020,15 @@
         }
         
         if (productId) {
-            console.log('Found product ID:', productId);
-            
-            // Find the button container - support both themes
             let buttonContainer = card.querySelector('.card-footer') || 
                                 card.querySelector('div[style*="text-align: center"]');
-
-            // If no container found, create one for Perfect theme
+  
             if (!buttonContainer) {
                 buttonContainer = document.createElement('div');
                 buttonContainer.className = 'card-footer bg-transparent border-0';
                 card.appendChild(buttonContainer);
             }
-
-            // Update container styles
+  
             buttonContainer.style.cssText += `
                 text-align: center;
                 display: flex;
@@ -1147,7 +1037,7 @@
                 gap: 5px;
                 width: 100%;
             `;
-
+  
             const button = document.createElement('button');
             button.className = 'quick-view-btn';
             button.style.cssText = `
@@ -1165,73 +1055,60 @@
                 vertical-align: middle;
                 margin: 5px;
             `;
-
-            // Add eye icon using SVG
+  
             button.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                 </svg>
             `;
-
+  
             button.addEventListener('mouseover', () => {
                 button.style.backgroundColor = '#f0f0f0';
             });
-
+  
             button.addEventListener('mouseout', () => {
                 button.style.backgroundColor = '#ffffff';
             });
-
+  
             button.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Quick View button clicked for product ID:', productId);
                 openQuickView(productId);
             });
-
-            // Safer insertion logic
+  
             try {
-                // For Perfect theme
                 if (buttonContainer.classList.contains('card-footer')) {
                     buttonContainer.appendChild(button);
                 } else {
-                    // For Soft theme
                     buttonContainer.insertBefore(button, buttonContainer.firstChild);
                 }
             } catch (error) {
-                console.warn('Failed to insert button normally, appending instead', error);
                 buttonContainer.appendChild(button);
             }
         }
     });
-}
-
-  // Initial setup
-  console.log('Running initial setup');
+  }
+  
   addQuickViewButtons();
-
-  // Re-apply Quick View buttons when the page content changes
+  
   const observer = new MutationObserver(() => {
-    console.log('Page content changed, re-applying Quick View buttons');
     addQuickViewButtons();
   });
   observer.observe(document.body, { childList: true, subtree: true });
-  console.log('MutationObserver set up');
-
-  // Expose necessary functions
+  
   window.HMStudioQuickView = {
     openQuickView: openQuickView
   };
-  console.log('HMStudioQuickView object exposed to window');
   }
 
   // =============== ANNOUNCEMENT BAR FEATURE ===============
   if (params.announcement) {
     console.log('Initializing Announcement Bar feature');
-
+  
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
   }
-
+  
   async function fetchAnnouncementSettings() {
     try {
       const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getAnnouncementSettings?storeId=${storeId}`);
@@ -1239,22 +1116,18 @@
         throw new Error(`Failed to fetch settings: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Fetched announcement settings:', data);
       return data;
     } catch (error) {
-      console.error('Error fetching announcement settings:', error);
       return null;
     }
   }
-
+  
   function createAnnouncementBar(settings) {
-    // Remove existing announcement bar if any
     const existingBar = document.getElementById('hmstudio-announcement-bar');
     if (existingBar) {
       existingBar.remove();
     }
-
-    // Create bar container
+  
     const bar = document.createElement('div');
     bar.id = 'hmstudio-announcement-bar';
     bar.style.cssText = `
@@ -1266,8 +1139,7 @@
       position: relative;
       z-index: 999999;
     `;
-
-    // Create content container
+  
     const tickerContent = document.createElement('div');
     tickerContent.id = 'tickerContent';
     tickerContent.style.cssText = `
@@ -1279,8 +1151,7 @@
       will-change: transform;
       transform: translateX(0);
     `;
-
-    // Calculate number of copies needed (initial)
+  
     const tempSpan = document.createElement('span');
     tempSpan.textContent = settings.announcementText;
     tempSpan.style.cssText = `
@@ -1292,11 +1163,10 @@
     document.body.appendChild(tempSpan);
     const textWidth = tempSpan.offsetWidth;
     document.body.removeChild(tempSpan);
-
-    // Create enough copies to fill twice the viewport width
+  
     const viewportWidth = window.innerWidth;
     const copiesNeeded = Math.ceil((viewportWidth * 3) / textWidth) + 2;
-
+  
     for (let i = 0; i < copiesNeeded; i++) {
       const textSpan = document.createElement('span');
       textSpan.textContent = settings.announcementText;
@@ -1306,18 +1176,16 @@
       `;
       tickerContent.appendChild(textSpan);
     }
-
-    // Add content to bar
+  
     bar.appendChild(tickerContent);
-
-    // NEW CODE: Try multiple possible header locations
+  
     const possibleSelectors = [
-      '.header',                 // Soft theme
-      'header[role="banner"]',   // Perfect theme
-      'nav.navbar',             // Alternative Perfect theme selector
-      '#navbar'                 // Another possible Perfect theme selector
+      '.header',
+      'header[role="banner"]',
+      'nav.navbar',
+      '#navbar'
   ];
-
+  
   let targetLocation = null;
   for (const selector of possibleSelectors) {
       const element = document.querySelector(selector);
@@ -1326,129 +1194,106 @@
           break;
       }
   }
-
-  // Insert the bar in the appropriate location
+  
   if (targetLocation) {
       targetLocation.insertBefore(bar, targetLocation.firstChild);
   } else {
-      // Fallback: Insert at the start of the body
       document.body.insertBefore(bar, document.body.firstChild);
   }
-
-    // Animation variables
+  
     let currentPosition = 0;
     let lastTimestamp = 0;
     let animationId;
     let isPaused = false;
-
-    // Convert speed setting to pixels per second
-    // Adjust these values to slow down the animation
-    const minSpeed = 10; // Minimum speed in pixels per second
-    const maxSpeed = 100; // Maximum speed in pixels per second
+  
+    const minSpeed = 10;
+    const maxSpeed = 100;
     const speedRange = maxSpeed - minSpeed;
-    const speedPercentage = (60 - settings.announcementSpeed) / 55; // Convert 5-60 range to 0-1
+    const speedPercentage = (60 - settings.announcementSpeed) / 55;
     const pixelsPerSecond = minSpeed + (speedRange * speedPercentage);
-
+  
     function updateAnimation(timestamp) {
       if (!lastTimestamp) lastTimestamp = timestamp;
       
       if (!isPaused) {
-        // Calculate time difference in seconds
         const deltaTime = (timestamp - lastTimestamp) / 1000;
         
-        // Update position using precise calculations
         const movement = pixelsPerSecond * deltaTime;
         currentPosition += movement;
-
-        // Reset position when necessary
+  
         if (currentPosition >= textWidth) {
-          // Adjust position to maintain smoothness
           currentPosition = currentPosition % textWidth;
           
-          // Move first item to end for smooth transition
           const firstItem = tickerContent.children[0];
           tickerContent.appendChild(firstItem.cloneNode(true));
           tickerContent.removeChild(firstItem);
         }
-
-        // Use transform3d for smoother animation
+  
         tickerContent.style.transform = `translate3d(${currentPosition}px, 0, 0)`;
       }
-
+  
       lastTimestamp = timestamp;
       animationId = requestAnimationFrame(updateAnimation);
     }
-
-    // Start animation with a slight delay to ensure proper initialization
+  
     setTimeout(() => {
       lastTimestamp = 0;
       animationId = requestAnimationFrame(updateAnimation);
     }, 100);
-
-    // Add hover pause functionality
+  
     bar.addEventListener('mouseenter', () => {
       isPaused = true;
     });
-
+  
     bar.addEventListener('mouseleave', () => {
       isPaused = false;
-      lastTimestamp = 0; // Reset timestamp for smooth resume
+      lastTimestamp = 0;
     });
-
-    // Handle cleanup
+  
     function cleanup() {
       if (animationId) {
         cancelAnimationFrame(animationId);
       }
     }
-
-    // Handle visibility change
+  
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         isPaused = true;
       } else {
         isPaused = false;
-        lastTimestamp = 0; // Reset timestamp for smooth resume
+        lastTimestamp = 0;
       }
     });
-
-    // Handle window resize
+  
     window.addEventListener('resize', () => {
       const newViewportWidth = window.innerWidth;
       const newCopiesNeeded = Math.ceil((newViewportWidth * 3) / textWidth) + 2;
-
-      // Adjust number of copies if needed
+  
       while (tickerContent.children.length < newCopiesNeeded) {
         const clone = tickerContent.children[0].cloneNode(true);
         tickerContent.appendChild(clone);
       }
-
-      // Reset position for smooth transition after resize
+  
       currentPosition = 0;
       lastTimestamp = 0;
       tickerContent.style.transform = `translate3d(${currentPosition}px, 0, 0)`;
     });
-
-    // Cleanup on page unload
+  
     window.addEventListener('unload', cleanup);
   }
-
-  // Initialize announcement bar
+  
   async function initializeAnnouncementBar() {
     const settings = await fetchAnnouncementSettings();
     if (settings && settings.announcementEnabled) {
       createAnnouncementBar({
         ...settings,
-        // Keep original speed value (5-60)
         announcementSpeed: Math.max(5, Math.min(60, settings.announcementSpeed))
       });
     }
   }
-
-  // Run initialization
+  
   initializeAnnouncementBar();
-
-  // Optional: Re-initialize on dynamic content changes
+  
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'childList' && !document.getElementById('hmstudio-announcement-bar')) {
@@ -1457,7 +1302,7 @@
       }
     }
   });
-
+  
   observer.observe(document.body, { childList: true, subtree: true });
   }
 
@@ -1478,7 +1323,6 @@ if (params.smartCart) {
     campaigns: (() => {
       const campaignsData = params.campaigns;
       if (!campaignsData) {
-        console.log('No smart cart campaigns data found');
         return [];
       }
 
@@ -1496,7 +1340,6 @@ if (params.smartCart) {
           }
         }));
       } catch (error) {
-        console.error('Error parsing smart cart campaigns data:', error);
         return [];
       }
     })(),
@@ -1524,7 +1367,7 @@ if (params.smartCart) {
         z-index: 999999;
         display: none;
         direction: ${getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};
-        height: ${isMobile() ? 'auto' : '100px'};  // Added this line
+        height: ${isMobile() ? 'auto' : '100px'};
       `;
 
       const wrapper = document.createElement('div');
@@ -1538,7 +1381,6 @@ if (params.smartCart) {
         flex-wrap: ${isMobile() ? 'wrap' : 'nowrap'};
       `;
 
-      // Quantity section container (for mobile layout)
       const quantityContainer = document.createElement('div');
       quantityContainer.style.cssText = `
         display: flex;
@@ -1550,7 +1392,6 @@ if (params.smartCart) {
         padding: ${isMobile() ? '8px 12px' : '4px'};
       `;
 
-      // Optional: Add quantity label
       const quantityLabel = document.createElement('span');
       quantityLabel.textContent = getCurrentLanguage() === 'ar' ? 'الكمية:' : 'Quantity:';
       quantityLabel.style.cssText = `
@@ -1627,7 +1468,6 @@ if (params.smartCart) {
         flex-shrink: 0;
       `;
     
-      // Add hover effects to buttons
       const addButtonHoverEffects = (button) => {
         button.addEventListener('mouseover', () => {
           button.style.background = '#f0f0f0';
@@ -1677,7 +1517,6 @@ if (params.smartCart) {
         updateQuantity(value);
       });
 
-      // Prevent scrolling when focusing input on mobile
       quantityInput.addEventListener('focus', (e) => {
         e.preventDefault();
         if (isMobile()) {
@@ -1697,7 +1536,7 @@ if (params.smartCart) {
         cursor: pointer;
         white-space: nowrap;
         transition: opacity 0.3s ease;
-        flex: 1;  // Make it stretch in both mobile and desktop
+        flex: 1;
         font-size: ${isMobile() ? '16px' : '16px'};
       `;
 
@@ -1719,21 +1558,18 @@ if (params.smartCart) {
         }
       });
 
-      // Assemble the quantity section
       quantityWrapper.appendChild(decreaseBtn);
       quantityWrapper.appendChild(quantityInput);
       quantityWrapper.appendChild(increaseBtn);
       quantityContainer.appendChild(quantityLabel);
       quantityContainer.appendChild(quantityWrapper);
     
-      // Assemble the final structure
       wrapper.appendChild(quantityContainer);
       wrapper.appendChild(addButton);
       container.appendChild(wrapper);
       document.body.appendChild(container);
     
       this.stickyCartElement = container;
-      // Add scroll event listener
       window.addEventListener('scroll', () => {
         const originalButton = document.querySelector('.btn.btn-add-to-cart');
         const originalSelect = document.querySelector('select#product-quantity');
@@ -1776,9 +1612,8 @@ if (params.smartCart) {
           return false;
         }
     
-        // Consider status and statusUpdatedAt when checking campaign validity
         const isValidStatus = campaign.status === 'active';
-        const hasValidStatus = campaign.statusUpdatedAt ? true : false;  // Consider campaigns with status timestamp
+        const hasValidStatus = campaign.statusUpdatedAt ? true : false;
     
         return hasProduct && 
                (now <= endTime || campaign.timerSettings.autoRestart) && 
@@ -1844,17 +1679,14 @@ if (params.smartCart) {
       container.appendChild(textElement);
       container.appendChild(timeElement);
     
-      // Calculate initial end time
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
     
-      // Calculate start time and original duration
       let startTime = campaign.startTime?._seconds ? 
         new Date(campaign.startTime._seconds * 1000) :
         new Date(campaign.startTime.seconds * 1000);
     
-      // If no valid start time exists, use campaign creation time or current time
       if (!startTime || isNaN(startTime.getTime())) {
         startTime = campaign.createdAt?._seconds ? 
           new Date(campaign.createdAt._seconds * 1000) :
@@ -1863,10 +1695,8 @@ if (params.smartCart) {
             new Date();
       }
     
-      // Calculate original duration in milliseconds
       const originalDuration = endTime - startTime;
     
-      // Set up timer with all needed information
       this.activeTimers.set(productId, {
         element: timeElement,
         endTime: endTime,
@@ -1915,17 +1745,14 @@ if (params.smartCart) {
     
       container.appendChild(timeElement);
     
-      // Calculate initial end time
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
     
-      // Calculate start time
       let startTime = campaign.startTime?._seconds ? 
         new Date(campaign.startTime._seconds * 1000) :
         new Date(campaign.startTime.seconds * 1000);
     
-      // If no valid start time exists, use campaign creation time or current time
       if (!startTime || isNaN(startTime.getTime())) {
         startTime = campaign.createdAt?._seconds ? 
           new Date(campaign.createdAt._seconds * 1000) :
@@ -1934,10 +1761,8 @@ if (params.smartCart) {
             new Date();
       }
     
-      // Calculate original duration in milliseconds
       const originalDuration = endTime - startTime;
     
-      // Set up timer with all needed information
       this.activeTimers.set(`card-${productId}`, {
         element: timeElement,
         endTime: endTime,
@@ -1950,7 +1775,6 @@ if (params.smartCart) {
       return container;
     },
 
-    // Add keyframes for flashing animation
     addFlashingStyleIfNeeded() {
       if (!document.getElementById('countdown-flash-animation')) {
         const style = document.createElement('style');
@@ -1977,15 +1801,12 @@ if (params.smartCart) {
   
         let timeDiff = timer.endTime - now;
   
-        // Handle auto-restart with proper original duration tracking
         if (timeDiff <= 0 && timer.campaign?.timerSettings?.autoRestart && timer.originalDuration) {
-          // Calculate new end time based on how many cycles have passed
           const cyclesPassed = Math.floor(Math.abs(timeDiff) / timer.originalDuration) + 1;
           const newEndTime = new Date(timer.endTime.getTime() + (cyclesPassed * timer.originalDuration));
           timer.endTime = newEndTime;
           timeDiff = newEndTime - now;
           timer.isFlashing = false;
-          console.log(`Timer restarted for ${id}, new end time:`, newEndTime);
         } else if (timeDiff <= 0 && !timer.campaign?.timerSettings?.autoRestart) {
           const elementId = id.startsWith('card-') ? 
             `hmstudio-card-countdown-${id.replace('card-', '')}` :
@@ -1996,10 +1817,8 @@ if (params.smartCart) {
           return;
         }
 
-        // Check if we're in the last 5 minutes
-        const isLastFiveMinutes = timeDiff <= 300000; // 5 minutes in milliseconds
+        const isLastFiveMinutes = timeDiff <= 300000;
 
-      // Update flashing state if needed
       if (isLastFiveMinutes && !timer.isFlashing) {
         timer.isFlashing = true;
       } else if (!isLastFiveMinutes && timer.isFlashing) {
@@ -2011,7 +1830,6 @@ if (params.smartCart) {
       const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
-      // Update display
       let html = `
         <div class="countdown-units-wrapper ${timer.isFlashing ? 'countdown-flash' : ''}" style="
           display: flex;
@@ -2067,8 +1885,6 @@ if (params.smartCart) {
   },
 
     setupProductCardTimers() {
-      console.log('Setting up product card timers...');
-      
       const productCardSelectors = [
         '.product-item',
         '.card.card-product'
@@ -2083,12 +1899,9 @@ if (params.smartCart) {
         }
       }
     
-      // First cleanup any duplicate timers
       allProductCards.forEach(card => {
-        // Get all timers in this card
         const timers = card.querySelectorAll('[id^="hmstudio-card-countdown-"]');
         if (timers.length > 1) {
-          // Keep only the first timer, remove others
           for (let i = 1; i < timers.length; i++) {
             timers[i].remove();
           }
@@ -2116,7 +1929,6 @@ if (params.smartCart) {
     
         if (!productId) return;
     
-        // Check if this product already has a timer
         const existingTimer = document.getElementById(`hmstudio-card-countdown-${productId}`);
         if (existingTimer) return;
         
@@ -2125,20 +1937,16 @@ if (params.smartCart) {
     
         const timer = this.createProductCardTimer(activeCampaign, productId);
     
-        // Perfect theme
         const cardBody = card.querySelector('.card-body');
         if (cardBody) {
-          // Check one more time before inserting
           if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
             cardBody.parentNode.insertBefore(timer, cardBody);
           }
           return;
         }
         
-        // Soft theme
         const productTitle = card.querySelector('.product-title');
         if (productTitle) {
-          // Check one more time before inserting
           if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
             productTitle.parentNode.insertBefore(timer, productTitle);
           }
@@ -2185,14 +1993,11 @@ if (params.smartCart) {
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
     
-      // First try to find the card element that comes before the list-group
       const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
       if (cardElement) {
-        // Insert the timer right after the card element
         cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
       } else {
-        // Fallback to other insertion points if the card element is not found
         const insertionPoints = [
           {
             container: '.js-product-price',
@@ -2251,8 +2056,6 @@ if (params.smartCart) {
     },
 
     initialize() {
-      console.log('Initializing Smart Cart');
-      
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
@@ -2285,7 +2088,6 @@ if (params.smartCart) {
         }
       }
     
-      // Add debounced observer
       let timeout;
   const observer = new MutationObserver((mutations) => {
     if (timeout) {
@@ -2302,14 +2104,11 @@ if (params.smartCart) {
           this.setupProductTimer();
         }
       } else {
-        // Do a cleanup before setting up new timers
         const currentCards = document.querySelectorAll('.product-item, .card.card-product');
         if (currentCards.length > 0) {
-          // Cleanup any duplicate timers first
           currentCards.forEach(card => {
             const timers = card.querySelectorAll('[id^="hmstudio-card-countdown-"]');
             if (timers.length > 1) {
-              // Keep only the first timer, remove others
               for (let i = 1; i < timers.length; i++) {
                 timers[i].remove();
               }
@@ -2319,7 +2118,7 @@ if (params.smartCart) {
           this.setupProductCardTimers();
         }
       }
-    }, 100); // Keep your original timeout value
+    }, 100);
   });
 
   observer.observe(document.body, { 
@@ -2327,7 +2126,6 @@ if (params.smartCart) {
     subtree: true 
   });
 
-      // Start timer updates if needed
       if (this.activeTimers.size > 0) {
         this.startTimerUpdates();
       }
@@ -2338,10 +2136,9 @@ if (params.smartCart) {
     SmartCart.stopTimerUpdates();
   });
 
-  // Handle mobile viewport changes
   window.addEventListener('resize', () => {
     if (SmartCart.stickyCartElement) {
-      SmartCart.createStickyCart(); // Recreate sticky cart with updated mobile styles
+      SmartCart.createStickyCart();
     }
   });
 
@@ -2360,7 +2157,6 @@ if (params.slidingCart) {
     return document.documentElement.lang || "ar"
   }
 
-// Add keyframe animation for spinner
 const styleSheet = document.createElement("style")
 styleSheet.textContent = `
   @keyframes spin {
@@ -2369,7 +2165,6 @@ styleSheet.textContent = `
 `
 document.head.appendChild(styleSheet)
 
-// Coupon feedback messages
 const couponMessages = {
   invalidCoupon: {
     ar: "القسيمة غير صالحة",
@@ -2410,10 +2205,8 @@ const couponMessages = {
           throw new Error(`Failed to fetch settings: ${response.statusText}`)
         }
         const data = await response.json()
-        console.log("Fetched sliding cart settings:", data)
         return data
       } catch (error) {
-        console.error("Error fetching sliding cart settings:", error)
         return null
       }
     },
@@ -2422,7 +2215,6 @@ const couponMessages = {
       const currentLang = getCurrentLanguage()
       const isRTL = currentLang === "ar"
 
-      // Create cart container
       const container = document.createElement("div")
       container.id = "hmstudio-sliding-cart"
       container.className = "hmstudio-cart-container"
@@ -2441,7 +2233,6 @@ const couponMessages = {
         direction: ${isRTL ? "rtl" : "ltr"};
       `
 
-      // Create header
       const header = document.createElement("div")
       header.className = "hmstudio-cart-header"
       header.style.cssText = `
@@ -2480,7 +2271,6 @@ const couponMessages = {
       header.appendChild(title)
       header.appendChild(closeButton)
 
-      // Create content area
       const content = document.createElement("div")
       content.className = "hmstudio-cart-content"
       content.style.cssText = `
@@ -2489,7 +2279,6 @@ const couponMessages = {
         padding: 20px;
       `
 
-      // Create footer
       const footer = document.createElement("div")
       footer.className = "hmstudio-cart-footer"
       footer.style.cssText = `
@@ -2497,12 +2286,10 @@ const couponMessages = {
         border-top: 1px solid rgba(0, 0, 0, 0.1);
       `
 
-      // Assemble cart structure
       container.appendChild(header)
       container.appendChild(content)
       container.appendChild(footer)
 
-      // Create backdrop
       const backdrop = document.createElement("div")
       backdrop.id = "hmstudio-sliding-cart-backdrop"
       backdrop.className = "hmstudio-cart-backdrop"
@@ -2521,7 +2308,6 @@ const couponMessages = {
 
       backdrop.addEventListener("click", () => this.closeCart())
 
-      // Add to DOM
       document.body.appendChild(backdrop)
       document.body.appendChild(container)
 
@@ -2542,7 +2328,6 @@ const couponMessages = {
         }
         throw new Error("Failed to fetch cart data")
       } catch (error) {
-        console.error("Error fetching cart:", error)
         return null
       }
     },
@@ -2552,7 +2337,6 @@ const couponMessages = {
         await zid.store.cart.updateProduct(cartProductId, newQuantity, productId)
         await this.updateCartDisplay()
       } catch (error) {
-        console.error("Error updating quantity:", error)
       }
     },
 
@@ -2561,13 +2345,11 @@ const couponMessages = {
         await zid.store.cart.removeProduct(cartProductId, productId)
         await this.updateCartDisplay()
       } catch (error) {
-        console.error("Error removing item:", error)
       }
     },
 
     createCartItem: function (item, currentLang) {
       const isArabic = currentLang === "ar"
-      //const currencySymbol = ' ر.س ';
 
       const itemElement = document.createElement("div")
       itemElement.className = "hmstudio-cart-item"
@@ -2579,7 +2361,6 @@ const couponMessages = {
         direction: ${isArabic ? "rtl" : "ltr"};
       `
 
-      // Product image
       const imageElement = document.createElement("img")
       imageElement.className = "hmstudio-cart-item-image"
       imageElement.src = item.images?.[0]?.origin || item.images?.[0]?.thumbnail || "/path/to/default-image.jpg"
@@ -2591,7 +2372,6 @@ const couponMessages = {
         border-radius: 4px;
       `
 
-      // Product details container
       const details = document.createElement("div")
       details.className = "hmstudio-cart-item-details"
       details.style.cssText = `
@@ -2601,7 +2381,6 @@ const couponMessages = {
         gap: 5px;
       `
 
-      // Product name
       const name = document.createElement("h3")
       name.className = "hmstudio-cart-item-name"
       name.textContent = item.name || ""
@@ -2611,7 +2390,6 @@ const couponMessages = {
         font-weight: 500;
       `
 
-      // Price container
       const priceContainer = document.createElement("div")
       priceContainer.className = "hmstudio-cart-item-price-container"
       priceContainer.style.cssText = `
@@ -2622,7 +2400,6 @@ const couponMessages = {
       `
 
       if (item.gross_sale_price && item.gross_price !== item.gross_sale_price) {
-        // Sale price (current price)
         const salePrice = document.createElement("div")
         salePrice.className = "hmstudio-cart-item-sale-price"
         const formattedSalePrice = isArabic
@@ -2634,7 +2411,6 @@ const couponMessages = {
           color: var(--theme-primary, #00b286);
         `
 
-        // Original price
         const originalPrice = document.createElement("div")
         originalPrice.className = "hmstudio-cart-item-original-price"
         const formattedOriginalPrice = isArabic
@@ -2656,7 +2432,6 @@ const couponMessages = {
           priceContainer.appendChild(originalPrice)
         }
       } else {
-        // Regular price only
         const price = document.createElement("div")
         price.className = "hmstudio-cart-item-price"
         const priceValue = item.gross_price || item.price
@@ -2671,7 +2446,6 @@ const couponMessages = {
         priceContainer.appendChild(price)
       }
 
-      // Quantity controls
       const quantityControls = document.createElement("div")
       quantityControls.className = "hmstudio-cart-item-quantity"
       quantityControls.style.cssText = `
@@ -2726,7 +2500,6 @@ const couponMessages = {
         this.updateItemQuantity(item.id, item.product_id, item.quantity + 1)
       })
 
-      // Remove button
       const removeBtn = document.createElement("button")
       removeBtn.className = "hmstudio-cart-item-remove"
       removeBtn.innerHTML = "🗑️"
@@ -2750,17 +2523,14 @@ const couponMessages = {
         this.removeItem(item.id, item.product_id)
       })
 
-      // Assemble quantity controls
       quantityControls.appendChild(decreaseBtn)
       quantityControls.appendChild(quantity)
       quantityControls.appendChild(increaseBtn)
 
-      // Assemble details
       details.appendChild(name)
       details.appendChild(priceContainer)
       details.appendChild(quantityControls)
 
-      // Assemble item
       itemElement.appendChild(imageElement)
       itemElement.appendChild(details)
       itemElement.appendChild(removeBtn)
@@ -2769,7 +2539,6 @@ const couponMessages = {
     },
     createFooterContent: function (cartData, currentLang) {
       const isArabic = currentLang === "ar"
-      //const currencySymbol = ' ر.س ';
       const currencySymbol = currentLang === "en" ? "SAR" : "ر.س"
       
 
@@ -2783,16 +2552,11 @@ const couponMessages = {
       `
 
       function getErrorType(response) {
-        // Log the full response for debugging
-        console.log("Coupon response:", response)
-
-        // Check the error message from the response data
         const errorMessage = (response.data?.message || "").toLowerCase()
 
-        // Check for specific error conditions with their Arabic messages
         if (
-          errorMessage.includes("فترة إستخدام الكوبون لم تبدأ بعد أو أنها انتهت") || // New expired message
-          errorMessage.includes("لم تبدأ بعد أو أنها انتهت") || // Partial match
+          errorMessage.includes("فترة إستخدام الكوبون لم تبدأ بعد أو أنها انتهت") ||
+          errorMessage.includes("لم تبدأ بعد أو أنها انتهت") ||
           errorMessage.includes("منتهية الصلاحية") ||
           errorMessage.includes("expired")
         ) {
@@ -2825,11 +2589,9 @@ const couponMessages = {
           return "alreadyUsed"
         }
 
-        // If none of the above conditions match
         return "invalidCoupon"
       }
 
-      // Coupon Section
       const couponSection = document.createElement("div")
       couponSection.className = "hmstudio-cart-coupon-section"
       couponSection.style.cssText = `
@@ -2844,12 +2606,10 @@ const couponMessages = {
         gap: 10px;
       `
 
-      // Prevent form submission
       couponForm.addEventListener("submit", (e) => {
         e.preventDefault()
       })
 
-      // Add message container for coupon feedback
       const couponMessage = document.createElement("div")
       couponMessage.className = "hmstudio-cart-coupon-message"
       couponMessage.style.cssText = `
@@ -2880,7 +2640,6 @@ const couponMessages = {
         transition: border-color 0.3s;
       `
 
-      // Add event listener for Enter key
       couponInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
           e.preventDefault()
@@ -2923,7 +2682,6 @@ const couponMessages = {
         }
       }
 
-      // Apply button with spinner
       const applyButton = document.createElement("button")
       applyButton.className = "hmstudio-cart-coupon-apply"
       applyButton.type = "button"
@@ -2974,12 +2732,10 @@ const couponMessages = {
       applyButton.appendChild(spinner)
       applyButton.appendChild(buttonText)
 
-      // Handle coupon application
       applyButton.addEventListener("click", async () => {
         const couponCode = couponInput.value.trim()
         if (!couponCode) return
 
-        // Show spinner, disable input and button
         spinner.style.display = "block"
         couponInput.disabled = true
         applyButton.disabled = true
@@ -2987,7 +2743,6 @@ const couponMessages = {
 
         try {
           const response = await zid.store.cart.redeemCoupon(couponCode)
-          console.log("Coupon application response:", response)
 
           if (response.status === "success") {
             showCouponMessage("success", isArabic)
@@ -2997,7 +2752,6 @@ const couponMessages = {
             showCouponMessage(errorType, isArabic)
           }
         } catch (error) {
-          console.error("Coupon error:", error)
           const errorResponse = {
             data: { message: error.message || "" },
             status: "error",
@@ -3005,7 +2759,6 @@ const couponMessages = {
           const errorType = getErrorType(errorResponse)
           showCouponMessage(errorType, isArabic)
         } finally {
-          // Hide spinner, enable input and button
           spinner.style.display = "none"
           couponInput.disabled = false
           applyButton.disabled = false
@@ -3018,7 +2771,6 @@ const couponMessages = {
       couponForm.appendChild(inputContainer)
       couponForm.appendChild(couponMessage)
       couponSection.appendChild(couponForm)
-      // Applied Coupon Display (if exists)
       if (cartData.coupon) {
         const appliedCouponContainer = document.createElement("div")
         appliedCouponContainer.className = "hmstudio-cart-applied-coupon"
@@ -3084,7 +2836,6 @@ const couponMessages = {
             await zid.store.cart.removeCoupon()
             await this.updateCartDisplay()
           } catch (error) {
-            console.error("Error removing coupon:", error)
           }
         })
 
@@ -3095,13 +2846,11 @@ const couponMessages = {
         couponForm.appendChild(appliedCouponContainer)
       }
 
-      // Calculate subtotal using original prices
       const originalSubtotal = cartData.products.reduce((acc, product) => {
         const originalPrice = product.gross_price || product.price
         return acc + originalPrice * product.quantity
       }, 0)
 
-      // Subtotal
       const subtotal = document.createElement("div")
       subtotal.className = "hmstudio-cart-subtotal"
       subtotal.style.cssText = `
@@ -3123,11 +2872,9 @@ const couponMessages = {
 
       footer.appendChild(subtotal)
 
-      // Calculate and display total discount (both from product discounts and coupon)
       const calculateTotalDiscount = () => {
         let totalDiscount = 0
 
-        // Calculate product discounts
         cartData.products.forEach((product) => {
           if (product.gross_sale_price && product.gross_sale_price !== product.gross_price) {
             const regularPrice = product.gross_price || 0
@@ -3136,7 +2883,6 @@ const couponMessages = {
           }
         })
 
-        // Add coupon discount if exists
         if (cartData.coupon && cartData.coupon.discount_amount) {
           totalDiscount += Number.parseFloat(cartData.coupon.discount_amount)
         }
@@ -3144,7 +2890,6 @@ const couponMessages = {
         return totalDiscount
       }
 
-      // Display discount if there's any (either from products or coupon)
       const totalDiscount = calculateTotalDiscount()
       if (totalDiscount > 0 || (cartData.coupon && cartData.coupon.discount_amount > 0)) {
         const discountInfo = document.createElement("div")
@@ -3169,7 +2914,6 @@ const couponMessages = {
         footer.appendChild(discountInfo)
       }
 
-      // Tax information
       if (cartData.tax_percentage > 0) {
         const taxInfo = document.createElement("div")
         taxInfo.className = "hmstudio-cart-tax-info"
@@ -3181,7 +2925,6 @@ const couponMessages = {
           padding: 5px 0;
         `
 
-        // Calculate tax amount
         const taxAmount = (cartData.products_subtotal * (cartData.tax_percentage / 100)).toFixed(2)
         const formattedTax = isArabic
           ? `${taxAmount} ${currencySymbol} (${cartData.tax_percentage}٪)`
@@ -3195,7 +2938,6 @@ const couponMessages = {
         footer.appendChild(taxInfo)
       }
 
-      // Total
       const total = document.createElement("div")
       total.className = "hmstudio-cart-total"
       total.style.cssText = `
@@ -3219,7 +2961,6 @@ const couponMessages = {
 
       footer.appendChild(total)
 
-      // Checkout button
       const checkoutBtn = document.createElement("button")
       checkoutBtn.className = "hmstudio-cart-checkout-button"
       checkoutBtn.textContent = isArabic ? "إتمام الطلب" : "Checkout"
@@ -3245,15 +2986,12 @@ const couponMessages = {
       })
 
       checkoutBtn.addEventListener("click", () => {
-        // First try to find the direct checkout link (for authenticated users)
         const checkoutLink = document.querySelector('a[href="/checkout/choose-address-and-shipping"]')
 
         if (!checkoutLink || checkoutLink.style.display === "none") {
-          // User is not authenticated, create a custom URL that redirects directly to shipping
           const redirectUrl = encodeURIComponent("/checkout/choose-address-and-shipping")
           window.location.href = `/auth/login?redirect_to=${redirectUrl}`
         } else {
-          // User is authenticated, use the direct checkout link
           checkoutLink.click()
         }
       })
@@ -3271,7 +3009,6 @@ const couponMessages = {
       const currentLang = getCurrentLanguage()
       const { content, footer } = this.cartElement
 
-      // Update content
       content.innerHTML = ""
 
       if (!cartData.products || cartData.products.length === 0) {
@@ -3285,14 +3022,12 @@ const couponMessages = {
         emptyMessage.textContent = currentLang === "ar" ? "سلة التسوق فارغة" : "Your cart is empty"
         content.appendChild(emptyMessage)
 
-        // Hide footer when cart is empty
         footer.style.display = "none"
       } else {
         cartData.products.forEach((item) => {
           content.appendChild(this.createCartItem(item, currentLang))
         })
 
-        // Show and update footer when cart has items
         footer.style.display = "block"
         footer.innerHTML = ""
         footer.appendChild(this.createFooterContent(cartData, currentLang))
@@ -3327,11 +3062,7 @@ const couponMessages = {
     handleCartUpdates: function () {
       const self = this
 
-      // Check if zid object exists
       if (typeof zid === "undefined" || !zid.store || !zid.store.cart) {
-        console.error("Zid store object not found. Waiting for it to be available...")
-
-        // Wait for zid object to be available
         const checkZid = setInterval(() => {
           if (typeof zid !== "undefined" && zid.store && zid.store.cart) {
             clearInterval(checkZid)
@@ -3357,7 +3088,6 @@ const couponMessages = {
             }
             return result
           } catch (error) {
-            console.error("Error in cart add:", error)
             throw error
           }
         }
@@ -3366,7 +3096,6 @@ const couponMessages = {
 
     setupCartButton: function () {
       
-      // Add event listener to the parent header-cart div
       const headerCart = document.querySelector(".header-cart")
       if (headerCart) {
         headerCart.addEventListener("click", (e) => {
@@ -3386,26 +3115,18 @@ const couponMessages = {
     },
 
     initialize: async function () {
-      console.log("Initializing Sliding Cart")
-
-      // Fetch settings
       const settings = await this.fetchSettings()
       if (!settings?.enabled) {
-        console.log("Sliding Cart is disabled")
         return
       }
 
-      // Create cart structure
       this.createCartStructure()
 
-      // Wait for document and zid to be ready
       const waitForZid = () => {
         if (typeof zid !== "undefined" && zid.store && zid.store.cart) {
-          // Setup cart functionality
           this.handleCartUpdates()
           this.setupCartButton()
 
-          // Setup mutation observer for dynamically added cart buttons
           const self = this
           const observer = new MutationObserver(() => {
             self.setupCartButton()
@@ -3416,9 +3137,7 @@ const couponMessages = {
             subtree: true,
           })
 
-          console.log("Sliding Cart initialized successfully")
         } else {
-          // If zid is not ready, wait and try again
           setTimeout(waitForZid, 100)
         }
       }
@@ -3427,7 +3146,6 @@ const couponMessages = {
     },
   }
 
-  // Initialize when DOM is ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       SlidingCart.initialize.call(SlidingCart)
@@ -3441,13 +3159,11 @@ const couponMessages = {
   if (params.upsell) {
     console.log('Initializing Upsell feature');
     
-  // Add this style block first
   const styleTag = document.createElement('style');
   styleTag.textContent = `
   @font-face {font-family: "Teshrin AR+LT Bold"; src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot"); 
-src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.woff") format("woff"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.svg#Teshrin AR+LT Bold") format("svg"); 
-}
-    /* Base modal styles */
+  src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.woff") format("woff"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.svg#Teshrin AR+LT Bold") format("svg"); 
+  }
     .hmstudio-upsell-modal {
       position: fixed;
       top: 0;
@@ -3475,17 +3191,16 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       transition: transform 0.3s ease;
     }
   
-    /* Responsive sizing based on product count */
     .hmstudio-upsell-content:has(.hmstudio-upsell-products > *:only-child) {
-      max-width: 620px; /* For single product */
+      max-width: 620px;
     }
-
+  
     .hmstudio-upsell-content:has(.hmstudio-upsell-products > *:first-child:nth-last-child(2)) {
-      max-width: 750px; /* For two products */
+      max-width: 750px;
     }
-
+  
     .hmstudio-upsell-content:has(.hmstudio-upsell-products > *:first-child:nth-last-child(3)) {
-      max-width: 1000px; /* For three products */
+      max-width: 1000px;
     }
   
     .hmstudio-upsell-header {
@@ -3530,7 +3245,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       margin: 0 auto;
     }
   
-    /* Product Card Styles */
     .hmstudio-upsell-product-card {
       border: 1px solid #eee;
       box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2) !important;
@@ -3540,7 +3254,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
   
-    /* Product Form Styles */
     .hmstudio-upsell-product-form {
       width: 100%;
       display: flex;
@@ -3585,7 +3298,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       margin-bottom: 5px;
     }
   
-    /* Variants Styles */
     .hmstudio-upsell-variants {
       display: flex;
       flex-direction: column;
@@ -3609,7 +3321,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       margin-bottom: 4px;
     }
   
-    /* Product Controls Styles */
     .hmstudio-upsell-product-controls {
       display: flex;
       flex-direction: column;
@@ -3659,7 +3370,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       margin: 0;
     }
   
-    /* Add to Cart Button */
     .addToCartBtn {
       width: 100%;
       padding: 8px 15px;
@@ -3676,7 +3386,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       opacity: 0.9;
     }
   
-    /* Mobile Styles */
     @media (max-width: 768px) {
       .hmstudio-upsell-content {
         padding: 20px;
@@ -3712,7 +3421,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       }
     }
   
-    /* Small Mobile Styles */
     @media (max-width: 480px) {
       .hmstudio-upsell-content {
         padding: 20px;
@@ -3807,17 +3515,15 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
     }
   `;
   
-  // Add the style tag to the document head
   document.head.appendChild(styleTag);
   
   const UpsellManager = {
     campaigns: (() => {
       const campaignsData = params.upsellCampaigns;
       if (!campaignsData) {
-        console.log('No upsell campaigns data found');
         return [];
       }
-
+  
       try {
         const decodedData = atob(campaignsData);
         const parsedData = JSON.parse(decodedData);
@@ -3833,7 +3539,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           }
         }));
       } catch (error) {
-        console.error('Error parsing upsell campaigns data:', error);
         return [];
       }
     })(),
@@ -3841,7 +3546,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
     activeTimeout: null,
   
       async fetchProductData(productId) {
-        console.log('Fetching product data for ID:', productId);
         const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
         
         try {
@@ -3850,10 +3554,8 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             throw new Error(`Failed to fetch product data: ${response.statusText}`);
           }
           const data = await response.json();
-          console.log('Received product data:', data);
           return data;
         } catch (error) {
-          console.error('Error fetching product data:', error);
           throw error;
         }
       },
@@ -3861,7 +3563,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       async createProductCard(product, currentCampaign) {
         try {
           const fullProductData = await this.fetchProductData(product.id);
-          console.log('Full product data:', fullProductData);
       
           if (!fullProductData) {
             throw new Error('Failed to fetch full product data');
@@ -3875,16 +3576,13 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             productName = currentLang === 'ar' ? productName.ar : productName.en;
           }
       
-          // Create main card container
           const card = document.createElement('div');
           card.className = 'hmstudio-upsell-product-card';
       
-          // Create form
           const form = document.createElement('form');
           form.id = `product-form-${fullProductData.id}`;
           form.className = 'hmstudio-upsell-product-form';
       
-          // Product ID input
           const productIdInput = document.createElement('input');
           productIdInput.type = 'hidden';
           productIdInput.id = 'product-id';
@@ -3892,7 +3590,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           productIdInput.value = fullProductData.selected_product?.id || fullProductData.id;
           form.appendChild(productIdInput);
       
-          // Image container
           const imageContainer = document.createElement('div');
           imageContainer.className = 'hmstudio-upsell-product-image-container';
       
@@ -3902,17 +3599,14 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           productImage.alt = productName;
           imageContainer.appendChild(productImage);
       
-          // Product content container
           const contentContainer = document.createElement('div');
           contentContainer.className = 'hmstudio-upsell-product-content';
       
-          // Title
           const title = document.createElement('h5');
           title.className = 'hmstudio-upsell-product-title';
           title.textContent = productName;
           contentContainer.appendChild(title);
       
-          // Price container
           const priceContainer = document.createElement('div');
           priceContainer.className = 'hmstudio-upsell-product-price';
       
@@ -3939,22 +3633,18 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           }
           contentContainer.appendChild(priceContainer);
       
-          // Add variants if product has options
           if (fullProductData.has_options && fullProductData.variants?.length > 0) {
             const variantsSection = this.createVariantsSection(fullProductData, currentLang);
             variantsSection.className = 'hmstudio-upsell-variants';
             contentContainer.appendChild(variantsSection);
           }
       
-          // Controls container
           const controlsContainer = document.createElement('div');
           controlsContainer.className = 'hmstudio-upsell-product-controls';
       
-          // Quantity selector
           const quantityContainer = document.createElement('div');
           quantityContainer.className = 'hmstudio-upsell-product-quantity';
       
-          // Quantity input
           const quantityInput = document.createElement('input');
           quantityInput.type = 'number';
           quantityInput.id = 'product-quantity';
@@ -3973,7 +3663,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           increaseBtn.type = 'button';
           increaseBtn.textContent = '+';
       
-          // Add quantity controls functionality
           decreaseBtn.addEventListener('click', () => {
             const currentValue = parseInt(quantityInput.value);
             if (currentValue > 1) {
@@ -3990,7 +3679,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             quantityInput.dispatchEvent(event);
           });
       
-          // Prevent manual typing
           quantityInput.addEventListener('keydown', (e) => {
             e.preventDefault();
           });
@@ -4000,18 +3688,15 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           quantityContainer.appendChild(increaseBtn);
           controlsContainer.appendChild(quantityContainer);
       
-          // Add to cart button
           const addToCartBtn = document.createElement('button');
           addToCartBtn.className = 'addToCartBtn';
           addToCartBtn.type = 'button';
           const originalText = currentLang === 'ar' ? 'إضافة للسلة' : 'Add to Cart';
           const loadingText = currentLang === 'ar' ? 'جاري الإضافة...' : 'Adding...';
           addToCartBtn.textContent = originalText;
-
-          // Add to cart functionality
+  
           addToCartBtn.addEventListener('click', () => {
             try {
-              // If product has variants, validate all variants are selected
               if (fullProductData.has_options && fullProductData.variants?.length > 0) {
                 const selects = form.querySelectorAll('.variant-select');
                 const missingSelections = [];
@@ -4022,7 +3707,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                     missingSelections.push(labelText);
                   }
                 });
-
+  
                 if (missingSelections.length > 0) {
                   const message = currentLang === 'ar' 
                     ? `الرجاء اختيار ${missingSelections.join(', ')}`
@@ -4031,8 +3716,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                   return;
                 }
               }
-
-              // Get quantity value
+  
               const quantityValue = parseInt(quantityInput.value);
               if (isNaN(quantityValue) || quantityValue < 1) {
                 const message = currentLang === 'ar' 
@@ -4041,24 +3725,20 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                 alert(message);
                 return;
               }
-
-              // Show loading state
+  
               addToCartBtn.textContent = loadingText;
               addToCartBtn.disabled = true;
               addToCartBtn.style.opacity = '0.7';
-
-              // Use Zid's cart function with formId
+  
               zid.store.cart.addProduct({ 
                 formId: form.id
               })
               .then(function(response) {
-                console.log('Add to cart response:', response);
                 if (response.status === 'success') {
                   if (typeof setCartBadge === 'function') {
                     setCartBadge(response.data.cart.products_count);
                   }
               
-                  // Add tracking
                   try {
                     const quantityInput = form.querySelector('#product-quantity');
                     const quantity = parseInt(quantityInput.value) || 1;
@@ -4075,7 +3755,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                       },
                       body: JSON.stringify({
                         storeId,
-                        eventType: 'cart_add',  // Add this line
+                        eventType: 'cart_add',
                         productId,
                         productName,
                         quantity,
@@ -4085,13 +3765,10 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                         timestamp: new Date().toISOString()
                       })
                     }).catch(error => {
-                      console.error('Failed to track upsell stats:', error);
                     });
                   } catch (error) {
-                    console.error('Error tracking upsell stats:', error);
                   }              
                 } else {
-                  console.error('Add to cart failed:', response);
                   const errorMessage = currentLang === 'ar' 
                     ? response.data.message || 'فشل إضافة المنتج إلى السلة'
                     : response.data.message || 'Failed to add product to cart';
@@ -4099,21 +3776,17 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                 }
               })
               .catch(function(error) {
-                console.error('Add to cart error:', error);
                 const errorMessage = currentLang === 'ar' 
                   ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
                   : 'Error occurred while adding product to cart';
                 alert(errorMessage);
               })
               .finally(function() {
-                // Reset button state
                 addToCartBtn.textContent = originalText;
                 addToCartBtn.disabled = false;
                 addToCartBtn.style.opacity = '1';
               });
             } catch (error) {
-              console.error('Critical error in add to cart:', error);
-              // Reset button state on error
               addToCartBtn.textContent = originalText;
               addToCartBtn.disabled = false;
               addToCartBtn.style.opacity = '1';
@@ -4123,14 +3796,12 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           controlsContainer.appendChild(addToCartBtn);
           contentContainer.appendChild(controlsContainer);
       
-          // Assemble the card
           form.appendChild(imageContainer);
           form.appendChild(contentContainer);
           card.appendChild(form);
       
           return card;
         } catch (error) {
-          console.error('Error creating product card:', error);
           return null;
         }
       },
@@ -4201,7 +3872,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
   
       updateSelectedVariant(product, form) {
         if (!form) {
-          console.error('Product form not found');
           return;
         }
       
@@ -4215,8 +3885,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           }
         });
       
-        console.log('Selected values:', selectedValues);
-      
         const selectedVariant = product.variants.find(variant => {
           return variant.attributes.every(attr => {
             const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
@@ -4224,13 +3892,10 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           });
         });
       
-        console.log('Found variant:', selectedVariant);
-      
         if (selectedVariant) {
           const productIdInput = form.querySelector('input[name="product_id"]');
           if (productIdInput) {
             productIdInput.value = selectedVariant.id;
-            console.log('Updated product ID to:', selectedVariant.id);
           }
   
           const priceElement = form.querySelector('.product-price');
@@ -4268,13 +3933,10 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       },
   
       async showUpsellModal(campaign, productCart) {
-        console.log('Showing upsell modal:', { campaign, productCart });
         
         if (!campaign?.upsellProducts?.length) {
-          console.warn('Invalid campaign data:', campaign);
           return;
         }
-        // Track popup open
     try {
       await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
         method: 'POST',
@@ -4290,7 +3952,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
         })
       });
     } catch (error) {
-      console.error('Failed to track upsell popup open:', error);
     }
       
         const currentLang = getCurrentLanguage();
@@ -4301,16 +3962,13 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             this.currentModal.remove();
           }
       
-          // Create main modal container
           const modal = document.createElement('div');
           modal.className = 'hmstudio-upsell-modal';
           if (isRTL) modal.style.direction = 'rtl';
       
-          // Create modal content container
           const content = document.createElement('div');
           content.className = 'hmstudio-upsell-content';
       
-          // Create close button
           const closeButton = document.createElement('button');
           closeButton.innerHTML = '✕';
           closeButton.style.cssText = `
@@ -4328,7 +3986,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           `;
           closeButton.addEventListener('click', () => this.closeModal());
       
-          // Create header section
           const header = document.createElement('div');
           header.className = 'hmstudio-upsell-header';
       
@@ -4347,15 +4004,12 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           header.appendChild(title);
           header.appendChild(subtitle);
       
-          // Create main content wrapper
           const mainWrapper = document.createElement('div');
           mainWrapper.className = 'hmstudio-upsell-main';
       
-          // Create sidebar section
           const sidebar = document.createElement('div');
           sidebar.className = 'hmstudio-upsell-sidebar';
       
-          // Create benefit text
           const benefitText = document.createElement('div');
           benefitText.style.cssText = `
             text-align: center;
@@ -4367,7 +4021,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           benefitText.textContent = currentLang === 'ar' ? 'استفد من العرض' : 'Benefit from the Offer';
           sidebar.appendChild(benefitText);
       
-          // Create Add All to Cart button
           const addAllButton = document.createElement('button');
           addAllButton.textContent = currentLang === 'ar' ? 'أضف الكل إلى السلة' : 'Add All to Cart';
           addAllButton.style.cssText = `
@@ -4394,7 +4047,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             const forms = content.querySelectorAll('form');
             const variantForms = Array.from(forms).filter(form => form.querySelector('.variant-select'));
             
-            // Check if all variants are selected
             const allVariantsSelected = variantForms.every(form => {
               const selects = form.querySelectorAll('.variant-select');
               return Array.from(selects).every(select => select.value !== '');
@@ -4408,7 +4060,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
               return;
             }
           
-            // Add loading state to button
             addAllButton.disabled = true;
             addAllButton.style.opacity = '0.7';
             const originalText = addAllButton.textContent;
@@ -4426,13 +4077,11 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           
                 zid.store.cart.addProduct({ formId: form.id })
                   .then((response) => {
-                    console.log('Add to cart response:', response);
                     if (response.status === 'success') {
                       if (typeof setCartBadge === 'function') {
                         setCartBadge(response.data.cart.products_count);
                       }
           
-                      // Track each product addition
                       fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
                         method: 'POST',
                         headers: {
@@ -4440,7 +4089,7 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                         },
                         body: JSON.stringify({
                           storeId,
-                          eventType: 'cart_add',  // Add this line
+                          eventType: 'cart_add',
                           productId,
                           productName,
                           quantity,
@@ -4449,12 +4098,11 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
                           campaignName: campaign.name,
                           timestamp: new Date().toISOString()
                         })
-                      }).catch(error => console.error('Tracking error:', error));
+                      }).catch(error => {});
                     }
                     resolve();
                   })
                   .catch((error) => {
-                    console.error('Add to cart error:', error);
                     resolve();
                   });
               });
@@ -4467,11 +4115,9 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       
           sidebar.appendChild(addAllButton);
       
-          // Create products grid
           const productsGrid = document.createElement('div');
           productsGrid.className = 'hmstudio-upsell-products';
       
-          // Create and append product cards
           const productCards = await Promise.all(
             campaign.upsellProducts.map(product => this.createProductCard(product, campaign))
           );
@@ -4481,7 +4127,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             productsGrid.appendChild(card);
           });
       
-          // Assemble the modal
           mainWrapper.appendChild(sidebar);
           mainWrapper.appendChild(productsGrid);
       
@@ -4490,7 +4135,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           content.appendChild(mainWrapper);
           modal.appendChild(content);
       
-          // Add modal to document and animate in
           document.body.appendChild(modal);
           requestAnimationFrame(() => {
             modal.style.opacity = '1';
@@ -4499,7 +4143,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       
           this.currentModal = modal;
       
-          // Add mobile swipe to close functionality
           let touchStartY = 0;
           content.addEventListener('touchstart', (e) => {
             touchStartY = e.touches[0].clientY;
@@ -4526,24 +4169,20 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
             }
           });
       
-          // Close modal when clicking outside
           modal.addEventListener('click', (e) => {
             if (e.target === modal) this.closeModal();
           });
       
-          // Handle escape key
           const handleEscape = (e) => {
             if (e.key === 'Escape') this.closeModal();
           };
           document.addEventListener('keydown', handleEscape);
       
-          // Clean up event listener when modal closes
           modal.addEventListener('remove', () => {
             document.removeEventListener('keydown', handleEscape);
           });
       
         } catch (error) {
-          console.error('Error creating upsell modal:', error);
         }
       },
   
@@ -4564,28 +4203,22 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       },
   
       initialize() {
-        console.log('Initializing Upsell');
         
-        // Make sure the global object is available
         if (!window.HMStudioUpsell) {
           window.HMStudioUpsell = {
             showUpsellModal: (...args) => {
-              console.log('showUpsellModal called with args:', args);
               return this.showUpsellModal.apply(this, args);
             },
             closeModal: () => this.closeModal()
           };
-          console.log('Global HMStudioUpsell object created');
         }
   
-        // Handle page visibility changes
         document.addEventListener('visibilitychange', () => {
           if (document.hidden && this.currentModal) {
             this.closeModal();
           }
         });
   
-        // Handle window resize
         window.addEventListener('resize', () => {
           if (this.currentModal) {
             const content = this.currentModal.querySelector('.hmstudio-upsell-content');
@@ -4595,7 +4228,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
           }
         });
   
-        // Clean up on page unload
         window.addEventListener('beforeunload', () => {
           if (this.currentModal) {
             this.closeModal();
@@ -4604,7 +4236,6 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       }
     };
   
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         UpsellManager.initialize();
@@ -4613,5 +4244,4 @@ src: url("//db.onlinewebfonts.com/t/56364258e3196484d875eec94e6edb93.eot?#iefix"
       UpsellManager.initialize();
     }
   }
-
 })();
