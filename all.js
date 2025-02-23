@@ -1,8 +1,8 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.2 | 7iydgh giss kulu logs daytban
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.3 | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
-  console.log('HMStudio All Features script initialized');
+  console.log('HMStudio initialized');
 
   // Common utility to get URL parameters
   function getScriptParams() {
@@ -1099,7 +1099,8 @@
   window.HMStudioQuickView = {
     openQuickView: openQuickView
   };
-  }
+
+}
 
   // =============== ANNOUNCEMENT BAR FEATURE ===============
   if (params.announcement) {
@@ -1340,6 +1341,7 @@ if (params.smartCart) {
           }
         }));
       } catch (error) {
+        console.error('Error parsing smart cart campaigns data:', error);
         return [];
       }
     })(),
@@ -1570,6 +1572,7 @@ if (params.smartCart) {
       document.body.appendChild(container);
     
       this.stickyCartElement = container;
+
       window.addEventListener('scroll', () => {
         const originalButton = document.querySelector('.btn.btn-add-to-cart');
         const originalSelect = document.querySelector('select#product-quantity');
@@ -1611,14 +1614,18 @@ if (params.smartCart) {
         if (!(endTime instanceof Date && !isNaN(endTime))) {
           return false;
         }
+        if (campaign.timerSettings.autoRestart && now > endTime) {
+          const startTime = campaign.startTime?._seconds ? 
+            new Date(campaign.startTime._seconds * 1000) :
+            new Date(campaign.startTime.seconds * 1000);
+          
+          const originalDuration = endTime - startTime;
+          const timeSinceStart = now - startTime;
+          const cycles = Math.floor(timeSinceStart / originalDuration);
+          endTime = new Date(startTime.getTime() + (cycles + 1) * originalDuration);
+        }
     
-        const isValidStatus = campaign.status === 'active';
-        const hasValidStatus = campaign.statusUpdatedAt ? true : false;
-    
-        return hasProduct && 
-               (now <= endTime || campaign.timerSettings.autoRestart) && 
-               isValidStatus &&
-               hasValidStatus;
+        return hasProduct && (now <= endTime || campaign.timerSettings.autoRestart) && campaign.status === 'active';
       });
     
       return activeCampaign;
@@ -1678,7 +1685,7 @@ if (params.smartCart) {
     
       container.appendChild(textElement);
       container.appendChild(timeElement);
-    
+  
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
@@ -1744,15 +1751,12 @@ if (params.smartCart) {
       `;
     
       container.appendChild(timeElement);
-    
       let endTime = campaign.endTime?._seconds ? 
         new Date(campaign.endTime._seconds * 1000) :
         new Date(campaign.endTime.seconds * 1000);
-    
       let startTime = campaign.startTime?._seconds ? 
         new Date(campaign.startTime._seconds * 1000) :
         new Date(campaign.startTime.seconds * 1000);
-    
       if (!startTime || isNaN(startTime.getTime())) {
         startTime = campaign.createdAt?._seconds ? 
           new Date(campaign.createdAt._seconds * 1000) :
@@ -1760,9 +1764,7 @@ if (params.smartCart) {
             new Date(campaign.createdAt.seconds * 1000) :
             new Date();
       }
-    
       const originalDuration = endTime - startTime;
-    
       this.activeTimers.set(`card-${productId}`, {
         element: timeElement,
         endTime: endTime,
@@ -1774,7 +1776,6 @@ if (params.smartCart) {
     
       return container;
     },
-
     addFlashingStyleIfNeeded() {
       if (!document.getElementById('countdown-flash-animation')) {
         const style = document.createElement('style');
@@ -1800,7 +1801,6 @@ if (params.smartCart) {
         if (!timer.element || !timer.endTime) return;
   
         let timeDiff = timer.endTime - now;
-  
         if (timeDiff <= 0 && timer.campaign?.timerSettings?.autoRestart && timer.originalDuration) {
           const cyclesPassed = Math.floor(Math.abs(timeDiff) / timer.originalDuration) + 1;
           const newEndTime = new Date(timer.endTime.getTime() + (cyclesPassed * timer.originalDuration));
@@ -1816,9 +1816,7 @@ if (params.smartCart) {
           this.activeTimers.delete(id);
           return;
         }
-
         const isLastFiveMinutes = timeDiff <= 300000;
-
       if (isLastFiveMinutes && !timer.isFlashing) {
         timer.isFlashing = true;
       } else if (!isLastFiveMinutes && timer.isFlashing) {
@@ -1829,7 +1827,6 @@ if (params.smartCart) {
       const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-
       let html = `
         <div class="countdown-units-wrapper ${timer.isFlashing ? 'countdown-flash' : ''}" style="
           display: flex;
@@ -1885,6 +1882,7 @@ if (params.smartCart) {
   },
 
     setupProductCardTimers() {
+      
       const productCardSelectors = [
         '.product-item',
         '.card.card-product'
@@ -1898,7 +1896,6 @@ if (params.smartCart) {
           break;
         }
       }
-    
       allProductCards.forEach(card => {
         const timers = card.querySelectorAll('[id^="hmstudio-card-countdown-"]');
         if (timers.length > 1) {
@@ -1928,7 +1925,6 @@ if (params.smartCart) {
         }
     
         if (!productId) return;
-    
         const existingTimer = document.getElementById(`hmstudio-card-countdown-${productId}`);
         if (existingTimer) return;
         
@@ -1936,7 +1932,6 @@ if (params.smartCart) {
         if (!activeCampaign) return;
     
         const timer = this.createProductCardTimer(activeCampaign, productId);
-    
         const cardBody = card.querySelector('.card-body');
         if (cardBody) {
           if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
@@ -1944,7 +1939,6 @@ if (params.smartCart) {
           }
           return;
         }
-        
         const productTitle = card.querySelector('.product-title');
         if (productTitle) {
           if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
@@ -1992,7 +1986,6 @@ if (params.smartCart) {
       if (!activeCampaign) return;
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
-    
       const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
       if (cardElement) {
@@ -2056,6 +2049,7 @@ if (params.smartCart) {
     },
 
     initialize() {
+      
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
@@ -2087,7 +2081,6 @@ if (params.smartCart) {
           }
         }
       }
-    
       let timeout;
   const observer = new MutationObserver((mutations) => {
     if (timeout) {
@@ -2125,7 +2118,6 @@ if (params.smartCart) {
     childList: true, 
     subtree: true 
   });
-
       if (this.activeTimers.size > 0) {
         this.startTimerUpdates();
       }
@@ -2135,7 +2127,6 @@ if (params.smartCart) {
   window.addEventListener('beforeunload', () => {
     SmartCart.stopTimerUpdates();
   });
-
   window.addEventListener('resize', () => {
     if (SmartCart.stickyCartElement) {
       SmartCart.createStickyCart();
