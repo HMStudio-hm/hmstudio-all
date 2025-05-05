@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.4 | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.5 | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1321,75 +1321,27 @@ if (params.smartCart) {
 
   const SmartCart = {
     settings: null,
-    campaigns: [], // Will be populated after loading
-    campaignIds: [], // Will now store IDs from URL
-    stickyCartElement: null,
+    campaigns: [],
     currentProductId: null,
     activeTimers: new Map(),
     updateInterval: null,
     originalDurations: new Map(),
     
-    // New method to get campaign IDs from URL 
-    getCampaignIdsFromUrl() {
-      const scriptTag = document.currentScript;
-      const scriptUrl = new URL(scriptTag.src);
-      const campaignIdsData = scriptUrl.searchParams.get('campaignIds');
-      
-      if (!campaignIdsData) {
-        console.log('No campaign IDs found in URL');
-        return [];
-      }
-
+    async fetchCampaigns() {
       try {
-        return JSON.parse(atob(campaignIdsData));
-      } catch (error) {
-        console.error('Error parsing campaign IDs data:', error);
-        return [];
-      }
-    },
-    
-    // New method to fetch campaign data from server
-    async fetchCampaignData(campaignId) {
-      try {
-        const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getCampaignData?storeId=${storeId}&campaignId=${campaignId}`;
-        const response = await fetch(url);
+        const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getSmartCartData?storeId=${storeId}`);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch campaign data: ${response.statusText}`);
+          throw new Error(`Failed to fetch campaigns: ${response.statusText}`);
         }
         
-        const campaignData = await response.json();
-        
-        // Process timer settings
-        if (campaignData.timerSettings) {
-          campaignData.timerSettings.textAr = campaignData.timerSettings.textAr || '';
-          campaignData.timerSettings.textEn = campaignData.timerSettings.textEn || '';
-          campaignData.timerSettings.autoRestart = campaignData.timerSettings.autoRestart || false;
-        }
-        
-        return campaignData;
+        const data = await response.json();
+        this.campaigns = data.activeCampaigns || [];
+        return this.campaigns;
       } catch (error) {
-        console.error(`Error fetching campaign data for ${campaignId}:`, error);
-        return null;
+        console.error('Error fetching campaigns:', error);
+        return [];
       }
-    },
-    
-    // New method to load all campaigns
-    async loadCampaigns() {
-      this.campaignIds = this.getCampaignIdsFromUrl();
-      if (!this.campaignIds.length) return [];
-      
-      const loadedCampaigns = [];
-      
-      for (const campaignId of this.campaignIds) {
-        const campaign = await this.fetchCampaignData(campaignId);
-        if (campaign) {
-          loadedCampaigns.push(campaign);
-        }
-      }
-      
-      this.campaigns = loadedCampaigns;
-      return loadedCampaigns;
     },
     
     createStickyCart() {
@@ -2090,15 +2042,10 @@ if (params.smartCart) {
     },
 
     async initialize() {
-      console.log('Initializing Smart Cart');
+      // Fetch campaigns first
+      await this.fetchCampaigns();
       
       this.stopTimerUpdates();
-      
-      // Load campaigns first
-      await this.loadCampaigns();
-      
-      // Log loaded campaigns
-      console.log(`Loaded ${this.campaigns.length} campaigns`);
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
                            document.querySelector('.js-details-section') ||
@@ -2129,6 +2076,7 @@ if (params.smartCart) {
           }
         }
       }
+
       let timeout;
   const observer = new MutationObserver((mutations) => {
     if (timeout) {
@@ -2181,13 +2129,12 @@ if (params.smartCart) {
     }
   });
 
-  // Use async initialization
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      SmartCart.initialize().catch(err => console.error('Error initializing Smart Cart:', err));
+    document.addEventListener('DOMContentLoaded', async () => {
+      await SmartCart.initialize();
     });
   } else {
-    SmartCart.initialize().catch(err => console.error('Error initializing Smart Cart:', err));
+    SmartCart.initialize();
   }
 }
 
