@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.3 | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.4 | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1321,35 +1321,76 @@ if (params.smartCart) {
 
   const SmartCart = {
     settings: null,
-    campaigns: (() => {
-      const campaignsData = params.campaigns;
-      if (!campaignsData) {
-        return [];
-      }
-
-      try {
-        const decodedData = atob(campaignsData);
-        const parsedData = JSON.parse(decodedData);
-        
-        return parsedData.map(campaign => ({
-          ...campaign,
-          timerSettings: {
-            ...campaign.timerSettings,
-            textAr: decodeURIComponent(campaign.timerSettings.textAr || ''),
-            textEn: decodeURIComponent(campaign.timerSettings.textEn || ''),
-            autoRestart: campaign.timerSettings.autoRestart || false
-          }
-        }));
-      } catch (error) {
-        console.error('Error parsing smart cart campaigns data:', error);
-        return [];
-      }
-    })(),
-
+    campaigns: [], // Will be populated after loading
+    campaignIds: [], // Will now store IDs from URL
+    stickyCartElement: null,
     currentProductId: null,
     activeTimers: new Map(),
     updateInterval: null,
     originalDurations: new Map(),
+    
+    // New method to get campaign IDs from URL 
+    getCampaignIdsFromUrl() {
+      const scriptTag = document.currentScript;
+      const scriptUrl = new URL(scriptTag.src);
+      const campaignIdsData = scriptUrl.searchParams.get('campaignIds');
+      
+      if (!campaignIdsData) {
+        console.log('No campaign IDs found in URL');
+        return [];
+      }
+
+      try {
+        return JSON.parse(atob(campaignIdsData));
+      } catch (error) {
+        console.error('Error parsing campaign IDs data:', error);
+        return [];
+      }
+    },
+    
+    // New method to fetch campaign data from server
+    async fetchCampaignData(campaignId) {
+      try {
+        const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getCampaignData?storeId=${storeId}&campaignId=${campaignId}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch campaign data: ${response.statusText}`);
+        }
+        
+        const campaignData = await response.json();
+        
+        // Process timer settings
+        if (campaignData.timerSettings) {
+          campaignData.timerSettings.textAr = campaignData.timerSettings.textAr || '';
+          campaignData.timerSettings.textEn = campaignData.timerSettings.textEn || '';
+          campaignData.timerSettings.autoRestart = campaignData.timerSettings.autoRestart || false;
+        }
+        
+        return campaignData;
+      } catch (error) {
+        console.error(`Error fetching campaign data for ${campaignId}:`, error);
+        return null;
+      }
+    },
+    
+    // New method to load all campaigns
+    async loadCampaigns() {
+      this.campaignIds = this.getCampaignIdsFromUrl();
+      if (!this.campaignIds.length) return [];
+      
+      const loadedCampaigns = [];
+      
+      for (const campaignId of this.campaignIds) {
+        const campaign = await this.fetchCampaignData(campaignId);
+        if (campaign) {
+          loadedCampaigns.push(campaign);
+        }
+      }
+      
+      this.campaigns = loadedCampaigns;
+      return loadedCampaigns;
+    },
     
     createStickyCart() {
       if (this.stickyCartElement) {
@@ -2048,9 +2089,16 @@ if (params.smartCart) {
       }
     },
 
-    initialize() {
+    async initialize() {
+      console.log('Initializing Smart Cart');
       
       this.stopTimerUpdates();
+      
+      // Load campaigns first
+      await this.loadCampaigns();
+      
+      // Log loaded campaigns
+      console.log(`Loaded ${this.campaigns.length} campaigns`);
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
                            document.querySelector('.js-details-section') ||
@@ -2133,10 +2181,13 @@ if (params.smartCart) {
     }
   });
 
+  // Use async initialization
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => SmartCart.initialize());
+    document.addEventListener('DOMContentLoaded', () => {
+      SmartCart.initialize().catch(err => console.error('Error initializing Smart Cart:', err));
+    });
   } else {
-    SmartCart.initialize();
+    SmartCart.initialize().catch(err => console.error('Error initializing Smart Cart:', err));
   }
 }
 
