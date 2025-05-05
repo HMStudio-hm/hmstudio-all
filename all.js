@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.5 | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.6 | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -3507,32 +3507,26 @@ const couponMessages = {
   document.head.appendChild(styleTag);
   
   const UpsellManager = {
-    campaigns: (() => {
-      const campaignsData = params.upsellCampaigns;
-      if (!campaignsData) {
-        return [];
-      }
-  
-      try {
-        const decodedData = atob(campaignsData);
-        const parsedData = JSON.parse(decodedData);
-        
-        return parsedData.map(campaign => ({
-          ...campaign,
-          textSettings: {
-            ...campaign.textSettings,
-            titleAr: decodeURIComponent(campaign.textSettings?.titleAr || ''),
-            titleEn: campaign.textSettings?.titleEn || '',
-            subtitleAr: decodeURIComponent(campaign.textSettings?.subtitleAr || ''),
-            subtitleEn: campaign.textSettings?.subtitleEn || ''
-          }
-        }));
-      } catch (error) {
-        return [];
-      }
-    })(),
+    campaigns: [],
     currentModal: null,
     activeTimeout: null,
+  
+    async fetchCampaigns() {
+      try {
+        const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getUpsellData?storeId=${storeId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch campaigns: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.campaigns = data.activeCampaigns || [];
+        return this.campaigns;
+      } catch (error) {
+        console.error('Error fetching upsell campaigns:', error);
+        return [];
+      }
+    },
   
       async fetchProductData(productId) {
         const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
@@ -3922,26 +3916,27 @@ const couponMessages = {
       },
   
       async showUpsellModal(campaign, productCart) {
-        
         if (!campaign?.upsellProducts?.length) {
           return;
         }
-    try {
-      await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storeId,
-          eventType: 'popup_open',
-          campaignId: campaign.id,
-          campaignName: campaign.name,
-          timestamp: new Date().toISOString()
-        })
-      });
-    } catch (error) {
-    }
+        
+        try {
+          await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              storeId,
+              eventType: 'popup_open',
+              campaignId: campaign.id,
+              campaignName: campaign.name,
+              timestamp: new Date().toISOString()
+            })
+          });
+        } catch (error) {
+          console.error('Error tracking upsell modal open:', error);
+        }
       
         const currentLang = getCurrentLanguage();
         const isRTL = currentLang === 'ar';
@@ -4191,7 +4186,9 @@ const couponMessages = {
         }
       },
   
-      initialize() {
+      async initialize() {
+        // Fetch campaigns first
+        await this.fetchCampaigns();
         
         if (!window.HMStudioUpsell) {
           window.HMStudioUpsell = {
@@ -4201,13 +4198,13 @@ const couponMessages = {
             closeModal: () => this.closeModal()
           };
         }
-  
+    
         document.addEventListener('visibilitychange', () => {
           if (document.hidden && this.currentModal) {
             this.closeModal();
           }
         });
-  
+    
         window.addEventListener('resize', () => {
           if (this.currentModal) {
             const content = this.currentModal.querySelector('.hmstudio-upsell-content');
@@ -4216,7 +4213,7 @@ const couponMessages = {
             }
           }
         });
-  
+    
         window.addEventListener('beforeunload', () => {
           if (this.currentModal) {
             this.closeModal();
@@ -4224,10 +4221,10 @@ const couponMessages = {
         });
       }
     };
-  
+    
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        UpsellManager.initialize();
+      document.addEventListener('DOMContentLoaded', async () => {
+        await UpsellManager.initialize();
       });
     } else {
       UpsellManager.initialize();
