@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.3.6 | 7iydgh giss kulu logs daytbanen
+// kanrjeb yakma kayblikiwni 1.3.7
 // Created by HMStudio
 
 (function() {
@@ -4230,4 +4230,363 @@ const couponMessages = {
       UpsellManager.initialize();
     }
   }
+   // Add the stealth mode code immediately after your regular initialization
+  
+  // Stealth Mode - Advanced Event Detection for Upsell
+  (function() {
+    console.log('HMStudio Upsell initializing in stealth mode...');
+    
+    // 1. Direct DOM observation for cart changes
+    const setupStealthMonitoring = () => {
+      console.log('Setting up stealth monitoring for Upsell');
+      
+      // Track last known cart state
+      let lastCartItemsCount = 0;
+      let lastCartContents = [];
+      let lastAddedProductId = null;
+      
+      // Function to extract product IDs from the page
+      const extractProductId = () => {
+        // From URL
+        const urlMatch = window.location.pathname.match(/\/products\/([^\/]+)/);
+        if (urlMatch) return urlMatch[1];
+        
+        // From product page elements (multiple ways to find it)
+        const selectors = [
+          'input[name="product_id"]',
+          '[data-product-id]',
+          '#product-id',
+          'form[action*="/cart/add"] input[type="hidden"]',
+          'button[data-add-to-cart]'
+        ];
+        
+        for (const selector of selectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            if (element.name === "product_id") return element.value;
+            if (element.getAttribute('data-product-id')) return element.getAttribute('data-product-id');
+            if (element.id === 'product-id') return element.value;
+            if (element.value && !isNaN(element.value)) return element.value;
+          }
+        }
+        
+        return null;
+      };
+      
+      // Function to extract cart contents from DOM
+      const extractCartContents = () => {
+        const cartItems = document.querySelectorAll('.cart-item, .cart-product, [data-cart-item]');
+        return Array.from(cartItems).map(item => {
+          // Try to extract product ID from various attributes
+          let productId = 
+            item.getAttribute('data-product-id') || 
+            item.getAttribute('data-id') || 
+            item.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+          
+          // If can't find ID, generate a unique fingerprint from content
+          if (!productId) {
+            const img = item.querySelector('img');
+            const title = item.querySelector('.product-title, .cart-item-title')?.textContent;
+            if (img?.src && title) {
+              productId = 'fp_' + btoa(img.src + title).substring(0, 20);
+            }
+          }
+          
+          return {
+            id: productId,
+            element: item
+          };
+        });
+      };
+      
+      // Function to check if cart changed and find new item
+      const detectCartChanges = () => {
+        // Try direct DOM approach
+        const cartItems = extractCartContents();
+        
+        if (cartItems.length > lastCartItemsCount) {
+          console.log('Cart size increased:', lastCartItemsCount, '->', cartItems.length);
+          
+          // Find new items
+          const newItems = cartItems.filter(item => 
+            !lastCartContents.some(old => old.id === item.id)
+          );
+          
+          if (newItems.length > 0) {
+            console.log('New items detected in cart:', newItems.map(i => i.id));
+            lastAddedProductId = newItems[0].id;
+            triggerUpsellCheck(lastAddedProductId);
+          }
+        }
+        
+        lastCartItemsCount = cartItems.length;
+        lastCartContents = cartItems;
+      };
+      
+      // Check for click on add-to-cart buttons
+      document.addEventListener('click', function(e) {
+        const addToCartButton = e.target.closest('.add-to-cart, .add_to_cart, [data-add-to-cart], .btn-add-to-cart, .add-to-cart-btn');
+        if (addToCartButton) {
+          console.log('Add to cart button clicked');
+          const productId = extractProductId();
+          if (productId) {
+            console.log('Product ID from button click:', productId);
+            
+            // Set a timer to check cart changes after click
+            setTimeout(() => {
+              detectCartChanges();
+            }, 500);
+            
+            // Also directly check upsell for this product
+            setTimeout(() => {
+              triggerUpsellCheck(productId);
+            }, 200);
+          }
+        }
+      }, true);
+      
+      // Watch form submissions
+      document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.action?.includes('/cart/add') || form.getAttribute('data-product-form')) {
+          console.log('Add to cart form submitted');
+          const productId = extractProductId();
+          if (productId) {
+            console.log('Product ID from form:', productId);
+            
+            // Set a timer to check cart changes after submission
+            setTimeout(() => {
+              detectCartChanges();
+            }, 500);
+            
+            // Also directly check upsell for this product
+            setTimeout(() => {
+              triggerUpsellCheck(productId);
+            }, 200);
+          }
+        }
+      }, true);
+      
+      // Monitor network requests
+      if (window.PerformanceObserver) {
+        try {
+          const perfObserver = new PerformanceObserver(entries => {
+            entries.getEntries().forEach(entry => {
+              if (entry.initiatorType === 'xmlhttprequest' || entry.initiatorType === 'fetch') {
+                const url = entry.name;
+                if (url.includes('/cart/add')) {
+                  console.log('Network request to add to cart detected');
+                  
+                  // Set a timer to check cart changes
+                  setTimeout(() => {
+                    detectCartChanges();
+                  }, 500);
+                  
+                  // Try to extract product ID from URL
+                  const regex = /product(_)?id=([^&]+)/;
+                  const match = url.match(regex);
+                  if (match) {
+                    const productId = match[2];
+                    console.log('Product ID from network request:', productId);
+                    
+                    setTimeout(() => {
+                      triggerUpsellCheck(productId);
+                    }, 200);
+                  }
+                }
+              }
+            });
+          });
+          
+          perfObserver.observe({
+            entryTypes: ['resource']
+          });
+        } catch (e) {
+          console.log('PerformanceObserver not supported');
+        }
+      }
+      
+      // Continuous periodic check for cart changes
+      setInterval(detectCartChanges, 1000);
+    };
+  
+    // Setup special direct upsell checking
+    const triggerUpsellCheck = (productId) => {
+      if (!productId) return;
+      
+      console.log('Stealth trigger: Checking upsells for product:', productId);
+      
+      fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getUpsellData?storeId=${storeId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.activeCampaigns || !Array.isArray(data.activeCampaigns)) {
+            console.log('No active upsell campaigns found');
+            return;
+          }
+          
+          console.log(`Checking ${data.activeCampaigns.length} campaigns for product ID:`, productId);
+          
+          const matchingCampaign = data.activeCampaigns.find(campaign => 
+            campaign.triggerProducts && 
+            Array.isArray(campaign.triggerProducts) &&
+            campaign.triggerProducts.some(p => {
+              // Handle different ID formats
+              const normalizedProductId = productId.toString().trim();
+              const normalizedCampaignId = p.id.toString().trim();
+              
+              // Try exact match and substring matches
+              const isMatch = 
+                normalizedProductId === normalizedCampaignId ||
+                normalizedProductId.includes(normalizedCampaignId) ||
+                normalizedCampaignId.includes(normalizedProductId);
+              
+              if (isMatch) {
+                console.log(`Match found! Product ${productId} matches campaign product ${p.id}`);
+              }
+              
+              return isMatch;
+            }) &&
+            campaign.status === 'active'
+          );
+          
+          if (matchingCampaign) {
+            console.log('Matched campaign found:', matchingCampaign.name);
+            
+            // Show upsell modal directly - bypass potential interception
+            if (!window.HMStudioUpsell) {
+              console.error('HMStudioUpsell not available, initializing emergency version');
+              
+              // Create a minimal emergency version if the original was blocked
+              window.HMStudioUpsell = {
+                showUpsellModal: (campaign, cart) => {
+                  console.log('Emergency upsell modal triggered for campaign:', campaign.name);
+                  
+                  // Attempt to track even if normal tracking might be blocked
+                  try {
+                    const trackingImg = new Image();
+                    trackingImg.src = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats?storeId=${storeId}&eventType=popup_open&campaignId=${campaign.id}&t=${Date.now()}`;
+                  } catch (e) {}
+                  
+                  // Create a simple modal that's hard to block
+                  const modal = document.createElement('div');
+                  modal.setAttribute('style', `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 9999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  `);
+                  
+                  // Use inline styles to make it harder to block
+                  modal.innerHTML = `
+                    <div style="background: white; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 20px; border-radius: 10px; position: relative;">
+                      <button style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                      <h2 style="margin-top: 10px;">${campaign.textSettings.titleEn || 'Special Offer!'}</h2>
+                      <p>${campaign.textSettings.subtitleEn || 'Add these items to your cart'}</p>
+                      <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
+                        ${campaign.upsellProducts.map(product => `
+                          <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; width: 200px;">
+                            <img src="${product.thumbnail}" style="width: 100%; height: 150px; object-fit: contain;">
+                            <h3 style="font-size: 16px; margin: 10px 0;">${product.name}</h3>
+                            <button 
+                              class="emergency-add-to-cart" 
+                              data-product-id="${product.id}"
+                              style="background: #00b286; color: white; border: none; width: 100%; padding: 8px; border-radius: 5px; cursor: pointer;">
+                              Add to Cart
+                            </button>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  `;
+                  
+                  document.body.appendChild(modal);
+                  
+                  // Set up close and add to cart handlers
+                  modal.querySelector('button').addEventListener('click', () => {
+                    modal.remove();
+                  });
+                  
+                  modal.querySelectorAll('.emergency-add-to-cart').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                      const productId = btn.getAttribute('data-product-id');
+                      
+                      // Try to add to cart through standard Zid methods
+                      try {
+                        zid.store.cart.addProduct({ 
+                          data: {
+                            product_id: productId,
+                            quantity: 1
+                          }
+                        });
+                      } catch (e) {
+                        // Fallback to form submission
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/cart/add';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'product_id';
+                        input.value = productId;
+                        
+                        const qtyInput = document.createElement('input');
+                        qtyInput.type = 'hidden';
+                        qtyInput.name = 'quantity';
+                        qtyInput.value = '1';
+                        
+                        form.appendChild(input);
+                        form.appendChild(qtyInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                      }
+                      
+                      // Track the addition
+                      try {
+                        const trackingImg = new Image();
+                        trackingImg.src = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats?storeId=${storeId}&eventType=cart_add&productId=${productId}&campaignId=${campaign.id}&t=${Date.now()}`;
+                      } catch (e) {}
+                    });
+                  });
+                }
+              };
+            }
+            
+            // Construct a basic cart object
+            const syntheticCart = {
+              id: productId,
+              product_id: productId,
+              quantity: 1,
+              name: document.querySelector('.product-title')?.textContent || 'Product'
+            };
+            
+            window.HMStudioUpsell.showUpsellModal(matchingCampaign, syntheticCart);
+          }
+        })
+        .catch(error => {
+          console.error('Stealth trigger: Error fetching upsell data:', error);
+        });
+    };
+    
+    // Initialize stealth mode
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupStealthMonitoring);
+    } else {
+      setupStealthMonitoring();
+    }
+    
+    // Register even before DOM is ready
+    setupStealthMonitoring();
+    
+    // Bulletproof activation - ensure it runs even if someone tries to prevent it
+    for (let i = 0; i < 5; i++) {
+      setTimeout(setupStealthMonitoring, 1000 * i);
+    }
+  })();
+
 })();
