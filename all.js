@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.6 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.7 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1116,10 +1116,10 @@
                     width: 100%;
                     height: auto;
                     padding: 12px 20px;
-                    border: 1px solid #059669;
+                    border: 1px solid var(--bs-primary, #007bff);
                     border-radius: 8px;
                     background-color: #ffffff;
-                    color: #059669;
+                    color: var(--bs-primary, #007bff);
                     cursor: pointer;
                     transition: all 0.3s ease;
                     display: inline-flex;
@@ -1130,6 +1130,41 @@
                     margin-top: 8px;
                     gap: 8px;
                 `;
+                
+                // Add responsive styles for mobile
+                const style = document.createElement('style');
+                if (!document.querySelector('#quick-view-responsive-style')) {
+                    style.id = 'quick-view-responsive-style';
+                    style.textContent = `
+                        @media (max-width: 768px) {
+                            .quick-view-btn {
+                                width: 40px !important;
+                                height: 40px !important;
+                                padding: 0 !important;
+                                margin-top: 0 !important;
+                                margin-left: 8px !important;
+                                border-radius: 50% !important;
+                                flex-shrink: 0 !important;
+                            }
+                            .quick-view-btn span {
+                                display: none !important;
+                            }
+                            .quick-view-btn svg {
+                                width: 18px !important;
+                                height: 18px !important;
+                            }
+                            .mt-2 {
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 0 !important;
+                            }
+                            .btn-cart {
+                                flex: 1 !important;
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
             } else {
                 // Existing style for other themes
                 button.style.cssText = `
@@ -1191,7 +1226,7 @@
             // Add hover effects
             button.addEventListener('mouseover', () => {
                 if (currentTheme === 'assayl') {
-                    button.style.backgroundColor = '#059669';
+                    button.style.backgroundColor = 'var(--bs-primary, #007bff)';
                     button.style.color = '#ffffff';
                 } else {
                     button.style.backgroundColor = '#f0f0f0';
@@ -1201,7 +1236,7 @@
             button.addEventListener('mouseout', () => {
                 if (currentTheme === 'assayl') {
                     button.style.backgroundColor = '#ffffff';
-                    button.style.color = '#059669';
+                    button.style.color = 'var(--bs-primary, #007bff)';
                 } else {
                     button.style.backgroundColor = '#ffffff';
                 }
@@ -1216,10 +1251,10 @@
                     const spinner = button.querySelector('.quick-view-spinner');
                     const text = button.querySelector('span');
                     
-                    if (icon && spinner && text) {
+                    if (icon && spinner) {
                         icon.style.display = 'none';
                         spinner.style.display = 'inline-block';
-                        text.textContent = 'جاري التحميل...';
+                        if (text) text.textContent = 'جاري التحميل...';
                         button.style.pointerEvents = 'none';
                         button.style.opacity = '0.7';
                     }
@@ -1232,11 +1267,11 @@
                         const spinner = button.querySelector('.quick-view-spinner');
                         const text = button.querySelector('span');
                         
-                        if (icon && spinner && text) {
+                        if (icon && spinner) {
                             setTimeout(() => {
                                 icon.style.display = 'inline-block';
                                 spinner.style.display = 'none';
-                                text.textContent = 'عرض سريع';
+                                if (text) text.textContent = 'عرض سريع';
                                 button.style.pointerEvents = 'auto';
                                 button.style.opacity = '1';
                             }, 300);
@@ -1248,8 +1283,20 @@
             // Insert button based on theme
             try {
                 if (currentTheme === 'assayl') {
-                    // For Assayl theme, add button below the cart button
-                    buttonContainer.appendChild(button);
+                    // For Assayl theme, check if we're on mobile
+                    const isMobile = window.innerWidth <= 768;
+                    if (isMobile) {
+                        // On mobile, place button next to cart button (inline)
+                        const cartButton = buttonContainer.querySelector('.btn-cart');
+                        if (cartButton) {
+                            cartButton.parentNode.insertBefore(button, cartButton.nextSibling);
+                        } else {
+                            buttonContainer.appendChild(button);
+                        }
+                    } else {
+                        // On desktop, place button below cart button
+                        buttonContainer.appendChild(button);
+                    }
                 } else {
                     // For Perfect theme
                     if (buttonContainer.classList.contains('card-footer')) {
