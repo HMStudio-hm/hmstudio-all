@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.3 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.4 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2330,8 +2330,10 @@ for (const point of insertionPoints) {
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
-                           document.querySelector('.js-details-section') ||
-                           document.querySelector('#productId');
+                     document.querySelector('.js-details-section') ||
+                     document.querySelector('#product-id') ||
+                     document.querySelector('input#product-id') ||
+                     document.querySelector('section.products-details');
       
       if (isProductPage) {
         this.createStickyCart();
