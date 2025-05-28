@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.0 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2249,159 +2249,145 @@ setupProductCardTimers() {
   });
 },
 
-    setupProductTimer() {
-      console.log('=== DEBUGGING PRODUCT TIMER SETUP ===');
-      let productId = null;
-
-      // Debug: Check if we're on a product page
-  const isProductPage = document.querySelector('.product.products-details-page') || 
-  document.querySelector('.js-details-section') ||
-  document.querySelector('#productId') ||
-  document.querySelector('#product-id');
-
-console.log('Is product page detected:', !!isProductPage);
-console.log('Page selectors found:', {
-'product.products-details-page': !!document.querySelector('.product.products-details-page'),
-'js-details-section': !!document.querySelector('.js-details-section'), 
-'#productId': !!document.querySelector('#productId'),
-'#product-id': !!document.querySelector('#product-id')
-});
-      
-      const idSelectors = [
-        {
-          selector: '[data-wishlist-id]',
-          attribute: 'data-wishlist-id'
-        },
-        {
-          selector: '#product-form input[name="product_id"]',
-          attribute: 'value'
-        },
-        {
-          selector: 'form#product-form input#product-id',
-          attribute: 'value'
-        },
-        {
-          selector: '#product-id',
-          attribute: 'value'
-        },
-        {
-          selector: 'input#product-id',
-          attribute: 'value'
-        }
-      ];
-    
-      for (const {selector, attribute} of idSelectors) {
-        const element = document.querySelector(selector);
-        if (element) {
-          productId = element.getAttribute(attribute) || element.value;
-          break;
-        }
-      }
-
-      // After the for loop that tries to find productId, add:
-console.log('Product ID found:', productId);
-console.log('ID detection results:', {
-  '[data-wishlist-id]': document.querySelector('[data-wishlist-id]')?.getAttribute('data-wishlist-id'),
-  '#product-form input[name="product_id"]': document.querySelector('#product-form input[name="product_id"]')?.value,
-  'form#product-form input#product-id': document.querySelector('form#product-form input#product-id')?.value,
-  '#product-id': document.querySelector('#product-id')?.value,
-  'input#product-id': document.querySelector('input#product-id')?.value
-});
-    
-if (!productId) {
-  console.log('❌ No product ID found, exiting setupProductTimer');
-  return;
-}
-    
-this.currentProductId = productId;
-const activeCampaign = this.findActiveCampaignForProduct(productId);
-
-console.log('Active campaign found:', !!activeCampaign);
-console.log('Total campaigns loaded:', this.campaigns.length);
-
-if (!activeCampaign) {
-  console.log('❌ No active campaign for product', productId);
-  return;
-}
-
-console.log('✅ Creating timer for product:', productId);
-    
-      if (!activeCampaign) return;
-
-      const timer = this.createCountdownTimer(activeCampaign, productId);
-      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
-      
-      if (cardElement) {
-        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
-      } else {
-        const insertionPoints = [
-          {
-            container: '.price.d-flex.align-items-center', // Assayl theme - primary target
-            method: 'before'
-          },
-          {
-            container: '.details-product-data .price', // Assayl theme - alternative selector
-            method: 'before'
-          },
-          {
-            container: '.heading.d-flex.align-items-center', // Assayl theme - before product title
-            method: 'after'
-          },
-          {
-            container: '.js-product-price',
-            method: 'before'
-          },
-          {
-            container: '.product-formatted-price',
-            method: 'before'
-          },
-          {
-            container: '.loyalty-products', // Assayl theme fallback
-            method: 'before'
-          },
-          {
-            container: '.details-product-data', // Assayl theme - container level
-            method: 'prepend'
-          },
-          {
-            container: '.js-details-section',
-            method: 'prepend'
-          },
-          {
-            container: '.js-product-old-price',
-            method: 'before'
-          },
-          {
-            container: '.hmstudio-cart-buttons',
-            method: 'before'
-          }
-        ];
-    
-        // Replace the insertion logic with debugging version:
-for (const point of insertionPoints) {
-  const container = document.querySelector(point.container);
-  console.log(`Checking insertion point: ${point.container}`, !!container);
+setupProductTimer() {
+  let productId = null;
   
-  if (container) {
-    console.log('✅ Inserting timer at:', point.container);
-    if (point.method === 'before') {
-      container.parentNode.insertBefore(timer, container);
-    } else if (point.method === 'after') {
-      container.parentNode.insertBefore(timer, container.nextSibling);
-    } else {
-      container.insertBefore(timer, container.firstChild);
-    }
-    break;
-  }
-}
-      }
-    
-      this.createStickyCart();
-    
-      if (this.activeTimers.size > 0) {
-        this.startTimerUpdates();
-      }
+  const idSelectors = [
+    {
+      selector: '[data-wishlist-id]',
+      attribute: 'data-wishlist-id'
     },
+    {
+      selector: '#product-form input[name="product_id"]',
+      attribute: 'value'
+    },
+    {
+      selector: '#product-id',
+      attribute: 'value'
+    },
+    {
+      selector: 'form#product-form input#product-id',
+      attribute: 'value'
+    }
+  ];
+
+  for (const {selector, attribute} of idSelectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+      productId = element.getAttribute(attribute) || element.value;
+      break;
+    }
+  }
+
+  if (!productId) return;
+
+  this.currentProductId = productId;
+  const activeCampaign = this.findActiveCampaignForProduct(productId);
+
+  if (!activeCampaign) return;
+
+  const timer = this.createCountdownTimer(activeCampaign, productId);
+  
+  // Detect theme and insert timer accordingly
+  const isAssaylTheme = document.querySelector('.product.products-details-page');
+  const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
+  
+  if (isAssaylTheme) {
+    // Assayl theme insertion points
+    const assaylInsertionPoints = [
+      {
+        container: '.price',
+        method: 'after'
+      },
+      {
+        container: '.loyalty-products',
+        method: 'before'
+      },
+      {
+        container: '.later-payment-widget',
+        method: 'before'
+      },
+      {
+        container: '.details-product-data',
+        method: 'append'
+      }
+    ];
+    
+    let inserted = false;
+    for (const point of assaylInsertionPoints) {
+      const container = document.querySelector(point.container);
+      if (container) {
+        if (point.method === 'after') {
+          container.parentNode.insertBefore(timer, container.nextSibling);
+        } else if (point.method === 'before') {
+          container.parentNode.insertBefore(timer, container);
+        } else {
+          container.appendChild(timer);
+        }
+        inserted = true;
+        break;
+      }
+    }
+    
+    // Fallback for Assayl theme
+    if (!inserted) {
+      const productInfo = document.querySelector('.col-product-info');
+      if (productInfo) {
+        const priceSection = productInfo.querySelector('.price');
+        if (priceSection) {
+          priceSection.parentNode.insertBefore(timer, priceSection.nextSibling);
+        } else {
+          productInfo.insertBefore(timer, productInfo.firstChild);
+        }
+      }
+    }
+  } else if (cardElement) {
+    // Soft/Perfect theme
+    cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+  } else {
+    // Fallback insertion points for other themes
+    const insertionPoints = [
+      {
+        container: '.js-product-price',
+        method: 'before'
+      },
+      {
+        container: '.product-formatted-price',
+        method: 'before'
+      },
+      {
+        container: '.js-details-section',
+        method: 'prepend'
+      },
+      {
+        container: '.js-product-old-price',
+        method: 'before'
+      },
+      {
+        container: '.hmstudio-cart-buttons',
+        method: 'before'
+      }
+    ];
+
+    for (const point of insertionPoints) {
+      const container = document.querySelector(point.container);
+      if (container) {
+        if (point.method === 'before') {
+          container.parentNode.insertBefore(timer, container);
+        } else {
+          container.insertBefore(timer, container.firstChild);
+        }
+        break;
+      }
+    }
+  }
+
+  this.createStickyCart();
+
+  if (this.activeTimers.size > 0) {
+    this.startTimerUpdates();
+  }
+},
 
     startTimerUpdates() {
       if (this.updateInterval) {
