@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.8 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.9 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -990,7 +990,8 @@
   }
   
   // Support both Soft theme and Perfect theme selectors
-  
+ // src/scripts/quickView.js v2.4.8 - Added Assayl Theme Support with Enhanced UX
+
 function addQuickViewButtons() {
     
   // Support Soft theme, Perfect theme, and Assayl theme selectors
@@ -1112,20 +1113,20 @@ function addQuickViewButtons() {
           
           // Style the button based on theme
           if (currentTheme === 'assayl') {
-              // For Assayl theme, use btn-primary class for consistent styling
+              // For Assayl theme, use btn-primary classes for consistent styling
               button.className = 'quick-view-btn btn btn-outline-primary';
               button.style.cssText = `
                   width: 100%;
                   height: auto;
-                  padding: 12px 20px;
-                  margin-top: 6px;
+                  padding: 8px 16px;
+                  margin-top: 8px;
+                  transition: all 0.3s ease;
                   display: inline-flex;
                   align-items: center;
                   justify-content: center;
                   font-size: 14px;
                   font-weight: 600;
                   gap: 8px;
-                  border-radius: 8px;
               `;
               
               // Add responsive styles for mobile
@@ -1135,12 +1136,9 @@ function addQuickViewButtons() {
                   style.textContent = `
                       @media (max-width: 768px) {
                           .quick-view-btn {
-                              width: 100% !important;
-                              height: 32px !important;
-                              padding: 4px 8px !important;
-                              margin-top: 4px !important;
+                              padding: 6px 12px !important;
                               font-size: 12px !important;
-                              gap: 4px !important;
+                              height: 36px !important;
                           }
                           .quick-view-btn span {
                               display: none !important;
@@ -1148,6 +1146,9 @@ function addQuickViewButtons() {
                           .quick-view-btn svg {
                               width: 16px !important;
                               height: 16px !important;
+                          }
+                          .product .bottom-box .price {
+                              margin-top: 8px !important;
                           }
                       }
                   `;
@@ -1212,8 +1213,10 @@ function addQuickViewButtons() {
           }
 
           // Add hover effects
-          if (currentTheme !== 'assayl') {
-              // Only add custom hover for non-Assayl themes (Assayl uses Bootstrap classes)
+          if (currentTheme === 'assayl') {
+              // Let Bootstrap handle btn-outline-primary hover effects
+              // No manual hover styling needed
+          } else {
               button.addEventListener('mouseover', () => {
                   button.style.backgroundColor = '#f0f0f0';
               });
@@ -1236,12 +1239,10 @@ function addQuickViewButtons() {
                       icon.style.display = 'none';
                       spinner.style.display = 'inline-block';
                       if (text) text.textContent = 'جاري التحميل...';
-                      button.disabled = true;
+                      button.style.pointerEvents = 'none';
+                      button.style.opacity = '0.7';
                   }
               }
-              
-              // Track analytics for all themes including Assayl
-              trackQuickViewAnalytics(productId);
               
               openQuickView(productId).finally(() => {
                   // Reset loading state for Assayl theme
@@ -1255,7 +1256,8 @@ function addQuickViewButtons() {
                               icon.style.display = 'inline-block';
                               spinner.style.display = 'none';
                               if (text) text.textContent = 'عرض سريع';
-                              button.disabled = false;
+                              button.style.pointerEvents = 'auto';
+                              button.style.opacity = '1';
                           }, 300);
                       }
                   }
@@ -1265,7 +1267,7 @@ function addQuickViewButtons() {
           // Insert button based on theme
           try {
               if (currentTheme === 'assayl') {
-                  // For Assayl theme, add button below the cart button (both desktop and mobile)
+                  // For Assayl theme, add button below the cart button (both mobile and desktop)
                   buttonContainer.appendChild(button);
               } else {
                   // For Perfect theme
