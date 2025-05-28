@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.5 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.6 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -991,7 +991,6 @@
   
   // Support both Soft theme and Perfect theme selectors
   function addQuickViewButtons() {
-    console.log('Adding Quick View buttons');
     
     // Support Soft theme, Perfect theme, and Assayl theme selectors
     const productCardSelectors = [
@@ -1023,7 +1022,6 @@
     
     productCards.forEach(card => {
         if (card.querySelector('.quick-view-btn')) {
-            console.log('Quick View button already exists for a product, skipping');
             return;
         }
 
@@ -1049,8 +1047,6 @@
         }
         
         if (productId) {
-            console.log(`Found product ID: ${productId} in ${currentTheme} theme`);
-            
             // Find the button container based on theme
             let buttonContainer = null;
             
@@ -1084,7 +1080,6 @@
             }
 
             if (!buttonContainer) {
-                console.warn('Could not find button container for product:', productId);
                 return;
             }
 
@@ -1116,20 +1111,24 @@
             
             // Style the button based on theme
             if (currentTheme === 'assayl') {
+                // For Assayl theme, match the Add to Cart button size and style
                 button.style.cssText = `
-                    width: 40px;
-                    height: 40px;
-                    padding: 0;
-                    border: 1px solid #ddd;
+                    width: 100%;
+                    height: auto;
+                    padding: 12px 20px;
+                    border: 1px solid #059669;
                     border-radius: 8px;
                     background-color: #ffffff;
+                    color: #059669;
                     cursor: pointer;
                     transition: all 0.3s ease;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    vertical-align: middle;
-                    flex-shrink: 0;
+                    font-size: 14px;
+                    font-weight: 600;
+                    margin-top: 8px;
+                    gap: 8px;
                 `;
             } else {
                 // Existing style for other themes
@@ -1150,47 +1149,107 @@
                 `;
             }
 
-            // Add eye icon using SVG (same for all themes)
-            button.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            `;
+            // Add eye icon using SVG
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, add text with icon
+                button.innerHTML = `
+                    <svg class="quick-view-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="quick-view-spinner" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    </svg>
+                    <span>عرض سريع</span>
+                `;
+                
+                // Add spinner animation style
+                const style = document.createElement('style');
+                if (!document.querySelector('#quick-view-spinner-style')) {
+                    style.id = 'quick-view-spinner-style';
+                    style.textContent = `
+                        .quick-view-spinner {
+                            animation: spin 1s linear infinite;
+                        }
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else {
+                // For other themes, just the icon
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                `;
+            }
 
             // Add hover effects
             button.addEventListener('mouseover', () => {
                 if (currentTheme === 'assayl') {
-                    button.style.backgroundColor = '#f8f9fa';
-                    button.style.borderColor = '#adb5bd';
+                    button.style.backgroundColor = '#059669';
+                    button.style.color = '#ffffff';
                 } else {
                     button.style.backgroundColor = '#f0f0f0';
                 }
             });
 
             button.addEventListener('mouseout', () => {
-                button.style.backgroundColor = '#ffffff';
                 if (currentTheme === 'assayl') {
-                    button.style.borderColor = '#ddd';
+                    button.style.backgroundColor = '#ffffff';
+                    button.style.color = '#059669';
+                } else {
+                    button.style.backgroundColor = '#ffffff';
                 }
             });
 
             button.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log(`Quick View button clicked for product ID: ${productId} in ${currentTheme} theme`);
-                openQuickView(productId);
+                
+                // Show loading state for Assayl theme
+                if (currentTheme === 'assayl') {
+                    const icon = button.querySelector('.quick-view-icon');
+                    const spinner = button.querySelector('.quick-view-spinner');
+                    const text = button.querySelector('span');
+                    
+                    if (icon && spinner && text) {
+                        icon.style.display = 'none';
+                        spinner.style.display = 'inline-block';
+                        text.textContent = 'جاري التحميل...';
+                        button.style.pointerEvents = 'none';
+                        button.style.opacity = '0.7';
+                    }
+                }
+                
+                openQuickView(productId).finally(() => {
+                    // Reset loading state for Assayl theme
+                    if (currentTheme === 'assayl') {
+                        const icon = button.querySelector('.quick-view-icon');
+                        const spinner = button.querySelector('.quick-view-spinner');
+                        const text = button.querySelector('span');
+                        
+                        if (icon && spinner && text) {
+                            setTimeout(() => {
+                                icon.style.display = 'inline-block';
+                                spinner.style.display = 'none';
+                                text.textContent = 'عرض سريع';
+                                button.style.pointerEvents = 'auto';
+                                button.style.opacity = '1';
+                            }, 300);
+                        }
+                    }
+                });
             });
 
             // Insert button based on theme
             try {
                 if (currentTheme === 'assayl') {
-                    // For Assayl theme, add after the cart button or at the end
-                    const cartButton = buttonContainer.querySelector('.btn-cart');
-                    if (cartButton) {
-                        cartButton.parentNode.insertBefore(button, cartButton.nextSibling);
-                    } else {
-                        buttonContainer.appendChild(button);
-                    }
+                    // For Assayl theme, add button below the cart button
+                    buttonContainer.appendChild(button);
                 } else {
                     // For Perfect theme
                     if (buttonContainer.classList.contains('card-footer')) {
@@ -1201,7 +1260,6 @@
                     }
                 }
             } catch (error) {
-                console.warn('Failed to insert button normally, appending instead', error);
                 buttonContainer.appendChild(button);
             }
         }
@@ -1322,7 +1380,6 @@ for (const selector of possibleSelectors) {
         // Detect theme based on selector
         if (selector.includes('dev3')) {
             themeDetected = 'assayl';
-            console.log('Detected Assayl theme for announcement bar');
         } else {
             themeDetected = 'standard';
         }
