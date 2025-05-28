@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.2 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.3 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2242,8 +2242,16 @@ console.log('✅ Creating timer for product:', productId);
       } else {
         const insertionPoints = [
           {
-            container: '.price.d-flex.align-items-center', // Assayl theme
+            container: '.price.d-flex.align-items-center', // Assayl theme - primary target
             method: 'before'
+          },
+          {
+            container: '.details-product-data .price', // Assayl theme - alternative selector
+            method: 'before'
+          },
+          {
+            container: '.heading.d-flex.align-items-center', // Assayl theme - before product title
+            method: 'after'
           },
           {
             container: '.js-product-price',
@@ -2256,6 +2264,10 @@ console.log('✅ Creating timer for product:', productId);
           {
             container: '.loyalty-products', // Assayl theme fallback
             method: 'before'
+          },
+          {
+            container: '.details-product-data', // Assayl theme - container level
+            method: 'prepend'
           },
           {
             container: '.js-details-section',
@@ -2280,6 +2292,8 @@ for (const point of insertionPoints) {
     console.log('✅ Inserting timer at:', point.container);
     if (point.method === 'before') {
       container.parentNode.insertBefore(timer, container);
+    } else if (point.method === 'after') {
+      container.parentNode.insertBefore(timer, container.nextSibling);
     } else {
       container.insertBefore(timer, container.firstChild);
     }
