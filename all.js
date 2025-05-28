@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.1 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.2 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2156,7 +2156,22 @@ setupProductCardTimers() {
 },
 
     setupProductTimer() {
+      console.log('=== DEBUGGING PRODUCT TIMER SETUP ===');
       let productId = null;
+
+      // Debug: Check if we're on a product page
+  const isProductPage = document.querySelector('.product.products-details-page') || 
+  document.querySelector('.js-details-section') ||
+  document.querySelector('#productId') ||
+  document.querySelector('#product-id');
+
+console.log('Is product page detected:', !!isProductPage);
+console.log('Page selectors found:', {
+'product.products-details-page': !!document.querySelector('.product.products-details-page'),
+'js-details-section': !!document.querySelector('.js-details-section'), 
+'#productId': !!document.querySelector('#productId'),
+'#product-id': !!document.querySelector('#product-id')
+});
       
       const idSelectors = [
         {
@@ -2188,11 +2203,34 @@ setupProductCardTimers() {
           break;
         }
       }
+
+      // After the for loop that tries to find productId, add:
+console.log('Product ID found:', productId);
+console.log('ID detection results:', {
+  '[data-wishlist-id]': document.querySelector('[data-wishlist-id]')?.getAttribute('data-wishlist-id'),
+  '#product-form input[name="product_id"]': document.querySelector('#product-form input[name="product_id"]')?.value,
+  'form#product-form input#product-id': document.querySelector('form#product-form input#product-id')?.value,
+  '#product-id': document.querySelector('#product-id')?.value,
+  'input#product-id': document.querySelector('input#product-id')?.value
+});
     
-      if (!productId) return;
+if (!productId) {
+  console.log('❌ No product ID found, exiting setupProductTimer');
+  return;
+}
     
-      this.currentProductId = productId;
-      const activeCampaign = this.findActiveCampaignForProduct(productId);
+this.currentProductId = productId;
+const activeCampaign = this.findActiveCampaignForProduct(productId);
+
+console.log('Active campaign found:', !!activeCampaign);
+console.log('Total campaigns loaded:', this.campaigns.length);
+
+if (!activeCampaign) {
+  console.log('❌ No active campaign for product', productId);
+  return;
+}
+
+console.log('✅ Creating timer for product:', productId);
     
       if (!activeCampaign) return;
 
@@ -2233,17 +2271,21 @@ setupProductCardTimers() {
           }
         ];
     
-        for (const point of insertionPoints) {
-          const container = document.querySelector(point.container);
-          if (container) {
-            if (point.method === 'before') {
-              container.parentNode.insertBefore(timer, container);
-            } else {
-              container.insertBefore(timer, container.firstChild);
-            }
-            break;
-          }
-        }
+        // Replace the insertion logic with debugging version:
+for (const point of insertionPoints) {
+  const container = document.querySelector(point.container);
+  console.log(`Checking insertion point: ${point.container}`, !!container);
+  
+  if (container) {
+    console.log('✅ Inserting timer at:', point.container);
+    if (point.method === 'before') {
+      container.parentNode.insertBefore(timer, container);
+    } else {
+      container.insertBefore(timer, container.firstChild);
+    }
+    break;
+  }
+}
       }
     
       this.createStickyCart();
