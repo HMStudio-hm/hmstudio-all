@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.4 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.4.5 (nusskhayad zydgh giss quick view / smart cart gh assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1303,23 +1303,49 @@
       '.header',
       'header[role="banner"]',
       'nav.navbar',
-      '#navbar'
+      '#navbar',
+      'header.dev3-darkblue',              // Assayl theme primary header
+      '.dev3-darkblue',                    // Assayl theme header fallback
+      '.dev3-main.border-bottom.header-top', // Assayl theme main header
+      '.dev3-main',                        // Assayl theme main container
+      '#fixed-header'                      // Assayl theme fixed header
   ];
   
   let targetLocation = null;
-  for (const selector of possibleSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-          targetLocation = element;
-          break;
-      }
-  }
+let themeDetected = 'unknown';
+
+for (const selector of possibleSelectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+        targetLocation = element;
+        
+        // Detect theme based on selector
+        if (selector.includes('dev3')) {
+            themeDetected = 'assayl';
+            console.log('Detected Assayl theme for announcement bar');
+        } else {
+            themeDetected = 'standard';
+        }
+        break;
+    }
+}
   
-  if (targetLocation) {
-      targetLocation.insertBefore(bar, targetLocation.firstChild);
+if (targetLocation) {
+  if (themeDetected === 'assayl') {
+      // For Assayl theme, insert at the very top of the header
+      if (targetLocation.classList.contains('dev3-darkblue') || 
+          targetLocation.classList.contains('dev3-main')) {
+          targetLocation.insertBefore(bar, targetLocation.firstChild);
+      } else {
+          targetLocation.parentNode.insertBefore(bar, targetLocation);
+      }
   } else {
-      document.body.insertBefore(bar, document.body.firstChild);
+      // For standard themes (Soft, Perfect, etc.)
+      targetLocation.insertBefore(bar, targetLocation.firstChild);
   }
+} else {
+  document.body.insertBefore(bar, document.body.firstChild);
+}
   
     let currentPosition = 0;
     let lastTimestamp = 0;
