@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2173,9 +2173,7 @@ if (params.smartCart) {
           '[data-wishlist-id]',
           'input[name="product_id"]',
           '#product-id',
-          '.js-add-to-cart',
-          'form#product-form input#product-id',
-          '#product-form #product-id',
+          '.js-add-to-cart'
         ];
     
         for (const idSelector of idSelectors) {
@@ -2235,47 +2233,29 @@ if (productBottom) {
   console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
   console.log('  - #product-id:', !!document.querySelector('#product-id'));
   console.log('  - #product-form:', !!document.querySelector('#product-form'));
-  console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
 
       let productId = null;
       
-      const idSelectors = [
-        {
-          selector: '[data-wishlist-id]',
-          attribute: 'data-wishlist-id'
-        },
-        {
-          selector: '#product-form input[name="product_id"]',
-          attribute: 'value'
-        },
-        {
-          selector: '#product-id',
-          attribute: 'value'
-        },
-        {
-          selector: 'form#product-form input#product-id',
-          attribute: 'value'
-        },
-        {
-          selector: '#product-form #product-id',
-          attribute: 'value'
-        },
-        {
-          selector: 'input#product-id',  // Assayl theme - NEW
-          attribute: 'value'
-        }
-      ];
-      
-      console.log('🔍 Searching for product ID...');
-      for (const {selector, attribute} of idSelectors) {
-        const element = document.querySelector(selector);
-        console.log(`🔍 Checking selector "${selector}":`, !!element);
-        if (element) {
-          productId = element.getAttribute(attribute) || element.value;
-          console.log(`✅ Found product ID "${productId}" using selector "${selector}"`);
-          break;
-        }
-      }
+// Use the SAME logic as product cards
+const idSelectors = [
+  '[data-wishlist-id]',
+  'input[name="product_id"]', 
+  '#product-id',
+  '.js-add-to-cart'
+];
+
+console.log('🔍 Using product cards logic for ID extraction...');
+for (const idSelector of idSelectors) {
+  const element = document.querySelector(idSelector);
+  console.log(`🔍 Checking selector "${idSelector}":`, !!element);
+  if (element) {
+    productId = element.getAttribute('data-wishlist-id') || 
+               element.getAttribute('onclick')?.match(/\'(.*?)\'/)?.[1] || 
+               element.value;
+    console.log(`✅ Found product ID "${productId}" using selector "${idSelector}"`);
+    if (productId) break;
+  }
+}
       
       if (!productId) {
         console.log('❌ No product ID found with any selector');
