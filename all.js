@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2190,45 +2190,15 @@ if (productBottom) {
       
       const idSelectors = [
         {
-          selector: '#product-form #product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-
-
-        {
-          selector:  '#product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        {
-          selector:  'input#product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        {
-          selector:  'form#product-form #product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        {
-          selector: 'form#product-form input#product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        {
-          selector: '#product-form #product-id',  // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        {
-          selector: '#product-form input#product-id', // Assayl theme - ADD THIS LINE
-           attribute: 'value'
-        },
-        
-
-
-
-        {
-          selector: '#product-form input[name="product_id"]',
+          selector: '#product-id',  // This should work for Assayl theme
           attribute: 'value'
         },
         {
-          selector: '#product-id',
+          selector: 'input#product-id',
+          attribute: 'value'
+        },
+        {
+          selector: '#product-form #product-id',
           attribute: 'value'
         },
         {
@@ -2236,8 +2206,12 @@ if (productBottom) {
           attribute: 'value'
         },
         {
-          selector: '#product-form #product-id',  // Assayl theme - ADD THIS LINE
+          selector: '#product-form input[name="product_id"]',
           attribute: 'value'
+        },
+        {
+          selector: '[data-wishlist-id]',
+          attribute: 'data-wishlist-id'
         }
       ];
     
@@ -2245,11 +2219,19 @@ if (productBottom) {
         const element = document.querySelector(selector);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
+          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
           break;
+        } else {
+          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
         }
       }
-    
-      if (!productId) return;
+      
+      console.log('FINAL PRODUCT ID:', productId); // DEBUG
+      
+      if (!productId) {
+        console.log('NO PRODUCT ID FOUND - TIMER WILL NOT SHOW'); // DEBUG
+        return;
+      }
     
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
@@ -2258,51 +2240,60 @@ if (productBottom) {
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
 
-// Assayl theme - ADD THIS SECTION FIRST
-const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
-if (assaylPriceContainer) {
-  assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
+// Assayl theme - try multiple insertion points
+const assaylInsertionPoints = [
+  '.price.d-flex.align-items-center',
+  '.product-formatted-price',
+  '.details-product-data .price',
+  'h3.fw-bold.text-dark-1.product-formatted-price'
+];
+
+let inserted = false;
+for (const selector of assaylInsertionPoints) {
+  const priceContainer = document.querySelector(selector);
+  if (priceContainer) {
+    priceContainer.parentNode.insertBefore(timer, priceContainer);
+    inserted = true;
+    break;
+  }
+}
+
+if (inserted) return;
+
+// Perfect theme (keep existing)
+const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
+if (cardElement) {
+  cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
   return;
 }
-      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
-      
-      if (cardElement) {
-        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
-      } else {
-        const insertionPoints = [
-          {
-            container: '.js-product-price',
-            method: 'before'
-          },
-          {
-            container: '.product-formatted-price',
-            method: 'before'
-          },
-          {
-            container: '.js-details-section',
-            method: 'prepend'
-          },
-          {
-            container: '.js-product-old-price',
-            method: 'before'
-          },
-          {
-            container: '.hmstudio-cart-buttons',
-            method: 'before'
-          }
-        ];
-    
-        for (const point of insertionPoints) {
-          const container = document.querySelector(point.container);
-          if (container) {
-            if (point.method === 'before') {
-              container.parentNode.insertBefore(timer, container);
-            } else {
-              container.insertBefore(timer, container.firstChild);
-            }
-            break;
-          }
-        }
+
+// Other fallback insertion points (keep existing)
+const insertionPoints = [
+  {
+    container: '.js-product-price',
+    method: 'before'
+  },
+  {
+    container: '.product-formatted-price',
+    method: 'before'
+  },
+  {
+    container: '.js-details-section',
+    method: 'prepend'
+  }
+];
+
+for (const point of insertionPoints) {
+  const container = document.querySelector(point.container);
+  if (container) {
+    if (point.method === 'before') {
+      container.parentNode.insertBefore(timer, container);
+    } else {
+      container.insertBefore(timer, container.firstChild);
+    }
+    break;
+  }
+
       }
     
       this.createStickyCart();
@@ -2336,8 +2327,12 @@ if (assaylPriceContainer) {
                      document.querySelector('.js-details-section') ||
                      document.querySelector('#productId') ||
                      document.querySelector('.details-product-data') ||  // Assayl theme
-                     document.querySelector('#product-form');            // Assayl theme
-                     document.querySelector('.product-id');            // Assayl theme
+                     document.querySelector('#product-form') ||          // Assayl theme
+                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme
+                     document.querySelector('.products-details') ||      // Assayl theme
+                     document.querySelector('.product.products-details-page.pt-3.pb-5'); // Assayl theme
+                     
+                     
                      
       
       if (isProductPage) {
