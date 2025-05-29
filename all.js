@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.6 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -999,11 +999,11 @@
         '.product.product-1',  // Assayl theme - main product pages
         'product product-1 ',
         'col-md-3 col-6 ',
-        '.col-md-3 col-6 ', // Assayl theme - grid container
+        '.col-md-3 col-6 ',
         '.product.position-relative',  // Assayl theme - carousel/slider products
         'product position-relative',
         'item text-center slick-slide slick-active',
-        '.item text-center slick-slide slick-active' // Assayl theme - slider items
+        '.item text-center slick-slide slick-active'
     ];
 
     let productCards = [];
@@ -1807,57 +1807,27 @@ if (params.smartCart) {
     },
 
     findActiveCampaignForProduct(productId) {
-      console.log('🔍 Looking for campaign for product ID:', productId);
-  console.log('🔍 Total campaigns to check:', this.campaigns.length);
-
       const now = new Date();
-      console.log('🕐 Current time:', now.toISOString());
-
       const activeCampaign = this.campaigns.find(campaign => {
-        console.log('📋 Checking campaign:', campaign.name || 'Unnamed Campaign');
-
         if (!campaign.products || !Array.isArray(campaign.products)) {
-          console.log('❌ Campaign has no products array');
           return false;
         }
-
-        console.log('🔍 Campaign products:', campaign.products.length);
-        console.log('🔍 Campaign product IDs:', campaign.products.map(p => p.id));
     
-        const hasProduct = campaign.products.some(p => {
-          const match = p.id === productId;
-          console.log(`  Product ${p.id} === ${productId}: ${match}`);
-          return match;
-        });
-        
-        console.log('🎯 Product found in campaign:', hasProduct);
-        
-        if (!hasProduct) {
-          console.log('❌ Product not in this campaign');
-          return false;
-        }
+        const hasProduct = campaign.products.some(p => p.id === productId);
     
         let endTime;
         try {
           endTime = campaign.endTime?._seconds ? 
             new Date(campaign.endTime._seconds * 1000) :
             new Date(campaign.endTime.seconds * 1000);
-            console.log('⏰ Campaign end time:', endTime.toISOString());
         } catch (error) {
-          console.log('❌ Error parsing end time:', error);
           return false;
         }
     
         if (!(endTime instanceof Date && !isNaN(endTime))) {
-          console.log('❌ Invalid end time');
           return false;
         }
-
-        console.log('📊 Campaign status:', campaign.status);
-        console.log('🔄 Auto restart:', campaign.timerSettings?.autoRestart);
-
         if (campaign.timerSettings.autoRestart && now > endTime) {
-          console.log('🔄 Campaign expired but has auto-restart, calculating new end time...');
           const startTime = campaign.startTime?._seconds ? 
             new Date(campaign.startTime._seconds * 1000) :
             new Date(campaign.startTime.seconds * 1000);
@@ -1866,19 +1836,10 @@ if (params.smartCart) {
           const timeSinceStart = now - startTime;
           const cycles = Math.floor(timeSinceStart / originalDuration);
           endTime = new Date(startTime.getTime() + (cycles + 1) * originalDuration);
-          console.log('🔄 New calculated end time:', endTime.toISOString());
         }
-        const isActive = hasProduct && (now <= endTime || campaign.timerSettings?.autoRestart) && campaign.status === 'active';
-        console.log('✅ Final campaign match result:', isActive);
-        
-        return isActive;
-      });
     
-      if (activeCampaign) {
-        console.log('🎯 Found active campaign:', activeCampaign.name || 'Unnamed Campaign');
-      } else {
-        console.log('❌ No active campaign found for product:', productId);
-      }
+        return hasProduct && (now <= endTime || campaign.timerSettings.autoRestart) && campaign.status === 'active';
+      });
     
       return activeCampaign;
     },
@@ -2147,8 +2108,6 @@ if (params.smartCart) {
         'item text-center slick-slide slick-active',
         '.item text-center slick-slide slick-active'
     ];
-
-
     
       let allProductCards = [];
       for (const selector of productCardSelectors) {
@@ -2193,7 +2152,9 @@ if (params.smartCart) {
         const activeCampaign = this.findActiveCampaignForProduct(productId);
         if (!activeCampaign) return;
     
-        const timer = this.createProductCardTimer(activeCampaign, productId);
+        // Add this replacement for the timer insertion logic in setupProductCardTimers()
+
+const timer = this.createProductCardTimer(activeCampaign, productId);
 
 // Perfect theme
 const cardBody = card.querySelector('.card-body');
@@ -2225,78 +2186,41 @@ if (productBottom) {
     },
 
     setupProductTimer() {
+
+
       let productId = null;
-      
-      // Check if we're on Assayl theme product page
-      const isAssaylTheme = document.querySelector('.details-product-data') || 
-                           document.querySelector('.col-product-info') ||
-                           document.querySelector('#product-form #product-id');
-      
-      if (isAssaylTheme) {
-        console.log('🎯 Assayl theme detected - using form input for product ID');
-        // For Assayl theme: prioritize form input over wishlist elements
-        const idSelectors = [
-          {
-            selector: '#product-id',
-            attribute: 'value'
-          },
-          {
-            selector: 'input#product-id',
-            attribute: 'value'
-          },
-          {
-            selector: '#product-form #product-id',
-            attribute: 'value'
-          },
-          {
-            selector: 'form#product-form input#product-id',
-            attribute: 'value'
-          }
-        ];
-        
-        for (const {selector, attribute} of idSelectors) {
-          const element = document.querySelector(selector);
-          if (element) {
-            productId = element.getAttribute(attribute) || element.value;
-            console.log(`✅ Assayl: Found product ID "${productId}" using "${selector}"`);
-            break;
-          }
-        }
-      } else {
-        console.log('🎯 Soft/Perfect theme detected - using existing logic');
-        // For Soft/Perfect themes: keep existing logic (wishlist first)
-        const idSelectors = [
-          {
-            selector: '[data-wishlist-id]',
-            attribute: 'data-wishlist-id'
-          },
-          {
-            selector: '#product-form input[name="product_id"]',
-            attribute: 'value'
-          },
-          {
-            selector: '#product-id',
-            attribute: 'value'
-          },
-          {
-            selector: 'form#product-form input#product-id',
-            attribute: 'value'
-          }
-        ];
-        
-        for (const {selector, attribute} of idSelectors) {
-          const element = document.querySelector(selector);
-          if (element) {
-            productId = element.getAttribute(attribute) || element.value;
-            console.log(`✅ Soft/Perfect: Found product ID "${productId}" using "${selector}"`);
-            break;
-          }
-        }
-      }
+
+// Check if it's Assayl theme first (most specific)
+const assaylProductId = document.querySelector('#product-id');
+if (assaylProductId) {
+  productId = assaylProductId.value;
+} else {
+  // Fallback to Soft and Perfect theme selectors
+  const idSelectors = [
+    {
+      selector: '[data-wishlist-id]',
+      attribute: 'data-wishlist-id'
+    },
+    {
+      selector: '#product-form input[name="product_id"]',
+      attribute: 'value'
+    },
+    {
+      selector: 'form#product-form input#product-id',
+      attribute: 'value'
+    }
+  ];
+
+  for (const {selector, attribute} of idSelectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+      productId = element.getAttribute(attribute) || element.value;
+      break;
+    }
+  }
+}
     
-      if (!productId) {
-        return;
-      }
+      if (!productId) return;
     
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
@@ -2304,78 +2228,54 @@ if (productBottom) {
       if (!activeCampaign) return;
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
-console.log('🎯 Created timer for product:', productId);
 
-// Assayl theme - with logging
+// Check for Assayl theme first - insert above price
 const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
-console.log('🔍 Assayl price container found:', !!assaylPriceContainer);
 if (assaylPriceContainer) {
   assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
-  console.log('✅ Timer inserted above Assayl price container');
-  return;
-}
+} else {
+  // Fallback to existing insertion points for Soft and Perfect themes
+  const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
+  
+  if (cardElement) {
+    cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+  } else {
+    const insertionPoints = [
+      {
+        container: '.js-product-price',
+        method: 'before'
+      },
+      {
+        container: '.product-formatted-price',
+        method: 'before'
+      },
+      {
+        container: '.js-details-section',
+        method: 'prepend'
+      },
+      {
+        container: '.js-product-old-price',
+        method: 'before'
+      },
+      {
+        container: '.hmstudio-cart-buttons',
+        method: 'before'
+      }
+    ];
 
-// Try additional Assayl selectors
-const assaylPrice2 = document.querySelector('h3.fw-bold.text-dark-1.product-formatted-price');
-console.log('🔍 Assayl price variant 2 found:', !!assaylPrice2);
-if (assaylPrice2) {
-  assaylPrice2.parentNode.insertBefore(timer, assaylPrice2);
-  console.log('✅ Timer inserted above Assayl price variant 2');
-  return;
-}
-
-const assaylDetailsData = document.querySelector('.details-product-data');
-console.log('🔍 Assayl details container found:', !!assaylDetailsData);
-if (assaylDetailsData) {
-  // Insert after the heading section
-  const priceSection = assaylDetailsData.querySelector('.price.d-flex.align-items-center');
-  if (priceSection) {
-    priceSection.parentNode.insertBefore(timer, priceSection);
-    console.log('✅ Timer inserted in Assayl details section');
-    return;
+    for (const point of insertionPoints) {
+      const container = document.querySelector(point.container);
+      if (container) {
+        if (point.method === 'before') {
+          container.parentNode.insertBefore(timer, container);
+        } else {
+          container.insertBefore(timer, container.firstChild);
+        }
+        break;
+      }
+    }
   }
 }
-
-      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
-      
-      if (cardElement) {
-        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
-      } else {
-        const insertionPoints = [
-          {
-            container: '.js-product-price',
-            method: 'before'
-          },
-          {
-            container: '.product-formatted-price',
-            method: 'before'
-          },
-          {
-            container: '.js-details-section',
-            method: 'prepend'
-          },
-          {
-            container: '.js-product-old-price',
-            method: 'before'
-          },
-          {
-            container: '.hmstudio-cart-buttons',
-            method: 'before'
-          }
-        ];
-    
-        for (const point of insertionPoints) {
-          const container = document.querySelector(point.container);
-          if (container) {
-            if (point.method === 'before') {
-              container.parentNode.insertBefore(timer, container);
-            } else {
-              container.insertBefore(timer, container.firstChild);
-            }
-            break;
-          }
-        }
-      }
     
       this.createStickyCart();
     
@@ -2405,52 +2305,24 @@ if (assaylDetailsData) {
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
-                     document.querySelector('.js-details-section') ||
-                     document.querySelector('#productId') ||
-                     document.querySelector('.details-product-data') ||  // Assayl theme
-                     document.querySelector('#product-form') ||          // Assayl theme
-                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme - FIXED
-                     document.querySelector('.products-details') ||      // Assayl theme
-                     document.querySelector('.product.products-details-page.pt-3.pb-5') ||  // Assayl theme - FIXED
-                     document.querySelector('.col-product-info') ||      // Assayl theme - NEW
-                     document.querySelector('.col-product-image-wrapper') ||  // Assayl theme - NEW
-                     document.querySelector('.product-formatted-price') ||   // Assayl theme - NEW
-                     document.querySelector('.product-buttons') ||       // Assayl theme - NEW
-                     document.querySelector('h1.product-title');         // Assayl theme - NEW
-
-console.log('🔍 Product Page Detection Result:', !!isProductPage);
-if (isProductPage) {
-  console.log('✅ Found product page element:', isProductPage.className || isProductPage.id || isProductPage.tagName);
-}
+                           document.querySelector('.js-details-section') ||
+                           document.querySelector('#productId');
       
       if (isProductPage) {
-        console.log('✅ Product page detected, calling setupProductTimer...');
         this.createStickyCart();
         const wishlistBtn = document.querySelector('[data-wishlist-id]');
         const productForm = document.querySelector('form[data-product-id]');
         const productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
                          productForm?.getAttribute('data-product-id');
-
-                         console.log('🔍 Quick product ID check:', productId);
-  console.log('🔍 Wishlist button found:', !!wishlistBtn);
-  console.log('🔍 Product form found:', !!productForm);
     
         if (productId) {
-          console.log('✅ Product ID found, checking for active campaign...');
           const activeCampaign = this.findActiveCampaignForProduct(productId);
-          console.log('🎯 Active campaign found:', !!activeCampaign);
           if (activeCampaign) {
-            console.log('✅ Calling setupProductTimer...');
             this.setupProductTimer();
             if (this.activeTimers.size > 0) {
               this.startTimerUpdates();
             }
-          } else {
-            console.log('❌ No active campaign for this product');
-          } 
-        } else {
-          console.log('❌ No product ID found in quick check, trying setupProductTimer anyway...');
-          this.setupProductTimer(); // Try anyway, it has its own ID detection
+          }
         }
       } else {
         const productCards = document.querySelectorAll('.product-item, .card.card-product, .product.product-1, .product.position-relative');
@@ -4572,8 +4444,25 @@ const couponMessages = {
       },
   
       async initialize() {
+
+        console.log('=== Smart Cart Initialize Called ===');
+
         // Fetch campaigns first
-        await this.fetchCampaigns();
+  await this.fetchCampaigns();
+  console.log('Campaigns fetched:', this.campaigns);
+  
+  this.stopTimerUpdates();
+  
+  const isProductPage = document.querySelector('.product.products-details-page') || 
+                       document.querySelector('.js-details-section') ||
+                       document.querySelector('#productId');
+  
+  console.log('Is product page?', isProductPage);
+  console.log('Page selectors found:', {
+    'product.products-details-page': !!document.querySelector('.product.products-details-page'),
+    'js-details-section': !!document.querySelector('.js-details-section'), 
+    'productId': !!document.querySelector('#productId')
+  });
         
         if (!window.HMStudioUpsell) {
           window.HMStudioUpsell = {
