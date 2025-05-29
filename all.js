@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2324,13 +2324,37 @@ for (const point of insertionPoints) {
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
-                     document.querySelector('.js-details-section') ||
-                     document.querySelector('#productId') ||
-                     document.querySelector('.details-product-data') ||  // Assayl theme
-                     document.querySelector('#product-form') ||          // Assayl theme
-                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme
-                     document.querySelector('.products-details') ||      // Assayl theme
-                     document.querySelector('.product.products-details-page.pt-3.pb-5'); // Assayl theme
+                           document.querySelector('.js-details-section') ||
+                           document.querySelector('#productId') ||
+                           document.querySelector('.details-product-data') ||
+                           document.querySelector('#product-form') ||
+                           document.querySelector('.products-details.mb-4.mb-lg-5') ||
+                           document.querySelector('.products-details') ||
+                           document.querySelector('.product.products-details-page.pt-3.pb-5');
+      
+      // EXPANDED DEBUG CODE:
+      console.log('=== PAGE DETECTION DEBUG ===');
+      console.log('Is Product Page:', !!isProductPage);
+      console.log('Selector 1 (.product.products-details-page):', !!document.querySelector('.product.products-details-page'));
+      console.log('Selector 2 (.js-details-section):', !!document.querySelector('.js-details-section'));
+      console.log('Selector 3 (#productId):', !!document.querySelector('#productId'));
+      console.log('Selector 4 (.details-product-data):', !!document.querySelector('.details-product-data'));
+      console.log('Selector 5 (#product-form):', !!document.querySelector('#product-form'));
+      console.log('Selector 6 (.products-details.mb-4.mb-lg-5):', !!document.querySelector('.products-details.mb-4.mb-lg-5'));
+      console.log('Selector 7 (.products-details):', !!document.querySelector('.products-details'));
+      console.log('Selector 8 (.product.products-details-page.pt-3.pb-5):', !!document.querySelector('.product.products-details-page.pt-3.pb-5'));
+      
+      // CHECK FOR #product-id ELEMENT
+      const productIdElement = document.querySelector('#product-id');
+      console.log('=== PRODUCT ID ELEMENT DEBUG ===');
+      console.log('#product-id element found:', !!productIdElement);
+      if (productIdElement) {
+        console.log('#product-id value:', productIdElement.value);
+        console.log('#product-id getAttribute value:', productIdElement.getAttribute('value'));
+      } else {
+        console.log('COULD NOT FIND #product-id ELEMENT');
+      }
+      console.log('================================');
                      
                      
                      
@@ -2343,7 +2367,10 @@ for (const point of insertionPoints) {
                          productForm?.getAttribute('data-product-id');
     
         if (productId) {
+          console.log('CALLING setupProductTimer() because isProductPage = true');
           const activeCampaign = this.findActiveCampaignForProduct(productId);
+        } else {
+          console.log('NOT CALLING setupProductTimer() because isProductPage = false');
           if (activeCampaign) {
             this.setupProductTimer();
             if (this.activeTimers.size > 0) {
