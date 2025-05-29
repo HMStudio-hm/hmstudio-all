@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2238,63 +2238,34 @@ for (const selector of assaylInsertionPoints) {
           }
         }
       }
-      
+    
       if (!productId) {
         console.log('Smart Cart: Still no product ID found, aborting timer setup');
         return;
       }
-      
+    
       console.log('Smart Cart: Setting up timer for product ID:', productId);
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
-      
+    
       if (!activeCampaign) {
         console.log('Smart Cart: No active campaign found for product:', productId);
         console.log('Smart Cart: Available campaigns:', this.campaigns);
         return;
       }
-      
-      console.log('Smart Cart: Found active campaign:', activeCampaign);
+    
+      console.log('Smart Cart: Found active campaign for product:', productId, activeCampaign);
       const timer = this.createCountdownTimer(activeCampaign, productId);
-
+      
+      // Try to insert the timer using various insertion points
       const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
       if (cardElement) {
         cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+        console.log('Smart Cart: Timer inserted using card element');
       } else {
-
         const insertionPoints = [
-          // Assayl theme specific insertion points (higher priority)
-          {
-            container: '.price.d-flex.align-items-center',
-            method: 'before'
-          },
-          {
-            container: '.loyalty-products',
-            method: 'before'
-          },
-          {
-            container: '.later-payment-widget',
-            method: 'before'
-          },
-          // New insertion points for variations without rating/reviews
-          {
-            container: '.feature-1',
-            method: 'after'
-          },
-          {
-            container: '.d-flex.align-items-center.mt-2.mb-3.feature-1',
-            method: 'after'
-          },
-          {
-            container: '.details-product-data .price',
-            method: 'before'
-          },
-          {
-            container: '.details-product-data h3.fw-bold.text-dark-1.product-formatted-price',
-            method: 'before'
-          },
-          // Generic insertion points for other themes
+          // Original working insertion points first (maintain existing functionality)
           {
             container: '.js-product-price',
             method: 'before'
@@ -2315,25 +2286,72 @@ for (const selector of assaylInsertionPoints) {
             container: '.hmstudio-cart-buttons',
             method: 'before'
           },
+          // Assayl theme specific insertion points
+          {
+            container: '.price.d-flex.align-items-center',
+            method: 'before'
+          },
+          {
+            container: '.loyalty-products',
+            method: 'before'
+          },
+          {
+            container: '.later-payment-widget',
+            method: 'before'
+          },
+          {
+            container: '.feature-1',
+            method: 'after'
+          },
+          {
+            container: '.d-flex.align-items-center.mt-2.mb-3.feature-1',
+            method: 'after'
+          },
+          {
+            container: '.details-product-data .price',
+            method: 'before'
+          },
+          {
+            container: '.details-product-data h3.fw-bold.text-dark-1.product-formatted-price',
+            method: 'before'
+          },
           {
             container: '.details-product-data',
             method: 'append'
           }
         ];
-      
+    
+        let timerInserted = false;
         for (const point of insertionPoints) {
           const container = document.querySelector(point.container);
-          if (container) {
-            if (point.method === 'before') {
-              container.parentNode.insertBefore(timer, container);
-            } else if (point.method === 'after') {
-              container.parentNode.insertBefore(timer, container.nextSibling);
-            } else {
-              container.insertBefore(timer, container.firstChild);
+          if (container && !timerInserted) {
+            try {
+              if (point.method === 'before') {
+                container.parentNode.insertBefore(timer, container);
+              } else if (point.method === 'after') {
+                container.parentNode.insertBefore(timer, container.nextSibling);
+              } else if (point.method === 'prepend') {
+                container.insertBefore(timer, container.firstChild);
+              } else if (point.method === 'append') {
+                container.appendChild(timer);
+              }
+              console.log('Smart Cart: Timer inserted using container:', point.container, 'method:', point.method);
+              timerInserted = true;
+              break;
+            } catch (error) {
+              console.log('Smart Cart: Failed to insert timer at:', point.container, error);
             }
-            console.log('Smart Cart: Timer inserted using container:', point.container);
-            break;
           }
+        }
+    
+        if (!timerInserted) {
+          console.log('Smart Cart: Could not find suitable insertion point for timer');
+          // Log available elements for debugging
+          console.log('Available elements for debugging:');
+          insertionPoints.forEach(point => {
+            const el = document.querySelector(point.container);
+            console.log(`- ${point.container}:`, el ? 'Found' : 'Not found');
+          });
         }
       }
     
