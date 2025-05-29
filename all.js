@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2108,6 +2108,8 @@ if (params.smartCart) {
         'item text-center slick-slide slick-active',
         '.item text-center slick-slide slick-active'
     ];
+
+
     
       let allProductCards = [];
       for (const selector of productCardSelectors) {
@@ -2132,7 +2134,9 @@ if (params.smartCart) {
           '[data-wishlist-id]',
           'input[name="product_id"]',
           '#product-id',
-          '.js-add-to-cart'
+          '.js-add-to-cart',
+          'form#product-form input#product-id',
+          '#product-form #product-id',
         ];
     
         for (const idSelector of idSelectors) {
@@ -2152,9 +2156,7 @@ if (params.smartCart) {
         const activeCampaign = this.findActiveCampaignForProduct(productId);
         if (!activeCampaign) return;
     
-        // Add this replacement for the timer insertion logic in setupProductCardTimers()
-
-const timer = this.createProductCardTimer(activeCampaign, productId);
+        const timer = this.createProductCardTimer(activeCampaign, productId);
 
 // Perfect theme
 const cardBody = card.querySelector('.card-body');
@@ -2186,6 +2188,9 @@ if (productBottom) {
     },
 
     setupProductTimer() {
+      console.log('🚀 setupProductTimer called');
+  console.log('🔍 Available campaigns:', this.campaigns.length);
+
       let productId = null;
       
       const idSelectors = [
@@ -2206,20 +2211,32 @@ if (productBottom) {
           attribute: 'value'
         },
         {
-          selector: '#product-form #product-id',  // Assayl theme - ADD THIS LINE
+          selector: '#product-form #product-id',
+          attribute: 'value'
+        },
+        {
+          selector: 'input#product-id',  // Assayl theme - NEW
           attribute: 'value'
         }
       ];
-    
+      
+      console.log('🔍 Searching for product ID...');
       for (const {selector, attribute} of idSelectors) {
         const element = document.querySelector(selector);
+        console.log(`🔍 Checking selector "${selector}":`, !!element);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
+          console.log(`✅ Found product ID "${productId}" using selector "${selector}"`);
           break;
         }
       }
-    
-      if (!productId) return;
+      
+      if (!productId) {
+        console.log('❌ No product ID found with any selector');
+        return;
+      } else {
+        console.log('✅ Final product ID:', productId);
+      }
     
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
@@ -2227,13 +2244,38 @@ if (productBottom) {
       if (!activeCampaign) return;
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
+console.log('🎯 Created timer for product:', productId);
 
-// Assayl theme - ADD THIS SECTION FIRST
+// Assayl theme - with logging
 const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
+console.log('🔍 Assayl price container found:', !!assaylPriceContainer);
 if (assaylPriceContainer) {
   assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
+  console.log('✅ Timer inserted above Assayl price container');
   return;
 }
+
+// Try additional Assayl selectors
+const assaylPrice2 = document.querySelector('h3.fw-bold.text-dark-1.product-formatted-price');
+console.log('🔍 Assayl price variant 2 found:', !!assaylPrice2);
+if (assaylPrice2) {
+  assaylPrice2.parentNode.insertBefore(timer, assaylPrice2);
+  console.log('✅ Timer inserted above Assayl price variant 2');
+  return;
+}
+
+const assaylDetailsData = document.querySelector('.details-product-data');
+console.log('🔍 Assayl details container found:', !!assaylDetailsData);
+if (assaylDetailsData) {
+  // Insert after the heading section
+  const priceSection = assaylDetailsData.querySelector('.price.d-flex.align-items-center');
+  if (priceSection) {
+    priceSection.parentNode.insertBefore(timer, priceSection);
+    console.log('✅ Timer inserted in Assayl details section');
+    return;
+  }
+}
+
       const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
       if (cardElement) {
@@ -2306,7 +2348,20 @@ if (assaylPriceContainer) {
                      document.querySelector('.js-details-section') ||
                      document.querySelector('#productId') ||
                      document.querySelector('.details-product-data') ||  // Assayl theme
-                     document.querySelector('#product-form');            // Assayl theme
+                     document.querySelector('#product-form') ||          // Assayl theme
+                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme - FIXED
+                     document.querySelector('.products-details') ||      // Assayl theme
+                     document.querySelector('.product.products-details-page.pt-3.pb-5') ||  // Assayl theme - FIXED
+                     document.querySelector('.col-product-info') ||      // Assayl theme - NEW
+                     document.querySelector('.col-product-image-wrapper') ||  // Assayl theme - NEW
+                     document.querySelector('.product-formatted-price') ||   // Assayl theme - NEW
+                     document.querySelector('.product-buttons') ||       // Assayl theme - NEW
+                     document.querySelector('h1.product-title');         // Assayl theme - NEW
+
+console.log('🔍 Product Page Detection Result:', !!isProductPage);
+if (isProductPage) {
+  console.log('✅ Found product page element:', isProductPage.className || isProductPage.id || isProductPage.tagName);
+}
       
       if (isProductPage) {
         this.createStickyCart();
@@ -4444,36 +4499,8 @@ const couponMessages = {
       },
   
       async initialize() {
-
-        console.log('=== Smart Cart Initialize Called ===');
-
         // Fetch campaigns first
-  await this.fetchCampaigns();
-  console.log('Campaigns fetched:', this.campaigns);
-  
-  this.stopTimerUpdates();
-  
-  const isProductPage = document.querySelector('.product.products-details-page') || 
-                     document.querySelector('.js-details-section') ||
-                     document.querySelector('#productId') ||
-                     document.querySelector('.details-product-data') ||  // Assayl theme
-                     document.querySelector('#product-form');            // Assayl theme
-                     document.querySelector('products-details mb-4 mb-lg-5');            // Assayl theme
-                     document.querySelector('.products-details mb-4 mb-lg-5');            // Assayl theme
-                     document.querySelector('.products-details');            // Assayl theme
-                     document.querySelector('products-details');            // Assayl theme
-                     document.querySelector('product products-details-page  pt-3 pb-5');            // Assayl theme
-                     document.querySelector('.product products-details-page  pt-3 pb-5');            // Assayl theme
-                     document.querySelector('.product products-details-page');            // Assayl theme
-                     document.querySelector('product products-details-page');            // Assayl theme
-
-  
-  console.log('Is product page?', isProductPage);
-  console.log('Page selectors found:', {
-    'product.products-details-page': !!document.querySelector('.product.products-details-page'),
-    'js-details-section': !!document.querySelector('.js-details-section'), 
-    'productId': !!document.querySelector('#productId')
-  });
+        await this.fetchCampaigns();
         
         if (!window.HMStudioUpsell) {
           window.HMStudioUpsell = {
