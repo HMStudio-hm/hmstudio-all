@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.5 (nusskhayad fixigh giss upsell model awri9n ighsbadlgh sf7a nlbrowser) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.6 (nusskhayad fixigh giss upsell model awri9n ighsbadlgh sf7a nlbrowser) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1946,16 +1946,16 @@ if (params.smartCart) {
       
       const idSelectors = [
         {
-          selector: '#product-id',
-          attribute: 'value'
+          selector: '[data-wishlist-id]',
+          attribute: 'data-wishlist-id'
         },
         {
           selector: '#product-form input[name="product_id"]',
           attribute: 'value'
         },
         {
-          selector: '[data-wishlist-id]',
-          attribute: 'data-wishlist-id'
+          selector: '#product-id',
+          attribute: 'value'
         },
         {
           selector: 'form#product-form input#product-id',
@@ -1967,101 +1967,95 @@ if (params.smartCart) {
         const element = document.querySelector(selector);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
-          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
           break;
-        } else {
-          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
         }
       }
-      
-      console.log('FINAL PRODUCT ID:', productId); // DEBUG
     
       if (!productId) {
-        console.log('NO PRODUCT ID FOUND - TIMER WILL NOT SHOW'); // DEBUG
+        console.log('DEBUG: No product ID found');
         return;
       }
+      
+      console.log('DEBUG: Product ID found:', productId);
     
       this.currentProductId = productId;
-      console.log('=== CAMPAIGN DETECTION DEBUG ===');
-      console.log('Total campaigns loaded:', this.campaigns.length);
-      console.log('Looking for campaigns for product ID:', productId);
-
       const activeCampaign = this.findActiveCampaignForProduct(productId);
-      console.log('Active campaign found:', !!activeCampaign);
-    
+      
+      console.log('DEBUG: Active campaign found:', !!activeCampaign);
       if (activeCampaign) {
-        console.log('Campaign details:', activeCampaign);
-      } else {
-        console.log('NO ACTIVE CAMPAIGN FOUND FOR THIS PRODUCT');
-        console.log('All campaigns:', this.campaigns);
+        console.log('DEBUG: Campaign details:', activeCampaign);
       }
     
       if (!activeCampaign) {
-        console.log('TIMER WILL NOT SHOW - NO ACTIVE CAMPAIGN');
+        console.log('DEBUG: No active campaign, timer will not show');
         return;
       }
-
-
-      console.log('=== TIMER CREATION DEBUG ===');
-  const timer = this.createCountdownTimer(activeCampaign, productId);
-  console.log('Timer created:', !!timer);
-
-// Assayl theme - ADD THIS SECTION FIRST
-const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
-if (assaylPriceContainer) {
-  assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
-  return;
-}
-
-
-      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
-      
-      if (cardElement) {
-        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
-      } else {
-        const insertionPoints = [
-          {
-            container: '.js-product-price',
-            method: 'before'
-          },
-          {
-            container: '.product-formatted-price',
-            method: 'before'
-          },
-          {
-            container: '.js-details-section',
-            method: 'prepend'
-          },
-          {
-            container: '.js-product-old-price',
-            method: 'before'
-          },
-          {
-            container: '.hmstudio-cart-buttons',
-            method: 'before'
-          }
-        ];
     
-        for (const point of insertionPoints) {
-          const container = document.querySelector(point.container);
-          if (container) {
-            console.log('Attempting to insert timer...');
-            if (point.method === 'before') {
-              container.parentNode.insertBefore(timer, container);
-            } else {
-              container.insertBefore(timer, container.firstChild);
-              console.log('Timer insertion completed');
+      console.log('DEBUG: Creating countdown timer...');
+      const timer = this.createCountdownTimer(activeCampaign, productId);
+      console.log('DEBUG: Timer created:', !!timer);
+      
+      if (!timer) {
+        console.log('DEBUG: Timer creation failed');
+        return;
+      }
+      
+      // Assayl theme - Insert above price
+      const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
+      console.log('DEBUG: Assayl price container found:', !!assaylPriceContainer);
+      
+      if (assaylPriceContainer) {
+        console.log('DEBUG: Inserting timer above price container...');
+        console.log('DEBUG: Price container parent:', assaylPriceContainer.parentNode);
+        
+        try {
+          assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
+          console.log('DEBUG: Timer inserted successfully!');
+          
+          // Check if timer is actually in the DOM
+          const insertedTimer = document.getElementById(`hmstudio-countdown-${productId}`);
+          console.log('DEBUG: Timer found in DOM after insertion:', !!insertedTimer);
+          
+        } catch (error) {
+          console.error('DEBUG: Error inserting timer:', error);
+        }
+        
+        this.createStickyCart();
+        if (this.activeTimers.size > 0) {
+          this.startTimerUpdates();
+        }
+        return;
+      }
+      
+      console.log('DEBUG: Assayl price container not found, trying other selectors...');
+      
+      // Try alternative Assayl selectors
+      const altSelectors = [
+        'h3.fw-bold.text-dark-1.product-formatted-price',
+        '.product-formatted-price',
+        '.details-product-data .price'
+      ];
+      
+      for (const selector of altSelectors) {
+        const container = document.querySelector(selector);
+        console.log(`DEBUG: Trying selector "${selector}":`, !!container);
+        if (container) {
+          console.log('DEBUG: Found alternative container, inserting timer...');
+          try {
+            container.parentNode.insertBefore(timer, container);
+            console.log('DEBUG: Timer inserted with alternative selector!');
+            this.createStickyCart();
+            if (this.activeTimers.size > 0) {
+              this.startTimerUpdates();
             }
-            break;
+            return;
+          } catch (error) {
+            console.error('DEBUG: Error with alternative insertion:', error);
           }
         }
       }
-    
-      this.createStickyCart();
-    
-      if (this.activeTimers.size > 0) {
-        this.startTimerUpdates();
-      }
+      
+      console.log('DEBUG: No suitable container found for Assayl theme');
     },
 
     startTimerUpdates() {
