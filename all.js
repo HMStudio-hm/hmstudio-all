@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2190,32 +2190,41 @@ if (productBottom) {
 
       let productId = null;
 
-// Check if it's Assayl theme first (most specific)
-const assaylProductId = document.querySelector('#product-id');
-if (assaylProductId) {
-  productId = assaylProductId.value;
+// Try Assayl theme first - be more specific
+const assaylProductIdInput = document.querySelector('form#product-form input#product-id[type="hidden"]');
+if (assaylProductIdInput && assaylProductIdInput.value) {
+  productId = assaylProductIdInput.value;
+  console.log('Assayl product ID found:', productId); // Debug log
 } else {
-  // Fallback to Soft and Perfect theme selectors
-  const idSelectors = [
-    {
-      selector: '[data-wishlist-id]',
-      attribute: 'data-wishlist-id'
-    },
-    {
-      selector: '#product-form input[name="product_id"]',
-      attribute: 'value'
-    },
-    {
-      selector: 'form#product-form input#product-id',
-      attribute: 'value'
-    }
-  ];
+  // Also try without form selector as backup
+  const assaylProductIdDirect = document.querySelector('input#product-id[type="hidden"]');
+  if (assaylProductIdDirect && assaylProductIdDirect.value) {
+    productId = assaylProductIdDirect.value;
+    console.log('Assayl product ID found (direct):', productId); // Debug log
+  } else {
+    // Fallback to Soft and Perfect theme selectors
+    const idSelectors = [
+      {
+        selector: '[data-wishlist-id]',
+        attribute: 'data-wishlist-id'
+      },
+      {
+        selector: '#product-form input[name="product_id"]',
+        attribute: 'value'
+      },
+      {
+        selector: 'form#product-form input#product-id',
+        attribute: 'value'
+      }
+    ];
 
-  for (const {selector, attribute} of idSelectors) {
-    const element = document.querySelector(selector);
-    if (element) {
-      productId = element.getAttribute(attribute) || element.value;
-      break;
+    for (const {selector, attribute} of idSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        productId = element.getAttribute(attribute) || element.value;
+        console.log('Fallback product ID found:', productId); // Debug log
+        break;
+      }
     }
   }
 }
@@ -2229,16 +2238,33 @@ if (assaylProductId) {
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
 
-// Check for Assayl theme first - insert above price
-const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
-if (assaylPriceContainer) {
-  assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
-} else {
-  // Fallback to existing insertion points for Soft and Perfect themes
+// Check for Assayl theme with multiple possible selectors
+let timerInserted = false;
+
+// Try multiple Assayl price selectors
+const assaylPriceSelectors = [
+  '.price.d-flex.align-items-center',
+  '.details-product-data .price',
+  'h3.fw-bold.text-dark-1.product-formatted-price'
+];
+
+for (const selector of assaylPriceSelectors) {
+  const priceContainer = document.querySelector(selector);
+  if (priceContainer) {
+    priceContainer.parentNode.insertBefore(timer, priceContainer);
+    console.log('Timer inserted above price in Assayl theme using:', selector); // Debug log
+    timerInserted = true;
+    break;
+  }
+}
+
+// If Assayl insertion failed, try existing logic for Soft/Perfect themes
+if (!timerInserted) {
   const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
   
   if (cardElement) {
     cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+    timerInserted = true;
   } else {
     const insertionPoints = [
       {
@@ -2271,10 +2297,17 @@ if (assaylPriceContainer) {
         } else {
           container.insertBefore(timer, container.firstChild);
         }
+        timerInserted = true;
         break;
       }
     }
   }
+}
+
+if (timerInserted) {
+  console.log('Timer successfully inserted for product:', productId);
+} else {
+  console.log('Failed to insert timer for product:', productId);
 }
     
       this.createStickyCart();
