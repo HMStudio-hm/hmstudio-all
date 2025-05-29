@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2191,6 +2191,13 @@ if (productBottom) {
       console.log('🚀 setupProductTimer called');
   console.log('🔍 Available campaigns:', this.campaigns.length);
 
+  // Log all available elements for debugging
+  console.log('🔍 Available elements check:');
+  console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
+  console.log('  - #product-id:', !!document.querySelector('#product-id'));
+  console.log('  - #product-form:', !!document.querySelector('#product-form'));
+  console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
+
       let productId = null;
       
       const idSelectors = [
@@ -2364,20 +2371,33 @@ if (isProductPage) {
 }
       
       if (isProductPage) {
+        console.log('✅ Product page detected, calling setupProductTimer...');
         this.createStickyCart();
         const wishlistBtn = document.querySelector('[data-wishlist-id]');
         const productForm = document.querySelector('form[data-product-id]');
         const productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
                          productForm?.getAttribute('data-product-id');
+
+                         console.log('🔍 Quick product ID check:', productId);
+  console.log('🔍 Wishlist button found:', !!wishlistBtn);
+  console.log('🔍 Product form found:', !!productForm);
     
         if (productId) {
+          console.log('✅ Product ID found, checking for active campaign...');
           const activeCampaign = this.findActiveCampaignForProduct(productId);
+          console.log('🎯 Active campaign found:', !!activeCampaign);
           if (activeCampaign) {
+            console.log('✅ Calling setupProductTimer...');
             this.setupProductTimer();
             if (this.activeTimers.size > 0) {
               this.startTimerUpdates();
             }
-          }
+          } else {
+            console.log('❌ No active campaign for this product');
+          } 
+        } else {
+          console.log('❌ No product ID found in quick check, trying setupProductTimer anyway...');
+          this.setupProductTimer(); // Try anyway, it has its own ID detection
         }
       } else {
         const productCards = document.querySelectorAll('.product-item, .card.card-product, .product.product-1, .product.position-relative');
