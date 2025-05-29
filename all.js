@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.6 (nusskhayad fixigh giss upsell model awri9n ighsbadlgh sf7a nlbrowser) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -989,105 +989,300 @@
     }
   }
   
+  // Support both Soft theme and Perfect theme selectors
   function addQuickViewButtons() {
+    
+    // Support Soft theme, Perfect theme, and Assayl theme selectors
     const productCardSelectors = [
-        '.product-item.position-relative',
-        '.card.card-product'
+        '.product-item.position-relative', // Soft theme
+        '.card.card-product',              // Perfect theme
+        '.product.product-1',  // Assayl theme - main product pages
+        'product product-1 ',
+        'col-md-3 col-6 ',
+        '.col-md-3 col-6 ', // Assayl theme - grid container
+        '.product.position-relative',  // Assayl theme - carousel/slider products
+        'product position-relative',
+        'item text-center slick-slide slick-active',
+        '.item text-center slick-slide slick-active' // Assayl theme - slider items
     ];
-  
+
     let productCards = [];
+    let currentTheme = 'unknown';
+    
+    // Try each selector to identify the theme
     for (const selector of productCardSelectors) {
         const cards = document.querySelectorAll(selector);
         if (cards.length > 0) {
             productCards = cards;
+            if (selector === '.product-item.position-relative') {
+                currentTheme = 'soft';
+            } else if (selector === '.card.card-product') {
+                currentTheme = 'perfect';
+            } else if (selector === '.product.position-relative') {
+                currentTheme = 'assayl';
+            }
             break;
         }
-    }
-    
+    }    
     productCards.forEach(card => {
         if (card.querySelector('.quick-view-btn')) {
             return;
         }
-  
+
+        // Support different product ID data attributes for different themes
         let productId = null;
-        const wishlistBtn = card.querySelector('[data-wishlist-id]');
-        const productForm = card.querySelector('form[data-product-id]');
         
-        if (wishlistBtn) {
-            productId = wishlistBtn.getAttribute('data-wishlist-id');
-        } else if (productForm) {
-            productId = productForm.getAttribute('data-product-id');
+        if (currentTheme === 'assayl') {
+            // For Assayl theme, look for data-wishlist-id on the wishlist span
+            const wishlistSpan = card.querySelector('.add-to-wishlist[data-wishlist-id]');
+            if (wishlistSpan) {
+                productId = wishlistSpan.getAttribute('data-wishlist-id');
+            }
+        } else {
+            // For Soft and Perfect themes (existing logic)
+            const wishlistBtn = card.querySelector('[data-wishlist-id]');
+            const productForm = card.querySelector('form[data-product-id]');
+            
+            if (wishlistBtn) {
+                productId = wishlistBtn.getAttribute('data-wishlist-id');
+            } else if (productForm) {
+                productId = productForm.getAttribute('data-product-id');
+            }
         }
         
         if (productId) {
-            let buttonContainer = card.querySelector('.card-footer') || 
+            // Find the button container based on theme
+            let buttonContainer = null;
+            
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, find the add to cart button container
+                // First, try to find the .mt-2 div that contains the cart button
+                const mtDiv = card.querySelector('.bottom-box .mt-2');
+                if (mtDiv) {
+                    buttonContainer = mtDiv;
+                } else {
+                    // Fallback: find the cart button's parent
+                    const addToCartBtn = card.querySelector('.btn-cart');
+                    if (addToCartBtn && addToCartBtn.parentElement) {
+                        buttonContainer = addToCartBtn.parentElement;
+                    } else {
+                        // Last fallback: look for the bottom box container
+                        buttonContainer = card.querySelector('.bottom-box');
+                    }
+                }
+            } else {
+                // For Soft and Perfect themes (existing logic)
+                buttonContainer = card.querySelector('.card-footer') || 
                                 card.querySelector('div[style*="text-align: center"]');
-  
-            if (!buttonContainer) {
-                buttonContainer = document.createElement('div');
-                buttonContainer.className = 'card-footer bg-transparent border-0';
-                card.appendChild(buttonContainer);
+
+                // If no container found, create one for Perfect theme
+                if (!buttonContainer) {
+                    buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'card-footer bg-transparent border-0';
+                    card.appendChild(buttonContainer);
+                }
             }
-  
-            buttonContainer.style.cssText += `
-                text-align: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-                width: 100%;
-            `;
-  
+
+            if (!buttonContainer) {
+                return;
+            }
+
+            // Update container styles based on theme
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, add the button inline with existing add to cart
+                if (!buttonContainer.style.display || buttonContainer.style.display !== 'flex') {
+                    buttonContainer.style.cssText += `
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                    `;
+                }
+            } else {
+                // For other themes (existing logic)
+                buttonContainer.style.cssText += `
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                    width: 100%;
+                `;
+            }
+
             const button = document.createElement('button');
             button.className = 'quick-view-btn';
-            button.style.cssText = `
-                width: 35px;
-                height: 35px;
-                padding: 0;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                background-color: #ffffff;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                vertical-align: middle;
-                margin: 5px;
-            `;
-  
-            button.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            `;
-  
-            button.addEventListener('mouseover', () => {
-                button.style.backgroundColor = '#f0f0f0';
-            });
-  
-            button.addEventListener('mouseout', () => {
-                button.style.backgroundColor = '#ffffff';
-            });
-  
+            
+            // Style the button based on theme
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, use btn-primary classes for consistent styling
+                button.className = 'quick-view-btn btn btn-outline-primary';
+                button.style.cssText = `
+                    width: 100%;
+                    height: auto;
+                    padding: 8px 16px;
+                    margin-top: 8px;
+                    transition: all 0.3s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: 600;
+                    gap: 8px;
+                `;
+                
+                // Add responsive styles for mobile
+                const style = document.createElement('style');
+                if (!document.querySelector('#quick-view-responsive-style')) {
+                    style.id = 'quick-view-responsive-style';
+                    style.textContent = `
+                        @media (max-width: 768px) {
+                            .quick-view-btn {
+                                padding: 6px 12px !important;
+                                font-size: 12px !important;
+                                height: 36px !important;
+                            }
+                            .quick-view-btn span {
+                                display: none !important;
+                            }
+                            .quick-view-btn svg {
+                                width: 16px !important;
+                                height: 16px !important;
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else {
+                // Existing style for other themes
+                button.style.cssText = `
+                    width: 35px;
+                    height: 35px;
+                    padding: 0;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background-color: #ffffff;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    vertical-align: middle;
+                    margin: 5px;
+                `;
+            }
+
+            // Add eye icon using SVG
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, add text with icon
+                button.innerHTML = `
+                    <svg class="quick-view-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="quick-view-spinner" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    </svg>
+                    <span>عرض سريع</span>
+                `;
+                
+                // Add spinner animation style
+                const style = document.createElement('style');
+                if (!document.querySelector('#quick-view-spinner-style')) {
+                    style.id = 'quick-view-spinner-style';
+                    style.textContent = `
+                        .quick-view-spinner {
+                            animation: spin 1s linear infinite;
+                        }
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else {
+                // For other themes, just the icon
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                `;
+            }
+
+            // Add hover effects
+            if (currentTheme === 'assayl') {
+                // Let Bootstrap handle btn-outline-primary hover effects
+                // No manual hover styling needed
+            } else {
+                button.addEventListener('mouseover', () => {
+                    button.style.backgroundColor = '#f0f0f0';
+                });
+
+                button.addEventListener('mouseout', () => {
+                    button.style.backgroundColor = '#ffffff';
+                });
+            }
+
             button.addEventListener('click', (e) => {
                 e.preventDefault();
-                openQuickView(productId);
+                
+                // Show loading state for Assayl theme
+                if (currentTheme === 'assayl') {
+                    const icon = button.querySelector('.quick-view-icon');
+                    const spinner = button.querySelector('.quick-view-spinner');
+                    const text = button.querySelector('span');
+                    
+                    if (icon && spinner) {
+                        icon.style.display = 'none';
+                        spinner.style.display = 'inline-block';
+                        if (text) text.textContent = 'جاري التحميل...';
+                        button.style.pointerEvents = 'none';
+                        button.style.opacity = '0.7';
+                    }
+                }
+                
+                openQuickView(productId).finally(() => {
+                    // Reset loading state for Assayl theme
+                    if (currentTheme === 'assayl') {
+                        const icon = button.querySelector('.quick-view-icon');
+                        const spinner = button.querySelector('.quick-view-spinner');
+                        const text = button.querySelector('span');
+                        
+                        if (icon && spinner) {
+                            setTimeout(() => {
+                                icon.style.display = 'inline-block';
+                                spinner.style.display = 'none';
+                                if (text) text.textContent = 'عرض سريع';
+                                button.style.pointerEvents = 'auto';
+                                button.style.opacity = '1';
+                            }, 300);
+                        }
+                    }
+                });
             });
-  
+
+            // Insert button based on theme
             try {
-                if (buttonContainer.classList.contains('card-footer')) {
+                if (currentTheme === 'assayl') {
+                    // For Assayl theme, add button below the cart button (both mobile and desktop)
                     buttonContainer.appendChild(button);
                 } else {
-                    buttonContainer.insertBefore(button, buttonContainer.firstChild);
+                    // For Perfect theme
+                    if (buttonContainer.classList.contains('card-footer')) {
+                        buttonContainer.appendChild(button);
+                    } else {
+                        // For Soft theme
+                        buttonContainer.insertBefore(button, buttonContainer.firstChild);
+                    }
                 }
             } catch (error) {
                 buttonContainer.appendChild(button);
             }
         }
     });
-  }
+}
   
   addQuickViewButtons();
   
@@ -1184,23 +1379,48 @@
       '.header',
       'header[role="banner"]',
       'nav.navbar',
-      '#navbar'
+      '#navbar',
+      'header.dev3-darkblue',              // Assayl theme primary header
+      '.dev3-darkblue',                    // Assayl theme header fallback
+      '.dev3-main.border-bottom.header-top', // Assayl theme main header
+      '.dev3-main',                        // Assayl theme main container
+      '#fixed-header'                      // Assayl theme fixed header
   ];
   
   let targetLocation = null;
-  for (const selector of possibleSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-          targetLocation = element;
-          break;
-      }
-  }
+let themeDetected = 'unknown';
+
+for (const selector of possibleSelectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+        targetLocation = element;
+        
+        // Detect theme based on selector
+        if (selector.includes('dev3')) {
+            themeDetected = 'assayl';
+        } else {
+            themeDetected = 'standard';
+        }
+        break;
+    }
+}
   
-  if (targetLocation) {
-      targetLocation.insertBefore(bar, targetLocation.firstChild);
+if (targetLocation) {
+  if (themeDetected === 'assayl') {
+      // For Assayl theme, insert at the very top of the header
+      if (targetLocation.classList.contains('dev3-darkblue') || 
+          targetLocation.classList.contains('dev3-main')) {
+          targetLocation.insertBefore(bar, targetLocation.firstChild);
+      } else {
+          targetLocation.parentNode.insertBefore(bar, targetLocation);
+      }
   } else {
-      document.body.insertBefore(bar, document.body.firstChild);
+      // For standard themes (Soft, Perfect, etc.)
+      targetLocation.insertBefore(bar, targetLocation.firstChild);
   }
+} else {
+  document.body.insertBefore(bar, document.body.firstChild);
+}
   
     let currentPosition = 0;
     let lastTimestamp = 0;
@@ -1587,27 +1807,57 @@ if (params.smartCart) {
     },
 
     findActiveCampaignForProduct(productId) {
+      console.log('🔍 Looking for campaign for product ID:', productId);
+  console.log('🔍 Total campaigns to check:', this.campaigns.length);
+
       const now = new Date();
+      console.log('🕐 Current time:', now.toISOString());
+
       const activeCampaign = this.campaigns.find(campaign => {
+        console.log('📋 Checking campaign:', campaign.name || 'Unnamed Campaign');
+
         if (!campaign.products || !Array.isArray(campaign.products)) {
+          console.log('❌ Campaign has no products array');
           return false;
         }
+
+        console.log('🔍 Campaign products:', campaign.products.length);
+        console.log('🔍 Campaign product IDs:', campaign.products.map(p => p.id));
     
-        const hasProduct = campaign.products.some(p => p.id === productId);
+        const hasProduct = campaign.products.some(p => {
+          const match = p.id === productId;
+          console.log(`  Product ${p.id} === ${productId}: ${match}`);
+          return match;
+        });
+        
+        console.log('🎯 Product found in campaign:', hasProduct);
+        
+        if (!hasProduct) {
+          console.log('❌ Product not in this campaign');
+          return false;
+        }
     
         let endTime;
         try {
           endTime = campaign.endTime?._seconds ? 
             new Date(campaign.endTime._seconds * 1000) :
             new Date(campaign.endTime.seconds * 1000);
+            console.log('⏰ Campaign end time:', endTime.toISOString());
         } catch (error) {
+          console.log('❌ Error parsing end time:', error);
           return false;
         }
     
         if (!(endTime instanceof Date && !isNaN(endTime))) {
+          console.log('❌ Invalid end time');
           return false;
         }
+
+        console.log('📊 Campaign status:', campaign.status);
+        console.log('🔄 Auto restart:', campaign.timerSettings?.autoRestart);
+
         if (campaign.timerSettings.autoRestart && now > endTime) {
+          console.log('🔄 Campaign expired but has auto-restart, calculating new end time...');
           const startTime = campaign.startTime?._seconds ? 
             new Date(campaign.startTime._seconds * 1000) :
             new Date(campaign.startTime.seconds * 1000);
@@ -1616,10 +1866,19 @@ if (params.smartCart) {
           const timeSinceStart = now - startTime;
           const cycles = Math.floor(timeSinceStart / originalDuration);
           endTime = new Date(startTime.getTime() + (cycles + 1) * originalDuration);
+          console.log('🔄 New calculated end time:', endTime.toISOString());
         }
-    
-        return hasProduct && (now <= endTime || campaign.timerSettings.autoRestart) && campaign.status === 'active';
+        const isActive = hasProduct && (now <= endTime || campaign.timerSettings?.autoRestart) && campaign.status === 'active';
+        console.log('✅ Final campaign match result:', isActive);
+        
+        return isActive;
       });
+    
+      if (activeCampaign) {
+        console.log('🎯 Found active campaign:', activeCampaign.name || 'Unnamed Campaign');
+      } else {
+        console.log('❌ No active campaign found for product:', productId);
+      }
     
       return activeCampaign;
     },
@@ -1877,9 +2136,19 @@ if (params.smartCart) {
     setupProductCardTimers() {
       
       const productCardSelectors = [
-        '.product-item',
-        '.card.card-product'
-      ];
+        '.product-item.position-relative', // Soft theme
+        '.card.card-product',              // Perfect theme
+        '.product.product-1',  // Assayl theme - main product pages
+        'product product-1 ',
+        'col-md-3 col-6 ',
+        '.col-md-3 col-6 ',
+        '.product.position-relative',  // Assayl theme - carousel/slider products
+        'product position-relative',
+        'item text-center slick-slide slick-active',
+        '.item text-center slick-slide slick-active'
+    ];
+
+
     
       let allProductCards = [];
       for (const selector of productCardSelectors) {
@@ -1904,7 +2173,9 @@ if (params.smartCart) {
           '[data-wishlist-id]',
           'input[name="product_id"]',
           '#product-id',
-          '.js-add-to-cart'
+          '.js-add-to-cart',
+          'form#product-form input#product-id',
+          '#product-form #product-id',
         ];
     
         for (const idSelector of idSelectors) {
@@ -1925,137 +2196,179 @@ if (params.smartCart) {
         if (!activeCampaign) return;
     
         const timer = this.createProductCardTimer(activeCampaign, productId);
-        const cardBody = card.querySelector('.card-body');
-        if (cardBody) {
-          if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
-            cardBody.parentNode.insertBefore(timer, cardBody);
-          }
-          return;
-        }
-        const productTitle = card.querySelector('.product-title');
-        if (productTitle) {
-          if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
-            productTitle.parentNode.insertBefore(timer, productTitle);
-          }
-        }
+
+// Perfect theme
+const cardBody = card.querySelector('.card-body');
+if (cardBody) {
+  if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
+    cardBody.parentNode.insertBefore(timer, cardBody);
+  }
+  return;
+}
+
+// Soft theme
+const productTitle = card.querySelector('.product-title');
+if (productTitle) {
+  if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
+    productTitle.parentNode.insertBefore(timer, productTitle);
+  }
+  return;
+}
+
+// Assayl theme - NEW ADDITION
+const productBottom = card.querySelector('.product-bottom, .product-details, product-bottom product-style-2 pt-2, .product-bottom product-style-2 pt-2, product-details p-2 pb-2 bg-white, .product-details p-2 pb-2 bg-white');
+if (productBottom) {
+  if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
+    productBottom.parentNode.insertBefore(timer, productBottom);
+  }
+  return;
+}
       });
     },
 
     setupProductTimer() {
+      console.log('🚀 setupProductTimer called');
+  console.log('🔍 Available campaigns:', this.campaigns.length);
+
+  // Log all available elements for debugging
+  console.log('🔍 Available elements check:');
+  console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
+  console.log('  - #product-id:', !!document.querySelector('#product-id'));
+  console.log('  - #product-form:', !!document.querySelector('#product-form'));
+  console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
+
       let productId = null;
       
       const idSelectors = [
+        
         {
-          selector: '[data-wishlist-id]',
-          attribute: 'data-wishlist-id'
+          selector: '#product-id',
+          attribute: 'value'
         },
         {
           selector: '#product-form input[name="product_id"]',
           attribute: 'value'
         },
         {
-          selector: '#product-id',
-          attribute: 'value'
+          selector: '[data-wishlist-id]',
+          attribute: 'data-wishlist-id'
         },
         {
           selector: 'form#product-form input#product-id',
           attribute: 'value'
+        },
+        {
+          selector: '#product-form #product-id',
+          attribute: 'value'
+        },
+        {
+          selector: 'input#product-id',  // Assayl theme - NEW
+          attribute: 'value'
         }
       ];
-    
+      
+      console.log('🔍 Searching for product ID...');
       for (const {selector, attribute} of idSelectors) {
         const element = document.querySelector(selector);
+        console.log(`🔍 Checking selector "${selector}":`, !!element);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
+          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
           break;
         }
       }
-    
-      if (!productId) {
-        console.log('DEBUG: No product ID found');
-        return;
-      }
       
-      console.log('DEBUG: Product ID found:', productId);
+      if (!productId) {
+        console.log('❌ No product ID found with any selector');
+        return;
+      } else {
+        console.log('✅ Final product ID:', productId);
+      }
     
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
-      
-      console.log('DEBUG: Active campaign found:', !!activeCampaign);
-      if (activeCampaign) {
-        console.log('DEBUG: Campaign details:', activeCampaign);
-      }
     
-      if (!activeCampaign) {
-        console.log('DEBUG: No active campaign, timer will not show');
-        return;
-      }
-    
-      console.log('DEBUG: Creating countdown timer...');
+      if (!activeCampaign) return;
+
       const timer = this.createCountdownTimer(activeCampaign, productId);
-      console.log('DEBUG: Timer created:', !!timer);
+console.log('🎯 Created timer for product:', productId);
+
+// Assayl theme - with logging
+const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
+console.log('🔍 Assayl price container found:', !!assaylPriceContainer);
+if (assaylPriceContainer) {
+  assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
+  console.log('✅ Timer inserted above Assayl price container');
+  return;
+}
+
+// Try additional Assayl selectors
+const assaylPrice2 = document.querySelector('h3.fw-bold.text-dark-1.product-formatted-price');
+console.log('🔍 Assayl price variant 2 found:', !!assaylPrice2);
+if (assaylPrice2) {
+  assaylPrice2.parentNode.insertBefore(timer, assaylPrice2);
+  console.log('✅ Timer inserted above Assayl price variant 2');
+  return;
+}
+
+const assaylDetailsData = document.querySelector('.details-product-data');
+console.log('🔍 Assayl details container found:', !!assaylDetailsData);
+if (assaylDetailsData) {
+  // Insert after the heading section
+  const priceSection = assaylDetailsData.querySelector('.price.d-flex.align-items-center');
+  if (priceSection) {
+    priceSection.parentNode.insertBefore(timer, priceSection);
+    console.log('✅ Timer inserted in Assayl details section');
+    return;
+  }
+}
+
+      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
-      if (!timer) {
-        console.log('DEBUG: Timer creation failed');
-        return;
-      }
-      
-      // Assayl theme - Insert above price
-      const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
-      console.log('DEBUG: Assayl price container found:', !!assaylPriceContainer);
-      
-      if (assaylPriceContainer) {
-        console.log('DEBUG: Inserting timer above price container...');
-        console.log('DEBUG: Price container parent:', assaylPriceContainer.parentNode);
-        
-        try {
-          assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
-          console.log('DEBUG: Timer inserted successfully!');
-          
-          // Check if timer is actually in the DOM
-          const insertedTimer = document.getElementById(`hmstudio-countdown-${productId}`);
-          console.log('DEBUG: Timer found in DOM after insertion:', !!insertedTimer);
-          
-        } catch (error) {
-          console.error('DEBUG: Error inserting timer:', error);
-        }
-        
-        this.createStickyCart();
-        if (this.activeTimers.size > 0) {
-          this.startTimerUpdates();
-        }
-        return;
-      }
-      
-      console.log('DEBUG: Assayl price container not found, trying other selectors...');
-      
-      // Try alternative Assayl selectors
-      const altSelectors = [
-        'h3.fw-bold.text-dark-1.product-formatted-price',
-        '.product-formatted-price',
-        '.details-product-data .price'
-      ];
-      
-      for (const selector of altSelectors) {
-        const container = document.querySelector(selector);
-        console.log(`DEBUG: Trying selector "${selector}":`, !!container);
-        if (container) {
-          console.log('DEBUG: Found alternative container, inserting timer...');
-          try {
-            container.parentNode.insertBefore(timer, container);
-            console.log('DEBUG: Timer inserted with alternative selector!');
-            this.createStickyCart();
-            if (this.activeTimers.size > 0) {
-              this.startTimerUpdates();
+      if (cardElement) {
+        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+      } else {
+        const insertionPoints = [
+          {
+            container: '.js-product-price',
+            method: 'before'
+          },
+          {
+            container: '.product-formatted-price',
+            method: 'before'
+          },
+          {
+            container: '.js-details-section',
+            method: 'prepend'
+          },
+          {
+            container: '.js-product-old-price',
+            method: 'before'
+          },
+          {
+            container: '.hmstudio-cart-buttons',
+            method: 'before'
+          }
+        ];
+    
+        for (const point of insertionPoints) {
+          const container = document.querySelector(point.container);
+          if (container) {
+            if (point.method === 'before') {
+              container.parentNode.insertBefore(timer, container);
+            } else {
+              container.insertBefore(timer, container.firstChild);
             }
-            return;
-          } catch (error) {
-            console.error('DEBUG: Error with alternative insertion:', error);
+            break;
           }
         }
       }
-      
-      console.log('DEBUG: No suitable container found for Assayl theme');
+    
+      this.createStickyCart();
+    
+      if (this.activeTimers.size > 0) {
+        this.startTimerUpdates();
+      }
     },
 
     startTimerUpdates() {
@@ -2083,55 +2396,51 @@ if (params.smartCart) {
                      document.querySelector('#productId') ||
                      document.querySelector('.details-product-data') ||  // Assayl theme
                      document.querySelector('#product-form') ||          // Assayl theme
-                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme
+                     document.querySelector('.products-details.mb-4.mb-lg-5') ||  // Assayl theme - FIXED
                      document.querySelector('.products-details') ||      // Assayl theme
-                     document.querySelector('.product.products-details-page.pt-3.pb-5'); // Assayl theme
+                     document.querySelector('.product.products-details-page.pt-3.pb-5') ||  // Assayl theme - FIXED
+                     document.querySelector('.col-product-info') ||      // Assayl theme - NEW
+                     document.querySelector('.col-product-image-wrapper') ||  // Assayl theme - NEW
+                     document.querySelector('.product-formatted-price') ||   // Assayl theme - NEW
+                     document.querySelector('.product-buttons') ||       // Assayl theme - NEW
+                     document.querySelector('h1.product-title');         // Assayl theme - NEW
 
-                     // ADD THIS DEBUG CODE:
-  console.log('PAGE DETECTION DEBUG:');
-  console.log('Is Product Page:', !!isProductPage);
-  console.log('Selector 1 (.product.products-details-page):', !!document.querySelector('.product.products-details-page'));
-  console.log('Selector 2 (.js-details-section):', !!document.querySelector('.js-details-section'));
-  console.log('Selector 3 (#productId):', !!document.querySelector('#productId'));
-  console.log('Selector 4 (.details-product-data):', !!document.querySelector('.details-product-data'));
-  console.log('Selector 5 (#product-form):', !!document.querySelector('#product-form'));
-  console.log('Selector 6 (.products-details.mb-4.mb-lg-5):', !!document.querySelector('.products-details.mb-4.mb-lg-5'));
-  console.log('Selector 7 (.products-details):', !!document.querySelector('.products-details'));
-  console.log('Selector 8 (.product.products-details-page.pt-3.pb-5):', !!document.querySelector('.product.products-details-page.pt-3.pb-5'));
-  // END DEBUG CODE
-      
-// CHECK FOR #product-id ELEMENT
-const productIdElement = document.querySelector('#product-id');
-console.log('=== PRODUCT ID ELEMENT DEBUG ===');
-console.log('#product-id element found:', !!productIdElement);
-if (productIdElement) {
-  console.log('#product-id value:', productIdElement.value);
-  console.log('#product-id getAttribute value:', productIdElement.getAttribute('value'));
-} else {
-  console.log('COULD NOT FIND #product-id ELEMENT');
+console.log('🔍 Product Page Detection Result:', !!isProductPage);
+if (isProductPage) {
+  console.log('✅ Found product page element:', isProductPage.className || isProductPage.id || isProductPage.tagName);
 }
-console.log('================================');
-
+      
       if (isProductPage) {
+        console.log('✅ Product page detected, calling setupProductTimer...');
         this.createStickyCart();
         const wishlistBtn = document.querySelector('[data-wishlist-id]');
         const productForm = document.querySelector('form[data-product-id]');
         const productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
                          productForm?.getAttribute('data-product-id');
+
+                         console.log('🔍 Quick product ID check:', productId);
+  console.log('🔍 Wishlist button found:', !!wishlistBtn);
+  console.log('🔍 Product form found:', !!productForm);
     
         if (productId) {
-          console.log('CALLING setupProductTimer() because isProductPage = true');
+          console.log('✅ Product ID found, checking for active campaign...');
           const activeCampaign = this.findActiveCampaignForProduct(productId);
+          console.log('🎯 Active campaign found:', !!activeCampaign);
           if (activeCampaign) {
+            console.log('✅ Calling setupProductTimer...');
             this.setupProductTimer();
             if (this.activeTimers.size > 0) {
               this.startTimerUpdates();
             }
-          }
+          } else {
+            console.log('❌ No active campaign for this product');
+          } 
+        } else {
+          console.log('❌ No product ID found in quick check, trying setupProductTimer anyway...');
+          this.setupProductTimer(); // Try anyway, it has its own ID detection
         }
       } else {
-        console.log('NOT CALLING setupProductTimer() because isProductPage = false');
-        const productCards = document.querySelectorAll('.product-item, .card.card-product');
+        const productCards = document.querySelectorAll('.product-item, .card.card-product, .product.product-1, .product.position-relative');
         if (productCards.length > 0) {
           this.setupProductCardTimers();
           if (this.activeTimers.size > 0) {
@@ -2156,7 +2465,7 @@ console.log('================================');
           this.setupProductTimer();
         }
       } else {
-        const currentCards = document.querySelectorAll('.product-item, .card.card-product');
+        const currentCards = document.querySelectorAll('.product-item, .card.card-product, .product.product-1, .product.position-relative');
         if (currentCards.length > 0) {
           currentCards.forEach(card => {
             const timers = card.querySelectorAll('[id^="hmstudio-card-countdown-"]');
