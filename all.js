@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2250,6 +2250,7 @@ setupProductCardTimers() {
 },
 
 setupProductTimer() {
+  console.log('Smart Cart: setupProductTimer called');
   let productId = null;
   
   const idSelectors = [
@@ -2275,24 +2276,35 @@ setupProductTimer() {
     const element = document.querySelector(selector);
     if (element) {
       productId = element.getAttribute(attribute) || element.value;
+      console.log(`Smart Cart: Found product ID ${productId} using selector ${selector}`);
       break;
     }
   }
 
-  if (!productId) return;
+  if (!productId) {
+    console.log('Smart Cart: No product ID found');
+    return;
+  }
 
   this.currentProductId = productId;
   const activeCampaign = this.findActiveCampaignForProduct(productId);
 
-  if (!activeCampaign) return;
+  if (!activeCampaign) {
+    console.log(`Smart Cart: No active campaign found for product ${productId}`);
+    return;
+  }
 
+  console.log(`Smart Cart: Found active campaign for product ${productId}:`, activeCampaign);
   const timer = this.createCountdownTimer(activeCampaign, productId);
   
   // Detect theme and insert timer accordingly
   const isAssaylTheme = document.querySelector('.product.products-details-page');
   const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
   
+  console.log(`Smart Cart: Theme detection - Assayl: ${!!isAssaylTheme}, Card Element: ${!!cardElement}`);
+  
   if (isAssaylTheme) {
+    console.log('Smart Cart: Using Assayl theme insertion logic');
     // Assayl theme insertion points
     const assaylInsertionPoints = [
       {
@@ -2316,6 +2328,7 @@ setupProductTimer() {
     let inserted = false;
     for (const point of assaylInsertionPoints) {
       const container = document.querySelector(point.container);
+      console.log(`Smart Cart: Checking container ${point.container}:`, !!container);
       if (container) {
         if (point.method === 'after') {
           container.parentNode.insertBefore(timer, container.nextSibling);
@@ -2324,6 +2337,7 @@ setupProductTimer() {
         } else {
           container.appendChild(timer);
         }
+        console.log(`Smart Cart: Timer inserted ${point.method} ${point.container}`);
         inserted = true;
         break;
       }
@@ -2331,20 +2345,33 @@ setupProductTimer() {
     
     // Fallback for Assayl theme
     if (!inserted) {
+      console.log('Smart Cart: Using Assayl fallback insertion');
       const productInfo = document.querySelector('.col-product-info');
       if (productInfo) {
         const priceSection = productInfo.querySelector('.price');
         if (priceSection) {
           priceSection.parentNode.insertBefore(timer, priceSection.nextSibling);
+          console.log('Smart Cart: Timer inserted after price section (fallback)');
         } else {
           productInfo.insertBefore(timer, productInfo.firstChild);
+          console.log('Smart Cart: Timer inserted at beginning of product info (fallback)');
         }
+        inserted = true;
+      } else {
+        console.log('Smart Cart: No .col-product-info found for fallback');
       }
     }
+    
+    if (!inserted) {
+      console.log('Smart Cart: All Assayl insertion attempts failed, using body fallback');
+      document.body.appendChild(timer);
+    }
   } else if (cardElement) {
+    console.log('Smart Cart: Using Soft/Perfect theme insertion logic');
     // Soft/Perfect theme
     cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
   } else {
+    console.log('Smart Cart: Using generic fallback insertion logic');
     // Fallback insertion points for other themes
     const insertionPoints = [
       {
@@ -2369,6 +2396,7 @@ setupProductTimer() {
       }
     ];
 
+    let inserted = false;
     for (const point of insertionPoints) {
       const container = document.querySelector(point.container);
       if (container) {
@@ -2377,8 +2405,15 @@ setupProductTimer() {
         } else {
           container.insertBefore(timer, container.firstChild);
         }
+        console.log(`Smart Cart: Timer inserted using generic fallback at ${point.container}`);
+        inserted = true;
         break;
       }
+    }
+    
+    if (!inserted) {
+      console.log('Smart Cart: All generic insertion attempts failed, using body fallback');
+      document.body.appendChild(timer);
     }
   }
 
