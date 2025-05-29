@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.6 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2225,60 +2225,78 @@ if (productBottom) {
     },
 
     setupProductTimer() {
-      console.log('🚀 setupProductTimer called');
-  console.log('🔍 Available campaigns:', this.campaigns.length);
-
-  // Log all available elements for debugging
-  console.log('🔍 Available elements check:');
-  console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
-  console.log('  - #product-id:', !!document.querySelector('#product-id'));
-  console.log('  - #product-form:', !!document.querySelector('#product-form'));
-
       let productId = null;
       
-      const idSelectors = [
-        {
-          selector: '#product-id',                           // Assayl theme form input - FIRST
-          attribute: 'value'
-        },
-        {
-          selector: 'input#product-id',                      // Alternative form input
-          attribute: 'value'  
-        },
-        {
-          selector: '#product-form #product-id',             // Nested form input
-          attribute: 'value'
-        },
-        {
-          selector: '#product-form input[name="product_id"]', // Alternative form name
-          attribute: 'value'
-        },
-        {
-          selector: 'form#product-form input#product-id',    // Specific form
-          attribute: 'value'
-        },
-        {
-          selector: '[data-wishlist-id]',                    // Wishlist - LAST RESORT
-          attribute: 'data-wishlist-id'
+      // Check if we're on Assayl theme product page
+      const isAssaylTheme = document.querySelector('.details-product-data') || 
+                           document.querySelector('.col-product-info') ||
+                           document.querySelector('#product-form #product-id');
+      
+      if (isAssaylTheme) {
+        console.log('🎯 Assayl theme detected - using form input for product ID');
+        // For Assayl theme: prioritize form input over wishlist elements
+        const idSelectors = [
+          {
+            selector: '#product-id',
+            attribute: 'value'
+          },
+          {
+            selector: 'input#product-id',
+            attribute: 'value'
+          },
+          {
+            selector: '#product-form #product-id',
+            attribute: 'value'
+          },
+          {
+            selector: 'form#product-form input#product-id',
+            attribute: 'value'
+          }
+        ];
+        
+        for (const {selector, attribute} of idSelectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            productId = element.getAttribute(attribute) || element.value;
+            console.log(`✅ Assayl: Found product ID "${productId}" using "${selector}"`);
+            break;
+          }
         }
-      ];
-      
-      console.log('🔍 Searching for product ID (prioritizing form inputs)...');
-  for (const {selector, attribute} of idSelectors) {
-    const element = document.querySelector(selector);
-    console.log(`🔍 Checking selector "${selector}":`, !!element);
-    if (element) {
-      productId = element.getAttribute(attribute) || element.value;
-      console.log(`✅ Found product ID "${productId}" using selector "${selector}"`);
-      if (productId) break;
-    }
-  }
-      
-  if (!productId) {
-    console.log('❌ No product ID found with any selector');
-    return;
-  }
-  console.log('✅ Final product ID for campaign matching:', productId);
+      } else {
+        console.log('🎯 Soft/Perfect theme detected - using existing logic');
+        // For Soft/Perfect themes: keep existing logic (wishlist first)
+        const idSelectors = [
+          {
+            selector: '[data-wishlist-id]',
+            attribute: 'data-wishlist-id'
+          },
+          {
+            selector: '#product-form input[name="product_id"]',
+            attribute: 'value'
+          },
+          {
+            selector: '#product-id',
+            attribute: 'value'
+          },
+          {
+            selector: 'form#product-form input#product-id',
+            attribute: 'value'
+          }
+        ];
+        
+        for (const {selector, attribute} of idSelectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            productId = element.getAttribute(attribute) || element.value;
+            console.log(`✅ Soft/Perfect: Found product ID "${productId}" using "${selector}"`);
+            break;
+          }
+        }
+      }
+    
+      if (!productId) {
+        return;
+      }
     
       this.currentProductId = productId;
       const activeCampaign = this.findActiveCampaignForProduct(productId);
