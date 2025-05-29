@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.5.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.6.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -999,11 +999,11 @@
         '.product.product-1',  // Assayl theme - main product pages
         'product product-1 ',
         'col-md-3 col-6 ',
-        '.col-md-3 col-6 ',
+        '.col-md-3 col-6 ', // Assayl theme - grid container
         '.product.position-relative',  // Assayl theme - carousel/slider products
         'product position-relative',
         'item text-center slick-slide slick-active',
-        '.item text-center slick-slide slick-active'
+        '.item text-center slick-slide slick-active' // Assayl theme - slider items
     ];
 
     let productCards = [];
@@ -2204,6 +2204,10 @@ if (productBottom) {
         {
           selector: 'form#product-form input#product-id',
           attribute: 'value'
+        },
+        {
+          selector: '#product-form #product-id',  // Assayl theme - ADD THIS LINE
+          attribute: 'value'
         }
       ];
     
@@ -2223,6 +2227,13 @@ if (productBottom) {
       if (!activeCampaign) return;
 
       const timer = this.createCountdownTimer(activeCampaign, productId);
+
+// Assayl theme - ADD THIS SECTION FIRST
+const assaylPriceContainer = document.querySelector('.price.d-flex.align-items-center');
+if (assaylPriceContainer) {
+  assaylPriceContainer.parentNode.insertBefore(timer, assaylPriceContainer);
+  return;
+}
       const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
       
       if (cardElement) {
@@ -2292,8 +2303,10 @@ if (productBottom) {
       this.stopTimerUpdates();
       
       const isProductPage = document.querySelector('.product.products-details-page') || 
-                           document.querySelector('.js-details-section') ||
-                           document.querySelector('#productId');
+                     document.querySelector('.js-details-section') ||
+                     document.querySelector('#productId') ||
+                     document.querySelector('.details-product-data') ||  // Assayl theme
+                     document.querySelector('#product-form');            // Assayl theme
       
       if (isProductPage) {
         this.createStickyCart();
@@ -4441,8 +4454,19 @@ const couponMessages = {
   this.stopTimerUpdates();
   
   const isProductPage = document.querySelector('.product.products-details-page') || 
-                       document.querySelector('.js-details-section') ||
-                       document.querySelector('#productId');
+                     document.querySelector('.js-details-section') ||
+                     document.querySelector('#productId') ||
+                     document.querySelector('.details-product-data') ||  // Assayl theme
+                     document.querySelector('#product-form');            // Assayl theme
+                     document.querySelector('products-details mb-4 mb-lg-5');            // Assayl theme
+                     document.querySelector('.products-details mb-4 mb-lg-5');            // Assayl theme
+                     document.querySelector('.products-details');            // Assayl theme
+                     document.querySelector('products-details');            // Assayl theme
+                     document.querySelector('product products-details-page  pt-3 pb-5');            // Assayl theme
+                     document.querySelector('.product products-details-page  pt-3 pb-5');            // Assayl theme
+                     document.querySelector('.product products-details-page');            // Assayl theme
+                     document.querySelector('product products-details-page');            // Assayl theme
+
   
   console.log('Is product page?', isProductPage);
   console.log('Page selectors found:', {
