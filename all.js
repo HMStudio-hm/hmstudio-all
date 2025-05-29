@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2240,7 +2240,6 @@ if (productBottom) {
       let productId = null;
       
       const idSelectors = [
-        
         {
           selector: '#product-id',
           attribute: 'value'
@@ -2248,10 +2247,6 @@ if (productBottom) {
         {
           selector: '#product-form input[name="product_id"]',
           attribute: 'value'
-        },
-        {
-          selector: '[data-wishlist-id]',
-          attribute: 'data-wishlist-id'
         },
         {
           selector: 'form#product-form input#product-id',
@@ -2270,13 +2265,16 @@ if (productBottom) {
       console.log('🔍 Searching for product ID...');
       for (const {selector, attribute} of idSelectors) {
         const element = document.querySelector(selector);
-        console.log(`🔍 Checking selector "${selector}":`, !!element);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
           console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
           break;
+        } else {
+          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
         }
       }
+      
+      console.log('FINAL PRODUCT ID:', productId); // DEBUG
       
       if (!productId) {
         console.log('❌ No product ID found with any selector');
@@ -2405,6 +2403,31 @@ if (assaylDetailsData) {
                      document.querySelector('.product-buttons') ||       // Assayl theme - NEW
                      document.querySelector('h1.product-title');         // Assayl theme - NEW
 
+                      // ADD THIS DEBUG CODE:
+  console.log('PAGE DETECTION DEBUG:');
+  console.log('Is Product Page:', !!isProductPage);
+  console.log('Selector 1 (.product.products-details-page):', !!document.querySelector('.product.products-details-page'));
+  console.log('Selector 2 (.js-details-section):', !!document.querySelector('.js-details-section'));
+  console.log('Selector 3 (#productId):', !!document.querySelector('#productId'));
+  console.log('Selector 4 (.details-product-data):', !!document.querySelector('.details-product-data'));
+  console.log('Selector 5 (#product-form):', !!document.querySelector('#product-form'));
+  console.log('Selector 6 (.products-details.mb-4.mb-lg-5):', !!document.querySelector('.products-details.mb-4.mb-lg-5'));
+  console.log('Selector 7 (.products-details):', !!document.querySelector('.products-details'));
+  console.log('Selector 8 (.product.products-details-page.pt-3.pb-5):', !!document.querySelector('.product.products-details-page.pt-3.pb-5'));
+  // END DEBUG CODE
+
+  // CHECK FOR #product-id ELEMENT
+  const productIdElement = document.querySelector('#product-id');
+  console.log('=== PRODUCT ID ELEMENT DEBUG ===');
+  console.log('#product-id element found:', !!productIdElement);
+  if (productIdElement) {
+    console.log('#product-id value:', productIdElement.value);
+    console.log('#product-id getAttribute value:', productIdElement.getAttribute('value'));
+  } else {
+    console.log('COULD NOT FIND #product-id ELEMENT');
+  }
+  console.log('================================');
+
 console.log('🔍 Product Page Detection Result:', !!isProductPage);
 if (isProductPage) {
   console.log('✅ Found product page element:', isProductPage.className || isProductPage.id || isProductPage.tagName);
@@ -2423,7 +2446,7 @@ if (isProductPage) {
   console.log('🔍 Product form found:', !!productForm);
     
         if (productId) {
-          console.log('✅ Product ID found, checking for active campaign...');
+          console.log('CALLING setupProductTimer() because isProductPage = true');
           const activeCampaign = this.findActiveCampaignForProduct(productId);
           console.log('🎯 Active campaign found:', !!activeCampaign);
           if (activeCampaign) {
