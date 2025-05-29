@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2190,7 +2190,7 @@ if (productBottom) {
       
       const idSelectors = [
         {
-          selector: '#product-id',  // This should work for Assayl theme
+          selector: '#product-id',
           attribute: 'value'
         },
         {
@@ -2219,81 +2219,130 @@ if (productBottom) {
         const element = document.querySelector(selector);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
-          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
+          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector);
           break;
         } else {
-          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
+          console.log('SELECTOR NOT FOUND:', selector);
         }
       }
       
-      console.log('FINAL PRODUCT ID:', productId); // DEBUG
+      console.log('FINAL PRODUCT ID:', productId);
       
       if (!productId) {
-        console.log('NO PRODUCT ID FOUND - TIMER WILL NOT SHOW'); // DEBUG
+        console.log('NO PRODUCT ID FOUND - TIMER WILL NOT SHOW');
         return;
       }
     
+      // NEW DEBUG LOGS
       this.currentProductId = productId;
+      console.log('=== CAMPAIGN DETECTION DEBUG ===');
+      console.log('Total campaigns loaded:', this.campaigns.length);
+      console.log('Looking for campaigns for product ID:', productId);
+      
       const activeCampaign = this.findActiveCampaignForProduct(productId);
+      console.log('Active campaign found:', !!activeCampaign);
+      if (activeCampaign) {
+        console.log('Campaign details:', activeCampaign);
+      } else {
+        console.log('NO ACTIVE CAMPAIGN FOUND FOR THIS PRODUCT');
+        console.log('All campaigns:', this.campaigns);
+      }
     
-      if (!activeCampaign) return;
-
+      if (!activeCampaign) {
+        console.log('TIMER WILL NOT SHOW - NO ACTIVE CAMPAIGN');
+        return;
+      }
+    
+      console.log('=== TIMER CREATION DEBUG ===');
       const timer = this.createCountdownTimer(activeCampaign, productId);
-
-// Assayl theme - try multiple insertion points
-const assaylInsertionPoints = [
-  '.price.d-flex.align-items-center',
-  '.product-formatted-price',
-  '.details-product-data .price',
-  'h3.fw-bold.text-dark-1.product-formatted-price'
-];
-
-let inserted = false;
-for (const selector of assaylInsertionPoints) {
-  const priceContainer = document.querySelector(selector);
-  if (priceContainer) {
-    priceContainer.parentNode.insertBefore(timer, priceContainer);
-    inserted = true;
-    break;
-  }
-}
-
-if (inserted) return;
-
-// Perfect theme (keep existing)
-const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
-if (cardElement) {
-  cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
-  return;
-}
-
-// Other fallback insertion points (keep existing)
-const insertionPoints = [
-  {
-    container: '.js-product-price',
-    method: 'before'
-  },
-  {
-    container: '.product-formatted-price',
-    method: 'before'
-  },
-  {
-    container: '.js-details-section',
-    method: 'prepend'
-  }
-];
-
-for (const point of insertionPoints) {
-  const container = document.querySelector(point.container);
-  if (container) {
-    if (point.method === 'before') {
-      container.parentNode.insertBefore(timer, container);
-    } else {
-      container.insertBefore(timer, container.firstChild);
-    }
-    break;
-  }
-
+      console.log('Timer created:', !!timer);
+      
+      console.log('Attempting to insert timer...');
+    
+      // Assayl theme - try multiple insertion points
+      const assaylInsertionPoints = [
+        '.price.d-flex.align-items-center',
+        '.product-formatted-price',
+        '.details-product-data .price',
+        'h3.fw-bold.text-dark-1.product-formatted-price'
+      ];
+    
+      let inserted = false;
+      for (const selector of assaylInsertionPoints) {
+        const priceContainer = document.querySelector(selector);
+        if (priceContainer) {
+          console.log('Inserting timer using Assayl selector:', selector);
+          priceContainer.parentNode.insertBefore(timer, priceContainer);
+          inserted = true;
+          break;
+        } else {
+          console.log('Assayl selector not found:', selector);
+        }
+      }
+    
+      if (inserted) {
+        console.log('Timer inserted successfully - Assayl theme');
+        this.createStickyCart();
+        if (this.activeTimers.size > 0) {
+          this.startTimerUpdates();
+        }
+        return;
+      }
+    
+      // Perfect theme
+      const cardElement = document.querySelector('.card.mb-3.border-secondary.border-opacity-10.shadow-sm');
+      if (cardElement) {
+        console.log('Inserting timer using Perfect theme selector');
+        cardElement.parentNode.insertBefore(timer, cardElement.nextSibling);
+        inserted = true;
+      } else {
+        console.log('Perfect theme selector not found');
+        
+        // Other fallback insertion points
+        const insertionPoints = [
+          {
+            container: '.js-product-price',
+            method: 'before'
+          },
+          {
+            container: '.product-formatted-price',
+            method: 'before'
+          },
+          {
+            container: '.js-details-section',
+            method: 'prepend'
+          },
+          {
+            container: '.js-product-old-price',
+            method: 'before'
+          },
+          {
+            container: '.hmstudio-cart-buttons',
+            method: 'before'
+          }
+        ];
+    
+        for (const point of insertionPoints) {
+          const container = document.querySelector(point.container);
+          if (container) {
+            console.log('Inserting timer using fallback selector:', point.container);
+            if (point.method === 'before') {
+              container.parentNode.insertBefore(timer, container);
+            } else {
+              container.insertBefore(timer, container.firstChild);
+            }
+            inserted = true;
+            break;
+          } else {
+            console.log('Fallback selector not found:', point.container);
+          }
+        }
+      }
+    
+      if (inserted) {
+        console.log('Timer insertion completed successfully');
+      } else {
+        console.log('FAILED TO INSERT TIMER - NO SUITABLE CONTAINER FOUND');
       }
     
       this.createStickyCart();
