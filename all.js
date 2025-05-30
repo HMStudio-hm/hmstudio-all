@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2464,7 +2464,6 @@ if (isProductPage) {
   console.log('🔍 Initialize product ID check:', productId);
 
                          console.log('🔍 Quick product ID check:', productId);
-  console.log('🔍 Wishlist button found:', !!wishlistBtn);
   console.log('🔍 Product form found:', !!productForm);
     
         if (productId) {
