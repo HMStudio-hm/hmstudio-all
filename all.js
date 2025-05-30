@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1703,7 +1703,10 @@ if (params.smartCart) {
     
       const updateQuantity = (value) => {
         quantityInput.value = value;
-        const originalSelect = document.querySelector('select#product-quantity');
+        const originalSelect = document.querySelector('select#product-quantity') || 
+                              document.querySelector('.select-quantity') ||     // Assayl theme
+                              document.querySelector('#product-quantity');      // Fallback
+        
         if (originalSelect) {
           originalSelect.value = value;
           const event = new Event('change', { bubbles: true });
@@ -1758,17 +1761,33 @@ if (params.smartCart) {
       addButton.addEventListener('mouseover', () => addButton.style.opacity = '0.9');
       addButton.addEventListener('mouseout', () => addButton.style.opacity = '1');
       addButton.addEventListener('click', () => {
-        const originalSelect = document.querySelector('select#product-quantity');
+        // Update quantity in original selector
+        const originalSelect = document.querySelector('select#product-quantity') || 
+                              document.querySelector('.select-quantity') ||     // Assayl theme
+                              document.querySelector('#product-quantity');      // Fallback
+        
         if (originalSelect) {
           originalSelect.value = quantityInput.value;
           const event = new Event('change', { bubbles: true });
           originalSelect.dispatchEvent(event);
         }
-    
-        const originalButton = document.querySelector('.btn.btn-add-to-cart');
+      
+        // Trigger original add to cart button
+        const originalButton = document.querySelector('.btn.btn-add-to-cart') ||           // Soft/Perfect themes
+                               document.querySelector('button[onclick*="productAddToCart"]') || // Assayl theme
+                               document.querySelector('#product-view-add-to-cart') ||      // Assayl theme alternative
+                               document.querySelector('.btn-add-to-cart');                 // Generic fallback
+        
         if (originalButton) {
           setTimeout(() => {
-            originalButton.click();
+            // For Assayl theme, call the function directly if onclick exists
+            if (originalButton.getAttribute('onclick')) {
+              originalButton.click();
+            } else if (window.productAddToCart && typeof window.productAddToCart === 'function') {
+              window.productAddToCart();
+            } else {
+              originalButton.click();
+            }
           }, 100);
         }
       });
@@ -1787,11 +1806,18 @@ if (params.smartCart) {
       this.stickyCartElement = container;
 
       window.addEventListener('scroll', () => {
-        const originalButton = document.querySelector('.btn.btn-add-to-cart');
-        const originalSelect = document.querySelector('select#product-quantity');
+        // Check for original add to cart button visibility
+        const originalButton = document.querySelector('.btn.btn-add-to-cart') ||           // Soft/Perfect themes
+                               document.querySelector('button[onclick*="productAddToCart"]') || // Assayl theme
+                               document.querySelector('#product-view-add-to-cart') ||      // Assayl theme alternative
+                               document.querySelector('.btn-add-to-cart');                 // Generic fallback
+                               
+        const originalSelect = document.querySelector('select#product-quantity') || 
+                              document.querySelector('.select-quantity') ||              // Assayl theme
+                              document.querySelector('#product-quantity');               // Fallback
         
         if (!originalButton) return;
-    
+      
         const buttonRect = originalButton.getBoundingClientRect();
         const isButtonVisible = buttonRect.top >= 0 && buttonRect.bottom <= window.innerHeight;
         
