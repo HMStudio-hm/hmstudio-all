@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1745,7 +1745,7 @@ if (params.smartCart) {
       const addButton = document.createElement('button');
       addButton.textContent = getCurrentLanguage() === 'ar' ? 'أضف للسلة' : 'Add to Cart';
       addButton.style.cssText = `
-        background-color: var(--theme-primary, #00b286);
+        background-color: var(--mainColor, var(--theme-primary, #00b286));
         color: white;
         border: none;
         border-radius: 8px;
@@ -1779,10 +1779,8 @@ if (params.smartCart) {
                                document.querySelector('button[onclick*="productAddToCart"]') ||               // Assayl fallback
                                document.querySelector('.btn-add-to-cart');                                   // Generic fallback
 
-            console.log('🛒 Original add to cart button found:', !!originalButton);
         
         if (originalButton) {
-          console.log('🛒 Original button selector:', originalButton.className || originalButton.id);
           setTimeout(() => {
             if (originalButton.getAttribute('onclick')) {
               originalButton.click();
@@ -1820,7 +1818,6 @@ if (params.smartCart) {
                               document.querySelector('.select-quantity') ||
                               document.querySelector('#product-quantity');
         
-      console.log('🛒 Original quantity selector found:', !!originalSelect);
         if (!originalButton) return;
       
         const buttonRect = originalButton.getBoundingClientRect();
@@ -2384,16 +2381,12 @@ if (productBottom) {
                      document.querySelector('h1.product-title');
     
               if (isProductPage) {
-                      console.log('🛒 Creating sticky cart...');
                       this.createStickyCart();
-                      console.log('🛒 Sticky cart created, checking if element exists...');
                       
                       // Check if sticky cart was created
                       const stickyCartElement = document.getElementById('hmstudio-sticky-cart');
-                      console.log('🛒 Sticky cart element found:', !!stickyCartElement);
                       
                       if (stickyCartElement) {
-                        console.log('🛒 Sticky cart style display:', stickyCartElement.style.display);
                       }
 
         let productId = null;
