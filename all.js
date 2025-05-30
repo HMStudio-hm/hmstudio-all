@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -622,33 +622,45 @@
     `;
   
     const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      @media screen and (min-width: 768px) {
-        .quick-view-form {
-          flex-direction: row !important;
-          overflow: hidden !important;
-        }
-        .quick-view-gallery {
-          width: 50% !important;
-          border-bottom: none !important;
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          padding-top: 40px !important;
-        }
-        .quick-view-details {
-          width: 50% !important;
-          padding-top: 40px !important;
-        }
-        .quick-view-gallery img {
-          margin: 0 auto !important;
-        }
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `;
+styleSheet.textContent = `
+  @media screen and (min-width: 768px) {
+    .quick-view-form {
+      flex-direction: row !important;
+      overflow: hidden !important;
+    }
+    .quick-view-gallery {
+      width: 50% !important;
+      border-bottom: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      padding-top: 40px !important;
+    }
+    .quick-view-details {
+      width: 50% !important;
+      padding-top: 40px !important;
+    }
+    .quick-view-gallery img {
+      margin: 0 auto !important;
+    }
+  }
+  
+  /* Fix for all products page positioning */
+  .product-bottom .pricerevs {
+    position: static !important;
+    bottom: 0px !important;
+  }
+  
+  .product-bottom .btn-cart {
+    position: static !important;
+    bottom: 0px !important;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
     document.head.appendChild(styleSheet);
   
     form.className = 'quick-view-form';
