@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2228,25 +2228,20 @@ if (productBottom) {
 
     setupProductTimer() {
       console.log('🚀 setupProductTimer called');
-      console.log('🔍 Available campaigns:', this.campaigns.length);
-    
-      // Log all available elements for debugging
-      console.log('🔍 Available elements check:');
-      console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
-      console.log('  - #product-id:', !!document.querySelector('#product-id'));
-      console.log('  - #product-form:', !!document.querySelector('#product-form'));
-      console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
-      console.log('  - #product-parent-id:', !!document.querySelector('#product-parent-id')); // ADD THIS LOG
-    
+  console.log('🔍 Available campaigns:', this.campaigns.length);
+
+  // Log all available elements for debugging
+  console.log('🔍 Available elements check:');
+  console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
+  console.log('  - #product-parent-id:', !!document.querySelector('#product-parent-id'));
+  console.log('  - #product-form:', !!document.querySelector('#product-form'));
+  console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
+
       let productId = null;
       
       const idSelectors = [
         {
-          selector: '#product-parent-id',              // ADD THIS - CHECK PARENT ID FIRST
-          attribute: 'value'
-        },
-        {
-          selector: '#product-id',                     // Keep your existing selectors
+          selector: '#product-parent-id',
           attribute: 'value'
         },
         {
@@ -2262,7 +2257,7 @@ if (productBottom) {
           attribute: 'value'
         },
         {
-          selector: 'input#product-id',
+          selector: 'input#product-id',  // Assayl theme - NEW
           attribute: 'value'
         }
       ];
@@ -2272,14 +2267,14 @@ if (productBottom) {
         const element = document.querySelector(selector);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
-          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector);
+          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
           break;
         } else {
-          console.log('SELECTOR NOT FOUND:', selector);
+          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
         }
       }
       
-      console.log('FINAL PRODUCT ID:', productId);
+      console.log('FINAL PRODUCT ID:', productId); // DEBUG
       
       if (!productId) {
         console.log('❌ No product ID found with any selector');
@@ -2422,7 +2417,7 @@ if (assaylDetailsData) {
   // END DEBUG CODE
 
   // CHECK FOR #product-id ELEMENT
-  const productIdElement = document.querySelector('#product-id');
+  const productIdElement = document.querySelector('#product-parent-id');
   console.log('=== PRODUCT ID ELEMENT DEBUG ===');
   console.log('#product-id element found:', !!productIdElement);
   if (productIdElement) {
@@ -2448,11 +2443,11 @@ if (isProductPage) {
   // Check if we're on Assayl theme
   const isAssaylTheme = document.querySelector('.details-product-data') || 
                        document.querySelector('.col-product-info') ||
-                       document.querySelector('#product-form #product-id');
+                       document.querySelector('#product-form #product-parent-id');
   
   if (isAssaylTheme) {
     console.log('🎯 Initialize: Assayl theme detected');
-    const productIdInput = document.querySelector('#product-id');
+    const productIdInput = document.querySelector('#product-parent-id');
     if (productIdInput && productIdInput.value) {
       productId = productIdInput.value;
       console.log(`✅ Initialize: Found Assayl product ID: "${productId}"`);
