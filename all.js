@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1760,11 +1760,11 @@ if (params.smartCart) {
 
       addButton.addEventListener('mouseover', () => addButton.style.opacity = '0.9');
       addButton.addEventListener('mouseout', () => addButton.style.opacity = '1');
+      
       addButton.addEventListener('click', () => {
-        // Update quantity in original selector
         const originalSelect = document.querySelector('select#product-quantity') || 
-                              document.querySelector('.select-quantity') ||     // Assayl theme
-                              document.querySelector('#product-quantity');      // Fallback
+                              document.querySelector('.select-quantity') ||
+                              document.querySelector('#product-quantity');
         
         if (originalSelect) {
           originalSelect.value = quantityInput.value;
@@ -1772,15 +1772,18 @@ if (params.smartCart) {
           originalSelect.dispatchEvent(event);
         }
       
-        // Trigger original add to cart button
-        const originalButton = document.querySelector('.btn.btn-add-to-cart') ||           // Soft/Perfect themes
-                               document.querySelector('button[onclick*="productAddToCart"]') || // Assayl theme
-                               document.querySelector('#product-view-add-to-cart') ||      // Assayl theme alternative
-                               document.querySelector('.btn-add-to-cart');                 // Generic fallback
+        // For Assayl theme, prioritize the desktop add to cart button
+        const originalButton = document.querySelector('.hide-on-mobile[onclick*="productAddToCart"]') ||     // Assayl desktop button
+                               document.querySelector('.d-flex.gap-3 button[onclick*="productAddToCart"]') || // Assayl desktop alternative
+                               document.querySelector('.btn.btn-add-to-cart') ||                             // Soft/Perfect themes
+                               document.querySelector('button[onclick*="productAddToCart"]') ||               // Assayl fallback
+                               document.querySelector('.btn-add-to-cart');                                   // Generic fallback
+
+            console.log('🛒 Original add to cart button found:', !!originalButton);
         
         if (originalButton) {
+          console.log('🛒 Original button selector:', originalButton.className || originalButton.id);
           setTimeout(() => {
-            // For Assayl theme, call the function directly if onclick exists
             if (originalButton.getAttribute('onclick')) {
               originalButton.click();
             } else if (window.productAddToCart && typeof window.productAddToCart === 'function') {
@@ -1806,16 +1809,18 @@ if (params.smartCart) {
       this.stickyCartElement = container;
 
       window.addEventListener('scroll', () => {
-        // Check for original add to cart button visibility
-        const originalButton = document.querySelector('.btn.btn-add-to-cart') ||           // Soft/Perfect themes
-                               document.querySelector('button[onclick*="productAddToCart"]') || // Assayl theme
-                               document.querySelector('#product-view-add-to-cart') ||      // Assayl theme alternative
-                               document.querySelector('.btn-add-to-cart');                 // Generic fallback
+        // For Assayl theme, prioritize the desktop add to cart button (not mobile)
+        const originalButton = document.querySelector('.hide-on-mobile[onclick*="productAddToCart"]') ||     // Assayl desktop button
+                               document.querySelector('.d-flex.gap-3 button[onclick*="productAddToCart"]') || // Assayl desktop alternative
+                               document.querySelector('.btn.btn-add-to-cart') ||                             // Soft/Perfect themes
+                               document.querySelector('button[onclick*="productAddToCart"]') ||               // Assayl fallback
+                               document.querySelector('.btn-add-to-cart');                                   // Generic fallback
                                
         const originalSelect = document.querySelector('select#product-quantity') || 
-                              document.querySelector('.select-quantity') ||              // Assayl theme
-                              document.querySelector('#product-quantity');               // Fallback
+                              document.querySelector('.select-quantity') ||
+                              document.querySelector('#product-quantity');
         
+      console.log('🛒 Original quantity selector found:', !!originalSelect);
         if (!originalButton) return;
       
         const buttonRect = originalButton.getBoundingClientRect();
@@ -2378,9 +2383,19 @@ if (productBottom) {
                      document.querySelector('.product-buttons') ||
                      document.querySelector('h1.product-title');
     
-      if (isProductPage) {
-        this.createStickyCart();
-        
+              if (isProductPage) {
+                      console.log('🛒 Creating sticky cart...');
+                      this.createStickyCart();
+                      console.log('🛒 Sticky cart created, checking if element exists...');
+                      
+                      // Check if sticky cart was created
+                      const stickyCartElement = document.getElementById('hmstudio-sticky-cart');
+                      console.log('🛒 Sticky cart element found:', !!stickyCartElement);
+                      
+                      if (stickyCartElement) {
+                        console.log('🛒 Sticky cart style display:', stickyCartElement.style.display);
+                      }
+
         let productId = null;
         
         // Better theme detection - more specific to Assayl
