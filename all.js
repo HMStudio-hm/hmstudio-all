@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1053,45 +1053,42 @@ let buttonContainer = null;
 
 if (currentTheme === 'assayl') {
     // For Assayl theme, find the add to cart button container
-    // First, try to find the .mt-2 div that contains the cart button (Home page layout)
+    // First, try to find the existing .mt-2 div that contains the cart button (Home page layout)
     let mtDiv = card.querySelector('.bottom-box .mt-2');
     if (mtDiv) {
+        // Home page layout - use existing container
         buttonContainer = mtDiv;
     } else {
-        // For All Products page layout, look for the cart button's direct parent
+        // All Products page layout - find or create the container WITH the cart button
         const addToCartBtn = card.querySelector('.btn-cart');
-        if (addToCartBtn && addToCartBtn.parentElement) {
-            // Check if the cart button is directly in product-bottom
-            if (addToCartBtn.parentElement.classList.contains('product-bottom')) {
-                // Create a new container specifically for buttons after the price section
-                const productBottom = addToCartBtn.parentElement;
-                const priceSection = productBottom.querySelector('.pricerevs');
+        if (addToCartBtn) {
+            // Check if cart button already has a parent container we can use
+            const cartParent = addToCartBtn.parentElement;
+            
+            // If cart button is directly in product-bottom, we need to wrap both buttons together
+            if (cartParent && cartParent.classList.contains('product-bottom')) {
+                // Create a new container and move the cart button into it
+                buttonContainer = document.createElement('div');
+                buttonContainer.className = 'mt-2';
+                buttonContainer.style.cssText = 'margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
                 
-                // Create the button container
+                // Insert the new container before the cart button
+                addToCartBtn.before(buttonContainer);
+                
+                // Move the cart button into our new container
+                buttonContainer.appendChild(addToCartBtn);
+            } else {
+                // Cart button already has a proper container, use it
+                buttonContainer = cartParent;
+            }
+        } else {
+            // Fallback: create a new container
+            const productBottom = card.querySelector('.product-bottom') || card.querySelector('.bottom-box');
+            if (productBottom) {
                 buttonContainer = document.createElement('div');
                 buttonContainer.className = 'mt-2';
                 buttonContainer.style.cssText = 'margin-top: 8px;';
-                
-                // Insert after the price section and before the cart button
-                if (priceSection) {
-                    priceSection.after(buttonContainer);
-                } else {
-                    // If no price section found, insert before the cart button
-                    addToCartBtn.before(buttonContainer);
-                }
-            } else {
-                // Use the cart button's direct parent
-                buttonContainer = addToCartBtn.parentElement;
-            }
-        } else {
-            // Last fallback: look for the bottom box container
-            buttonContainer = card.querySelector('.bottom-box') || card.querySelector('.product-bottom');
-            
-            if (!buttonContainer) {
-                // Create a container if none exists
-                buttonContainer = document.createElement('div');
-                buttonContainer.className = 'mt-2';
-                card.appendChild(buttonContainer);
+                productBottom.appendChild(buttonContainer);
             }
         }
     }
@@ -1291,15 +1288,14 @@ if (currentTheme === 'assayl') {
             // Insert button based on theme
 try {
   if (currentTheme === 'assayl') {
-      // For Assayl theme, always append the button to the container
-      // This ensures it appears after the cart button when both are in the same container
-      buttonContainer.appendChild(button);
-      
-      // Ensure the cart button comes after the quick view button
-      const addToCartBtn = card.querySelector('.btn-cart');
-      if (addToCartBtn && buttonContainer.contains(addToCartBtn)) {
-          // Move the cart button to be after the quick view button
-          buttonContainer.appendChild(addToCartBtn);
+      // For Assayl theme, insert the quick view button BEFORE the cart button in the same container
+      const addToCartBtn = buttonContainer.querySelector('.btn-cart');
+      if (addToCartBtn) {
+          // Insert quick view button before the cart button
+          buttonContainer.insertBefore(button, addToCartBtn);
+      } else {
+          // If no cart button found in container, just append
+          buttonContainer.appendChild(button);
       }
   } else {
       // For Perfect theme
