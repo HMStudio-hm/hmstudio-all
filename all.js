@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.7.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2433,13 +2433,35 @@ if (isProductPage) {
   console.log('✅ Found product page element:', isProductPage.className || isProductPage.id || isProductPage.tagName);
 }
       
-      if (isProductPage) {
-        console.log('✅ Product page detected, calling setupProductTimer...');
-        this.createStickyCart();
-        const wishlistBtn = document.querySelector('[data-wishlist-id]');
-        const productForm = document.querySelector('form[data-product-id]');
-        const productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
-                         productForm?.getAttribute('data-product-id');
+if (isProductPage) {
+  console.log('✅ Product page detected, calling setupProductTimer...');
+  this.createStickyCart();
+  
+  // Use the same logic as setupProductTimer for consistency
+  let productId = null;
+  
+  // Check if we're on Assayl theme
+  const isAssaylTheme = document.querySelector('.details-product-data') || 
+                       document.querySelector('.col-product-info') ||
+                       document.querySelector('#product-form #product-id');
+  
+  if (isAssaylTheme) {
+    console.log('🎯 Initialize: Assayl theme detected');
+    const productIdInput = document.querySelector('#product-id');
+    if (productIdInput && productIdInput.value) {
+      productId = productIdInput.value;
+      console.log(`✅ Initialize: Found Assayl product ID: "${productId}"`);
+    }
+  } else {
+    console.log('🎯 Initialize: Soft/Perfect theme detected');
+    const wishlistBtn = document.querySelector('[data-wishlist-id]');
+    const productForm = document.querySelector('form[data-product-id]');
+    productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
+               productForm?.getAttribute('data-product-id');
+    console.log(`✅ Initialize: Found Soft/Perfect product ID: "${productId}"`);
+  }
+
+  console.log('🔍 Initialize product ID check:', productId);
 
                          console.log('🔍 Quick product ID check:', productId);
   console.log('🔍 Wishlist button found:', !!wishlistBtn);
