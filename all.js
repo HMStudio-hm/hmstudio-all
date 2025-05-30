@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2228,20 +2228,25 @@ if (productBottom) {
 
     setupProductTimer() {
       console.log('🚀 setupProductTimer called');
-  console.log('🔍 Available campaigns:', this.campaigns.length);
-
-  // Log all available elements for debugging
-  console.log('🔍 Available elements check:');
-  console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
-  console.log('  - #product-id:', !!document.querySelector('#product-id'));
-  console.log('  - #product-form:', !!document.querySelector('#product-form'));
-  console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
-
+      console.log('🔍 Available campaigns:', this.campaigns.length);
+    
+      // Log all available elements for debugging
+      console.log('🔍 Available elements check:');
+      console.log('  - [data-wishlist-id]:', !!document.querySelector('[data-wishlist-id]'));
+      console.log('  - #product-id:', !!document.querySelector('#product-id'));
+      console.log('  - #product-form:', !!document.querySelector('#product-form'));
+      console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
+      console.log('  - #product-parent-id:', !!document.querySelector('#product-parent-id')); // ADD THIS LOG
+    
       let productId = null;
       
       const idSelectors = [
         {
-          selector: '#product-id',
+          selector: '#product-parent-id',              // ADD THIS - CHECK PARENT ID FIRST
+          attribute: 'value'
+        },
+        {
+          selector: '#product-id',                     // Keep your existing selectors
           attribute: 'value'
         },
         {
@@ -2257,7 +2262,7 @@ if (productBottom) {
           attribute: 'value'
         },
         {
-          selector: 'input#product-id',  // Assayl theme - NEW
+          selector: 'input#product-id',
           attribute: 'value'
         }
       ];
@@ -2267,14 +2272,14 @@ if (productBottom) {
         const element = document.querySelector(selector);
         if (element) {
           productId = element.getAttribute(attribute) || element.value;
-          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector); // DEBUG
+          console.log('FOUND PRODUCT ID:', productId, 'using selector:', selector);
           break;
         } else {
-          console.log('SELECTOR NOT FOUND:', selector); // DEBUG
+          console.log('SELECTOR NOT FOUND:', selector);
         }
       }
       
-      console.log('FINAL PRODUCT ID:', productId); // DEBUG
+      console.log('FINAL PRODUCT ID:', productId);
       
       if (!productId) {
         console.log('❌ No product ID found with any selector');
