@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.6 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1807,33 +1807,21 @@ if (params.smartCart) {
     },
 
     findActiveCampaignForProduct(productId) {
-      console.log('🔍 Looking for campaign for product ID:', productId);
-  console.log('🔍 Total campaigns to check:', this.campaigns.length);
-
       const now = new Date();
-      console.log('🕐 Current time:', now.toISOString());
 
       const activeCampaign = this.campaigns.find(campaign => {
-        console.log('📋 Checking campaign:', campaign.name || 'Unnamed Campaign');
 
         if (!campaign.products || !Array.isArray(campaign.products)) {
-          console.log('❌ Campaign has no products array');
           return false;
         }
-
-        console.log('🔍 Campaign products:', campaign.products.length);
-        console.log('🔍 Campaign product IDs:', campaign.products.map(p => p.id));
     
         const hasProduct = campaign.products.some(p => {
           const match = p.id === productId;
           console.log(`  Product ${p.id} === ${productId}: ${match}`);
           return match;
         });
-        
-        console.log('🎯 Product found in campaign:', hasProduct);
-        
+                
         if (!hasProduct) {
-          console.log('❌ Product not in this campaign');
           return false;
         }
     
@@ -1842,22 +1830,15 @@ if (params.smartCart) {
           endTime = campaign.endTime?._seconds ? 
             new Date(campaign.endTime._seconds * 1000) :
             new Date(campaign.endTime.seconds * 1000);
-            console.log('⏰ Campaign end time:', endTime.toISOString());
         } catch (error) {
-          console.log('❌ Error parsing end time:', error);
           return false;
         }
     
         if (!(endTime instanceof Date && !isNaN(endTime))) {
-          console.log('❌ Invalid end time');
           return false;
         }
 
-        console.log('📊 Campaign status:', campaign.status);
-        console.log('🔄 Auto restart:', campaign.timerSettings?.autoRestart);
-
         if (campaign.timerSettings.autoRestart && now > endTime) {
-          console.log('🔄 Campaign expired but has auto-restart, calculating new end time...');
           const startTime = campaign.startTime?._seconds ? 
             new Date(campaign.startTime._seconds * 1000) :
             new Date(campaign.startTime.seconds * 1000);
@@ -1866,18 +1847,14 @@ if (params.smartCart) {
           const timeSinceStart = now - startTime;
           const cycles = Math.floor(timeSinceStart / originalDuration);
           endTime = new Date(startTime.getTime() + (cycles + 1) * originalDuration);
-          console.log('🔄 New calculated end time:', endTime.toISOString());
         }
         const isActive = hasProduct && (now <= endTime || campaign.timerSettings?.autoRestart) && campaign.status === 'active';
-        console.log('✅ Final campaign match result:', isActive);
         
         return isActive;
       });
     
       if (activeCampaign) {
-        console.log('🎯 Found active campaign:', activeCampaign.name || 'Unnamed Campaign');
       } else {
-        console.log('❌ No active campaign found for product:', productId);
       }
     
       return activeCampaign;
