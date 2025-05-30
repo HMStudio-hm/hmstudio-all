@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2237,6 +2237,22 @@ if (productBottom) {
   console.log('  - #product-form:', !!document.querySelector('#product-form'));
   console.log('  - input#product-id:', !!document.querySelector('input#product-id'));
 
+  // ADD THESE DEBUG LINES:
+const parentIdElement = document.querySelector('#product-parent-id');
+console.log('🔍 Parent ID element:', parentIdElement);
+if (parentIdElement) {
+  console.log('🔍 Parent ID value:', parentIdElement.value);
+  console.log('🔍 Parent ID getAttribute:', parentIdElement.getAttribute('value'));
+}
+
+const productIdElement = document.querySelector('#product-id');
+console.log('🔍 Product ID element:', productIdElement);
+if (productIdElement) {
+  console.log('🔍 Product ID value:', productIdElement.value);
+  console.log('🔍 Product ID getAttribute:', productIdElement.getAttribute('value'));
+}
+  
+
       let productId = null;
       
       const idSelectors = [
@@ -2440,26 +2456,32 @@ if (isProductPage) {
   // Use the same logic as setupProductTimer for consistency
   let productId = null;
   
-  // Check if we're on Assayl theme
-  const isAssaylTheme = document.querySelector('.details-product-data') || 
-                       document.querySelector('.col-product-info') ||
-                       document.querySelector('#product-form #product-parent-id');
-  
-  if (isAssaylTheme) {
-    console.log('🎯 Initialize: Assayl theme detected');
-    const productIdInput = document.querySelector('#product-parent-id');
-    if (productIdInput && productIdInput.value) {
-      productId = productIdInput.value;
-      console.log(`✅ Initialize: Found Assayl product ID: "${productId}"`);
-    }
-  } else {
-    console.log('🎯 Initialize: Soft/Perfect theme detected');
-    const wishlistBtn = document.querySelector('[data-wishlist-id]');
-    const productForm = document.querySelector('form[data-product-id]');
-    productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
-               productForm?.getAttribute('data-product-id');
-    console.log(`✅ Initialize: Found Soft/Perfect product ID: "${productId}"`);
-  }
+  // Better theme detection - more specific to Assayl
+const isAssaylTheme = document.querySelector('.details-product-data') || 
+document.querySelector('.col-product-info');
+
+if (isAssaylTheme) {
+console.log('🎯 Initialize: Assayl theme detected');
+// For Assayl: Try parent ID first, then regular ID
+const productParentInput = document.querySelector('#product-parent-id');
+const productIdInput = document.querySelector('#product-id');
+
+if (productParentInput && productParentInput.value) {
+productId = productParentInput.value;
+console.log(`✅ Initialize: Found Assayl parent ID: "${productId}"`);
+} else if (productIdInput && productIdInput.value) {
+productId = productIdInput.value;
+console.log(`✅ Initialize: Found Assayl product ID: "${productId}"`);
+}
+} else {
+console.log('🎯 Initialize: Soft/Perfect theme detected');
+// For Soft/Perfect: Use original wishlist logic
+const wishlistBtn = document.querySelector('[data-wishlist-id]');
+const productForm = document.querySelector('form[data-product-id]');
+productId = wishlistBtn?.getAttribute('data-wishlist-id') || 
+productForm?.getAttribute('data-product-id');
+console.log(`✅ Initialize: Found Soft/Perfect product ID: "${productId}"`);
+}
 
   console.log('🔍 Initialize product ID check:', productId);
 
