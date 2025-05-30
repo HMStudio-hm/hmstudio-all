@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.8.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1569,6 +1569,18 @@ if (params.smartCart) {
         this.stickyCartElement.remove();
       }
     
+      // Check if we're on Assayl theme
+      const isAssaylTheme = document.querySelector('.details-product-data') || 
+                           document.querySelector('.col-product-info');
+    
+      // For Assayl theme: only show on desktop (hide on mobile since it has built-in mobile cart)
+      if (isAssaylTheme && isMobile()) {
+        console.log('🎯 Assayl theme + mobile detected - skipping sticky cart (using built-in mobile cart)');
+        return; // Don't create sticky cart on mobile for Assayl theme
+      }
+    
+      console.log('🎯 Creating sticky cart for:', isAssaylTheme ? 'Assayl (desktop)' : 'Soft/Perfect theme');
+    
       const container = document.createElement('div');
       container.id = 'hmstudio-sticky-cart';
       container.style.cssText = `
@@ -1584,7 +1596,7 @@ if (params.smartCart) {
         direction: ${getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};
         height: ${isMobile() ? 'auto' : '100px'};
       `;
-
+    
       const wrapper = document.createElement('div');
       wrapper.style.cssText = `
         max-width: 1200px;
@@ -1595,7 +1607,7 @@ if (params.smartCart) {
         gap: ${isMobile() ? '8px' : '15px'};
         flex-wrap: ${isMobile() ? 'wrap' : 'nowrap'};
       `;
-
+    
       const quantityContainer = document.createElement('div');
       quantityContainer.style.cssText = `
         display: flex;
@@ -1606,7 +1618,7 @@ if (params.smartCart) {
         border-radius: 8px;
         padding: ${isMobile() ? '8px 12px' : '4px'};
       `;
-
+    
       const quantityLabel = document.createElement('span');
       quantityLabel.textContent = getCurrentLanguage() === 'ar' ? 'الكمية:' : 'Quantity:';
       quantityLabel.style.cssText = `
@@ -1614,7 +1626,7 @@ if (params.smartCart) {
         color: #666;
         ${isMobile() ? 'min-width: 60px;' : ''}
       `;
-
+    
       const quantityWrapper = document.createElement('div');
       quantityWrapper.style.cssText = `
         display: flex;
@@ -1625,6 +1637,7 @@ if (params.smartCart) {
         padding: 4px;
         ${isMobile() ? 'flex: 0 0 auto;' : ''}
       `;
+    
       const decreaseBtn = document.createElement('button');
       decreaseBtn.textContent = '-';
       decreaseBtn.style.cssText = `
@@ -1697,13 +1710,23 @@ if (params.smartCart) {
           button.style.background = '#f0f0f0';
         });
       };
-
+    
       addButtonHoverEffects(decreaseBtn);
       addButtonHoverEffects(increaseBtn);
     
       const updateQuantity = (value) => {
         quantityInput.value = value;
-        const originalSelect = document.querySelector('select#product-quantity');
+        
+        // For Assayl theme: update the correct quantity selector
+        let originalSelect;
+        if (isAssaylTheme) {
+          originalSelect = document.querySelector('select#product-quantity') || 
+                          document.querySelector('#product-quantity') ||
+                          document.querySelector('select[name="quantity"]');
+        } else {
+          originalSelect = document.querySelector('select#product-quantity');
+        }
+        
         if (originalSelect) {
           originalSelect.value = value;
           const event = new Event('change', { bubbles: true });
@@ -1731,7 +1754,7 @@ if (params.smartCart) {
         if (value > 10) value = 10;
         updateQuantity(value);
       });
-
+    
       quantityInput.addEventListener('focus', (e) => {
         e.preventDefault();
         if (isMobile()) {
@@ -1754,25 +1777,53 @@ if (params.smartCart) {
         flex: 1;
         font-size: ${isMobile() ? '16px' : '16px'};
       `;
-
+    
       addButton.addEventListener('mouseover', () => addButton.style.opacity = '0.9');
       addButton.addEventListener('mouseout', () => addButton.style.opacity = '1');
+      
       addButton.addEventListener('click', () => {
-        const originalSelect = document.querySelector('select#product-quantity');
-        if (originalSelect) {
-          originalSelect.value = quantityInput.value;
-          const event = new Event('change', { bubbles: true });
-          originalSelect.dispatchEvent(event);
-        }
+        // Update quantity first
+        const currentQuantity = quantityInput.value;
+        
+        // For Assayl theme: find and click the correct add to cart button
+        if (isAssaylTheme) {
+          const originalSelect = document.querySelector('select#product-quantity') || 
+                                document.querySelector('#product-quantity') ||
+                                document.querySelector('select[name="quantity"]');
+          if (originalSelect) {
+            originalSelect.value = currentQuantity;
+            const event = new Event('change', { bubbles: true });
+            originalSelect.dispatchEvent(event);
+          }
     
-        const originalButton = document.querySelector('.btn.btn-add-to-cart');
-        if (originalButton) {
-          setTimeout(() => {
-            originalButton.click();
-          }, 100);
+          // Find Assayl's add to cart button
+          const originalButton = document.querySelector('#product-view-add-to-cart') ||
+                                document.querySelector('.btn-add-to-cart') ||
+                                document.querySelector('button[onclick*="productAddToCart"]');
+          
+          if (originalButton) {
+            setTimeout(() => {
+              originalButton.click();
+            }, 100);
+          }
+        } else {
+          // Original logic for Soft/Perfect themes
+          const originalSelect = document.querySelector('select#product-quantity');
+          if (originalSelect) {
+            originalSelect.value = currentQuantity;
+            const event = new Event('change', { bubbles: true });
+            originalSelect.dispatchEvent(event);
+          }
+    
+          const originalButton = document.querySelector('.btn.btn-add-to-cart');
+          if (originalButton) {
+            setTimeout(() => {
+              originalButton.click();
+            }, 100);
+          }
         }
       });
-
+    
       quantityWrapper.appendChild(decreaseBtn);
       quantityWrapper.appendChild(quantityInput);
       quantityWrapper.appendChild(increaseBtn);
@@ -1785,10 +1836,20 @@ if (params.smartCart) {
       document.body.appendChild(container);
     
       this.stickyCartElement = container;
-
+    
+      // Updated scroll listener with Assayl theme support
       window.addEventListener('scroll', () => {
-        const originalButton = document.querySelector('.btn.btn-add-to-cart');
-        const originalSelect = document.querySelector('select#product-quantity');
+        let originalButton;
+        
+        if (isAssaylTheme) {
+          // For Assayl: look for their add to cart buttons
+          originalButton = document.querySelector('#product-view-add-to-cart') ||
+                          document.querySelector('.btn-add-to-cart') ||
+                          document.querySelector('button[onclick*="productAddToCart"]');
+        } else {
+          // For Soft/Perfect: use original logic
+          originalButton = document.querySelector('.btn.btn-add-to-cart');
+        }
         
         if (!originalButton) return;
     
@@ -1797,6 +1858,17 @@ if (params.smartCart) {
         
         if (!isButtonVisible) {
           container.style.display = 'block';
+          
+          // Sync quantity with page
+          let originalSelect;
+          if (isAssaylTheme) {
+            originalSelect = document.querySelector('select#product-quantity') || 
+                            document.querySelector('#product-quantity') ||
+                            document.querySelector('select[name="quantity"]');
+          } else {
+            originalSelect = document.querySelector('select#product-quantity');
+          }
+          
           if (originalSelect) {
             quantityInput.value = originalSelect.value;
           }
