@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.6 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -994,32 +994,36 @@
     
     // Support Soft theme, Perfect theme, and Assayl theme selectors
     const productCardSelectors = [
-      '.product-item.position-relative', // Soft theme
-      '.card.card-product',              // Perfect theme
-      '.col-md-3.col-6',                 // Assayl theme - All Products page grid
-      '.product.product-1',              // Assayl theme - main product pages
-      '.product.position-relative',      // Assayl theme - carousel/slider products
-      '.item.text-center.slick-slide'    // Assayl theme - slider items
-  ];
+        '.product-item.position-relative', // Soft theme
+        '.card.card-product',              // Perfect theme
+        '.product.product-1',  // Assayl theme - main product pages
+        'product product-1 ',
+        'col-md-3 col-6 ',
+        '.col-md-3 col-6 ', // Assayl theme - grid container
+        '.product.position-relative',  // Assayl theme - carousel/slider products
+        'product position-relative',
+        'item text-center slick-slide slick-active',
+        '.item text-center slick-slide slick-active' // Assayl theme - slider items
+    ];
 
     let productCards = [];
     let currentTheme = 'unknown';
     
     // Try each selector to identify the theme
-    for (const selector of productCardSelectors) {
-      const cards = document.querySelectorAll(selector);
-      if (cards.length > 0) {
-          productCards = cards;
-          if (selector === '.product-item.position-relative') {
-              currentTheme = 'soft';
-          } else if (selector === '.card.card-product') {
-              currentTheme = 'perfect';
-          } else if (selector.includes('col-md-3') || selector.includes('product-1') || selector.includes('position-relative') || selector.includes('slick-slide')) {
-              currentTheme = 'assayl';
-          }
-          break;
+for (const selector of productCardSelectors) {
+  const cards = document.querySelectorAll(selector);
+  if (cards.length > 0) {
+      productCards = cards;
+      if (selector === '.product-item.position-relative') {
+          currentTheme = 'soft';
+      } else if (selector === '.card.card-product') {
+          currentTheme = 'perfect';
+      } else if (selector.includes('.product.product-1') || selector.includes('.product.position-relative')) {
+          currentTheme = 'assayl';
       }
-  }  
+      break;
+  }
+}  
     productCards.forEach(card => {
         if (card.querySelector('.quick-view-btn')) {
             return;
@@ -1027,83 +1031,57 @@
 
         // Support different product ID data attributes for different themes
         let productId = null;
-
-if (currentTheme === 'assayl') {
-    // For Assayl theme, look for data-wishlist-id on the wishlist span
-    const wishlistSpan = card.querySelector('.add-to-wishlist[data-wishlist-id]') || 
-                        card.querySelector('span[data-wishlist-id]');
-    if (wishlistSpan) {
-        productId = wishlistSpan.getAttribute('data-wishlist-id');
-    }
-} else {
-    // For Soft and Perfect themes (existing logic)
-    const wishlistBtn = card.querySelector('[data-wishlist-id]');
-    const productForm = card.querySelector('form[data-product-id]');
-    
-    if (wishlistBtn) {
-        productId = wishlistBtn.getAttribute('data-wishlist-id');
-    } else if (productForm) {
-        productId = productForm.getAttribute('data-product-id');
-    }
-}
         
-        if (productId) {
-           // Find the button container based on theme
-let buttonContainer = null;
-
-if (currentTheme === 'assayl') {
-    // For Assayl theme, find the add to cart button container
-    // First, try to find the existing .mt-2 div that contains the cart button (Home page layout)
-    let mtDiv = card.querySelector('.bottom-box .mt-2');
-    if (mtDiv) {
-        // Home page layout - use existing container
-        buttonContainer = mtDiv;
-    } else {
-        // All Products page layout - find or create the container WITH the cart button
-        const addToCartBtn = card.querySelector('.btn-cart');
-        if (addToCartBtn) {
-            // Check if cart button already has a parent container we can use
-            const cartParent = addToCartBtn.parentElement;
-            
-            // If cart button is directly in product-bottom, we need to wrap both buttons together
-            if (cartParent && cartParent.classList.contains('product-bottom')) {
-                // Create a new container and move the cart button into it
-                buttonContainer = document.createElement('div');
-                buttonContainer.className = 'mt-2';
-                buttonContainer.style.cssText = 'margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
-                
-                // Insert the new container before the cart button
-                addToCartBtn.before(buttonContainer);
-                
-                // Move the cart button into our new container
-                buttonContainer.appendChild(addToCartBtn);
-            } else {
-                // Cart button already has a proper container, use it
-                buttonContainer = cartParent;
+        if (currentTheme === 'assayl') {
+            // For Assayl theme, look for data-wishlist-id on the wishlist span
+            const wishlistSpan = card.querySelector('.add-to-wishlist[data-wishlist-id]');
+            if (wishlistSpan) {
+                productId = wishlistSpan.getAttribute('data-wishlist-id');
             }
         } else {
-            // Fallback: create a new container
-            const productBottom = card.querySelector('.product-bottom') || card.querySelector('.bottom-box');
-            if (productBottom) {
-                buttonContainer = document.createElement('div');
-                buttonContainer.className = 'mt-2';
-                buttonContainer.style.cssText = 'margin-top: 8px;';
-                productBottom.appendChild(buttonContainer);
+            // For Soft and Perfect themes (existing logic)
+            const wishlistBtn = card.querySelector('[data-wishlist-id]');
+            const productForm = card.querySelector('form[data-product-id]');
+            
+            if (wishlistBtn) {
+                productId = wishlistBtn.getAttribute('data-wishlist-id');
+            } else if (productForm) {
+                productId = productForm.getAttribute('data-product-id');
             }
         }
-    }
-} else {
-    // For Soft and Perfect themes (existing logic)
-    buttonContainer = card.querySelector('.card-footer') || 
-                    card.querySelector('div[style*="text-align: center"]');
+        
+        if (productId) {
+            // Find the button container based on theme
+            let buttonContainer = null;
+            
+            if (currentTheme === 'assayl') {
+                // For Assayl theme, find the add to cart button container
+                // First, try to find the .mt-2 div that contains the cart button
+                const mtDiv = card.querySelector('.bottom-box .mt-2');
+                if (mtDiv) {
+                    buttonContainer = mtDiv;
+                } else {
+                    // Fallback: find the cart button's parent
+                    const addToCartBtn = card.querySelector('.btn-cart');
+                    if (addToCartBtn && addToCartBtn.parentElement) {
+                        buttonContainer = addToCartBtn.parentElement;
+                    } else {
+                        // Last fallback: look for the bottom box container
+                        buttonContainer = card.querySelector('.bottom-box');
+                    }
+                }
+            } else {
+                // For Soft and Perfect themes (existing logic)
+                buttonContainer = card.querySelector('.card-footer') || 
+                                card.querySelector('div[style*="text-align: center"]');
 
-    // If no container found, create one for Perfect theme
-    if (!buttonContainer) {
-        buttonContainer = document.createElement('div');
-        buttonContainer.className = 'card-footer bg-transparent border-0';
-        card.appendChild(buttonContainer);
-    }
-}
+                // If no container found, create one for Perfect theme
+                if (!buttonContainer) {
+                    buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'card-footer bg-transparent border-0';
+                    card.appendChild(buttonContainer);
+                }
+            }
 
             if (!buttonContainer) {
                 return;
@@ -1286,29 +1264,22 @@ if (currentTheme === 'assayl') {
             });
 
             // Insert button based on theme
-try {
-  if (currentTheme === 'assayl') {
-      // For Assayl theme, insert the quick view button BEFORE the cart button in the same container
-      const addToCartBtn = buttonContainer.querySelector('.btn-cart');
-      if (addToCartBtn) {
-          // Insert quick view button before the cart button
-          buttonContainer.insertBefore(button, addToCartBtn);
-      } else {
-          // If no cart button found in container, just append
-          buttonContainer.appendChild(button);
-      }
-  } else {
-      // For Perfect theme
-      if (buttonContainer.classList.contains('card-footer')) {
-          buttonContainer.appendChild(button);
-      } else {
-          // For Soft theme
-          buttonContainer.insertBefore(button, buttonContainer.firstChild);
-      }
-  }
-} catch (error) {
-  buttonContainer.appendChild(button);
-}
+            try {
+                if (currentTheme === 'assayl') {
+                    // For Assayl theme, add button below the cart button (both mobile and desktop)
+                    buttonContainer.appendChild(button);
+                } else {
+                    // For Perfect theme
+                    if (buttonContainer.classList.contains('card-footer')) {
+                        buttonContainer.appendChild(button);
+                    } else {
+                        // For Soft theme
+                        buttonContainer.insertBefore(button, buttonContainer.firstChild);
+                    }
+                }
+            } catch (error) {
+                buttonContainer.appendChild(button);
+            }
         }
     });
 }
