@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.6 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.7 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1055,22 +1055,28 @@ for (const selector of productCardSelectors) {
             let buttonContainer = null;
             
             if (currentTheme === 'assayl') {
-                // For Assayl theme, find the add to cart button container
-                // First, try to find the .mt-2 div that contains the cart button
-                const mtDiv = card.querySelector('.bottom-box .mt-2');
-                if (mtDiv) {
-                    buttonContainer = mtDiv;
-                } else {
-                    // Fallback: find the cart button's parent
-                    const addToCartBtn = card.querySelector('.btn-cart');
-                    if (addToCartBtn && addToCartBtn.parentElement) {
-                        buttonContainer = addToCartBtn.parentElement;
-                    } else {
-                        // Last fallback: look for the bottom box container
-                        buttonContainer = card.querySelector('.bottom-box');
-                    }
-                }
-            } else {
+              // For Assayl theme, find the add to cart button container
+              // First, try to find the .mt-2 div that contains the cart button (home page)
+              const mtDiv = card.querySelector('.bottom-box .mt-2');
+              if (mtDiv) {
+                  buttonContainer = mtDiv;
+              } else {
+                  // For all products page - look for the product-bottom container
+                  const productBottom = card.querySelector('.product-bottom');
+                  if (productBottom) {
+                      buttonContainer = productBottom;
+                  } else {
+                      // Fallback: find the cart button's parent
+                      const addToCartBtn = card.querySelector('.btn-cart');
+                      if (addToCartBtn && addToCartBtn.parentElement) {
+                          buttonContainer = addToCartBtn.parentElement;
+                      } else {
+                          // Last fallback: look for the bottom box container
+                          buttonContainer = card.querySelector('.bottom-box');
+                      }
+                  }
+              }
+          } else {
                 // For Soft and Perfect themes (existing logic)
                 buttonContainer = card.querySelector('.card-footer') || 
                                 card.querySelector('div[style*="text-align: center"]');
@@ -1264,22 +1270,33 @@ for (const selector of productCardSelectors) {
             });
 
             // Insert button based on theme
-            try {
-                if (currentTheme === 'assayl') {
-                    // For Assayl theme, add button below the cart button (both mobile and desktop)
-                    buttonContainer.appendChild(button);
-                } else {
-                    // For Perfect theme
-                    if (buttonContainer.classList.contains('card-footer')) {
-                        buttonContainer.appendChild(button);
-                    } else {
-                        // For Soft theme
-                        buttonContainer.insertBefore(button, buttonContainer.firstChild);
-                    }
-                }
-            } catch (error) {
-                buttonContainer.appendChild(button);
-            }
+try {
+  if (currentTheme === 'assayl') {
+      // Check if this is the all products page layout
+      if (buttonContainer.classList.contains('product-bottom')) {
+          // For all products page - add after the cart button
+          const cartButton = buttonContainer.querySelector('.btn-cart');
+          if (cartButton) {
+              cartButton.parentNode.insertBefore(button, cartButton.nextSibling);
+          } else {
+              buttonContainer.appendChild(button);
+          }
+      } else {
+          // For home page - add inside the .mt-2 container
+          buttonContainer.appendChild(button);
+      }
+  } else {
+      // For Perfect theme
+      if (buttonContainer.classList.contains('card-footer')) {
+          buttonContainer.appendChild(button);
+      } else {
+          // For Soft theme
+          buttonContainer.insertBefore(button, buttonContainer.firstChild);
+      }
+  }
+} catch (error) {
+  buttonContainer.appendChild(button);
+}
         }
     });
 }
