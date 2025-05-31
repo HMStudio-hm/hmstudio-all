@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.8 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -622,45 +622,33 @@
     `;
   
     const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-  @media screen and (min-width: 768px) {
-    .quick-view-form {
-      flex-direction: row !important;
-      overflow: hidden !important;
-    }
-    .quick-view-gallery {
-      width: 50% !important;
-      border-bottom: none !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      padding-top: 40px !important;
-    }
-    .quick-view-details {
-      width: 50% !important;
-      padding-top: 40px !important;
-    }
-    .quick-view-gallery img {
-      margin: 0 auto !important;
-    }
-  }
-  
-  /* Fix for all products page positioning */
-  .product-bottom .pricerevs {
-    position: static !important;
-    bottom: 0px !important;
-  }
-  
-  .product-bottom .btn-cart {
-    position: static !important;
-    bottom: 0px !important;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
+    styleSheet.textContent = `
+      @media screen and (min-width: 768px) {
+        .quick-view-form {
+          flex-direction: row !important;
+          overflow: hidden !important;
+        }
+        .quick-view-gallery {
+          width: 50% !important;
+          border-bottom: none !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          padding-top: 40px !important;
+        }
+        .quick-view-details {
+          width: 50% !important;
+          padding-top: 40px !important;
+        }
+        .quick-view-gallery img {
+          margin: 0 auto !important;
+        }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
     document.head.appendChild(styleSheet);
   
     form.className = 'quick-view-form';
@@ -2597,7 +2585,7 @@ const couponMessages = {
         position: fixed;
         top: 0;
         ${isRTL ? "right" : "left"}: 100%;
-        width: 400px;
+        width: ${this.isMobileDevice() ? '100vw' : '400px'};
         height: 100vh;
         background: #fff;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
@@ -3470,7 +3458,7 @@ const couponMessages = {
     },
 
     setupCartButton: function () {
-      
+      // Existing header cart support
       const headerCart = document.querySelector(".header-cart")
       if (headerCart) {
         headerCart.addEventListener("click", (e) => {
@@ -3479,7 +3467,9 @@ const couponMessages = {
           this.openCart()
         })
       }
-      const cartButtons = document.querySelectorAll(".a-shopping-cart, .a-shopping-cart")
+    
+      // Existing cart buttons
+      const cartButtons = document.querySelectorAll(".a-shopping-cart")
       cartButtons.forEach((button) => {
         button.addEventListener("click", (e) => {
           e.preventDefault()
@@ -3487,6 +3477,20 @@ const couponMessages = {
           this.openCart()
         })
       })
+    
+      // NEW: Assayl theme mobile cart support
+      const assaylMobileCart = document.querySelector(".nav-mobile .view-cart")
+      if (assaylMobileCart) {
+        assaylMobileCart.addEventListener("click", (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          this.openCart()
+        })
+      }
+    },
+
+    isMobileDevice: function () {
+      return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     },
 
     initialize: async function () {
@@ -3503,14 +3507,32 @@ const couponMessages = {
           this.setupCartButton()
 
           const self = this
-          const observer = new MutationObserver(() => {
-            self.setupCartButton()
-          })
+const observer = new MutationObserver((mutations) => {
+  let shouldSetupButtons = false
+  mutations.forEach((mutation) => {
+    if (mutation.type === 'childList') {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) { // Element node
+          if (node.classList?.contains('nav-mobile') || 
+              node.querySelector?.('.nav-mobile') || 
+              node.classList?.contains('header-cart') ||
+              node.querySelector?.('.header-cart')) {
+            shouldSetupButtons = true
+          }
+        }
+      })
+    }
+  })
+  
+  if (shouldSetupButtons) {
+    setTimeout(() => self.setupCartButton(), 100)
+  }
+})
 
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-          })
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+})
 
         } else {
           setTimeout(waitForZid, 100)
