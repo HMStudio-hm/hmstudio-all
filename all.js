@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v1.9.9 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.0 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2643,11 +2643,13 @@ const couponMessages = {
       `
 
       const footer = document.createElement("div")
-      footer.className = "hmstudio-cart-footer"
-      footer.style.cssText = `
-        padding: 20px;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-      `
+footer.className = "hmstudio-cart-footer"
+footer.style.cssText = `
+  padding: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+  flex-shrink: 0;
+`
 
       container.appendChild(header)
       container.appendChild(content)
@@ -2771,7 +2773,7 @@ const couponMessages = {
         salePrice.textContent = formattedSalePrice
         salePrice.style.cssText = `
           font-weight: bold;
-          color: var(--theme-primary, #00b286);
+          color: var(--mainColor, #00b286);
         `
 
         const originalPrice = document.createElement("div")
@@ -2804,7 +2806,7 @@ const couponMessages = {
         price.textContent = formattedPrice
         price.style.cssText = `
           font-weight: bold;
-          color: var(--theme-primary, #00b286);
+          color: var(--mainColor, #00b286);
         `
         priceContainer.appendChild(price)
       }
@@ -3030,7 +3032,7 @@ const couponMessages = {
             border-radius: 4px;
             margin-top: 8px;
             background-color: rgba(0, 178, 134, 0.1);
-            color: var(--theme-primary, #00b286);
+            color: var(--mainColor, #00b286);
           `
           couponInput.value = ""
         } else {
@@ -3168,7 +3170,7 @@ const couponMessages = {
         couponCode.textContent = cartData.coupon.code
         couponCode.style.cssText = `
           font-weight: 500;
-          color: var(--theme-primary, #00b286);
+          color: var(--mainColor, #00b286);
         `
 
         const removeButton = document.createElement("button")
@@ -3261,7 +3263,7 @@ const couponMessages = {
           display: flex;
           justify-content: space-between;
           padding: 10px 0;
-          color: var(--theme-primary, #00b286);
+          color: var(--mainColor, #00b286);
           font-size: 0.9rem;
         `
 
@@ -3689,7 +3691,7 @@ observer.observe(document.body, {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--theme-primary, #00b286);
+      color: var(--mainColor, #00b286);
       font-weight: bold;
       justify-content: center;
       margin-bottom: 5px;
