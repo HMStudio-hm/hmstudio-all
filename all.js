@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.1 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2583,18 +2583,17 @@ const couponMessages = {
       container.className = "hmstudio-cart-container"
       container.style.cssText = `
   position: fixed;
-  top: 0;
+  ${this.isMobileDevice() ? 'bottom: 0;' : 'top: 0;'}
   ${isRTL ? "right" : "left"}: 100%;
   width: ${this.isMobileDevice() ? '100vw' : '400px'};
-  height: ${this.isMobileDevice() ? 'calc(100vh - 80px)' : '100vh'};
+  height: 100vh;
   background: #fff;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   transition: transform 300ms ease;
-  z-index: 999999;
+  z-index: 9999999;
   display: flex;
   flex-direction: column;
   direction: ${isRTL ? "rtl" : "ltr"};
-  ${this.isMobileDevice() ? 'bottom: 80px;' : ''}
 `
 
       const header = document.createElement("div")
@@ -2667,7 +2666,7 @@ footer.style.cssText = `
         opacity: 0;
         visibility: hidden;
         transition: opacity 300ms ease;
-        z-index: 999998;
+        z-index: 9999998;
       `
 
       backdrop.addEventListener("click", () => this.closeCart())
@@ -3031,7 +3030,7 @@ footer.style.cssText = `
             border-radius: 4px;
             margin-top: 8px;
             background-color: rgba(0, 178, 134, 0.1);
-            color: var(--mainColor, #00b286);
+color: var(--mainColor, var(--theme-primary, #00b286));
           `
           couponInput.value = ""
         } else {
