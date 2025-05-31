@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.2 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2583,17 +2583,18 @@ const couponMessages = {
       container.className = "hmstudio-cart-container"
       container.style.cssText = `
   position: fixed;
-  ${this.isMobileDevice() ? 'bottom: 0;' : 'top: 0;'}
+  top: 0;
   ${isRTL ? "right" : "left"}: 100%;
   width: ${this.isMobileDevice() ? '100vw' : '400px'};
-  height: 100vh;
+  height: ${this.isMobileDevice() ? 'calc(100vh - 80px)' : '100vh'};
   background: #fff;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   transition: transform 300ms ease;
-  z-index: 9999999;
+  z-index: 999999;
   display: flex;
   flex-direction: column;
   direction: ${isRTL ? "rtl" : "ltr"};
+  ${this.isMobileDevice() ? 'bottom: 80px;' : ''}
 `
 
       const header = document.createElement("div")
@@ -2647,6 +2648,8 @@ footer.className = "hmstudio-cart-footer"
 footer.style.cssText = `
   padding: 20px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+  flex-shrink: 0;
 `
 
       container.appendChild(header)
@@ -2666,7 +2669,7 @@ footer.style.cssText = `
         opacity: 0;
         visibility: hidden;
         transition: opacity 300ms ease;
-        z-index: 9999998;
+        z-index: 999998;
       `
 
       backdrop.addEventListener("click", () => this.closeCart())
@@ -3030,7 +3033,7 @@ footer.style.cssText = `
             border-radius: 4px;
             margin-top: 8px;
             background-color: rgba(0, 178, 134, 0.1);
-color: var(--mainColor, var(--theme-primary, #00b286));
+            color: var(--mainColor, #00b286);
           `
           couponInput.value = ""
         } else {
@@ -3050,7 +3053,7 @@ color: var(--mainColor, var(--theme-primary, #00b286));
       applyButton.type = "button"
       applyButton.style.cssText = `
         padding: 8px 16px;
-        color: var(--mainColor, #00b286);
+        background: var(--mainColor, var(--theme-primary, #00b286));
         color: white;
         border: none;
         border-radius: 4px;
@@ -3330,7 +3333,7 @@ color: var(--mainColor, var(--theme-primary, #00b286));
       checkoutBtn.style.cssText = `
        width: 100%;
        padding: 15px;
-       color: var(--mainColor, #00b286);
+       background: var(--mainColor, var(--theme-primary, #00b286));
        color: white;
        border: none;
        border-radius: 4px;
@@ -3770,7 +3773,7 @@ observer.observe(document.body, {
     .addToCartBtn {
       width: 100%;
       padding: 8px 15px;
-      color: var(--mainColor, #00b286);
+      background: var(--theme-primary, #00b286);
       color: white;
       border: none;
       border-radius: 20px;
