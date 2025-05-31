@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.3 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -2586,7 +2586,7 @@ const couponMessages = {
   top: 0;
   ${isRTL ? "right" : "left"}: 100%;
   width: ${this.isMobileDevice() ? '100vw' : '400px'};
-  height: ${this.isMobileDevice() ? 'calc(100vh - 80px)' : '100vh'};
+  height: ${this.isMobileDevice() ? 'calc(100vh - 50px)' : '100vh'};
   background: #fff;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   transition: transform 300ms ease;
@@ -2594,7 +2594,7 @@ const couponMessages = {
   display: flex;
   flex-direction: column;
   direction: ${isRTL ? "rtl" : "ltr"};
-  ${this.isMobileDevice() ? 'bottom: 80px;' : ''}
+  ${this.isMobileDevice() ? 'bottom: 50px;' : ''}
 `
 
       const header = document.createElement("div")
