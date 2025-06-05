@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.4 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
 // Created by HMStudio
 
 (function() {
@@ -1159,7 +1159,23 @@ for (const selector of productCardSelectors) {
                     `;
                     document.head.appendChild(style);
                 }
-            } else {
+            }
+            // Add spinner animation style for all themes
+const spinnerStyle = document.createElement('style');
+if (!document.querySelector('#quick-view-spinner-style')) {
+    spinnerStyle.id = 'quick-view-spinner-style';
+    spinnerStyle.textContent = `
+        .quick-view-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(spinnerStyle);
+}
+            else {
                 // Existing style for other themes
                 button.style.cssText = `
                     width: 35px;
@@ -1207,12 +1223,15 @@ for (const selector of productCardSelectors) {
                     `;
                     document.head.appendChild(style);
                 }
-            } else {
-                // For other themes, just the icon
+              } else {
+                // For other themes, add icon with loading spinner
                 button.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="quick-view-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="quick-view-spinner" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
                     </svg>
                 `;
             }
@@ -1232,42 +1251,43 @@ for (const selector of productCardSelectors) {
             }
 
             button.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Show loading state for Assayl theme
-                if (currentTheme === 'assayl') {
-                    const icon = button.querySelector('.quick-view-icon');
-                    const spinner = button.querySelector('.quick-view-spinner');
-                    const text = button.querySelector('span');
-                    
-                    if (icon && spinner) {
-                        icon.style.display = 'none';
-                        spinner.style.display = 'inline-block';
-                        if (text) text.textContent = 'جاري التحميل...';
-                        button.style.pointerEvents = 'none';
-                        button.style.opacity = '0.7';
-                    }
-                }
-                
-                openQuickView(productId).finally(() => {
-                    // Reset loading state for Assayl theme
-                    if (currentTheme === 'assayl') {
-                        const icon = button.querySelector('.quick-view-icon');
-                        const spinner = button.querySelector('.quick-view-spinner');
-                        const text = button.querySelector('span');
-                        
-                        if (icon && spinner) {
-                            setTimeout(() => {
-                                icon.style.display = 'inline-block';
-                                spinner.style.display = 'none';
-                                if (text) text.textContent = 'عرض سريع';
-                                button.style.pointerEvents = 'auto';
-                                button.style.opacity = '1';
-                            }, 300);
-                        }
-                    }
-                });
-            });
+              e.preventDefault();
+              
+              // Show loading state for all themes
+              const icon = button.querySelector('.quick-view-icon');
+              const spinner = button.querySelector('.quick-view-spinner');
+              
+              if (icon && spinner) {
+                  icon.style.display = 'none';
+                  spinner.style.display = 'inline-block';
+                  button.style.pointerEvents = 'none';
+                  button.style.opacity = '0.7';
+                  
+                  // For Assayl theme, also update text
+                  if (currentTheme === 'assayl') {
+                      const text = button.querySelector('span');
+                      if (text) text.textContent = 'جاري التحميل...';
+                  }
+              }
+              
+              openQuickView(productId).finally(() => {
+                  // Reset loading state for all themes
+                  if (icon && spinner) {
+                      setTimeout(() => {
+                          icon.style.display = 'inline-block';
+                          spinner.style.display = 'none';
+                          button.style.pointerEvents = 'auto';
+                          button.style.opacity = '1';
+                          
+                          // For Assayl theme, also reset text
+                          if (currentTheme === 'assayl') {
+                              const text = button.querySelector('span');
+                              if (text) text.textContent = 'عرض سريع';
+                          }
+                      }, 300);
+                  }
+              });
+          });
 
             // Insert button based on theme
 try {
