@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.7 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls) | b9a Fixing products variants f upsell
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.8 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls wlkn makhdamash, I got back to backend 7ta njreb mn b3d) | b9a Fixing products variants f upsell
 // Created by HMStudio
 
 (function() {
@@ -32,8 +32,6 @@
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
   }
-
-
 
   // Wait for zid.products to be available (Vitrin theme)
   async function waitForZidProducts(maxAttempts = 50, delayMs = 100) {
@@ -98,17 +96,16 @@
   };
   
   async function fetchProductData(productId) {
+    const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
+    
     try {
-      if (window.vitrin === true) {
-        await waitForZidProducts();
-        const product = await zid.products.get(productId);
-        return product;
-      } else {
-        const product = await zid.store.product.fetch(productId);
-        return product;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch product data: ${response.statusText}`);
       }
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Product fetch failed:', error);
       throw error;
     }
   }
@@ -4029,19 +4026,20 @@ observer.observe(document.body, {
       }
     },
   
-      async fetchProductData(productId) {
-        try {
-          if (window.vitrin === true) {
-            const product = await zid.products.get(productId);
-            return product;
-          } else {
-            const product = await zid.store.product.fetch(productId);
-            return product;
-          }
-        } catch (error) {
-          throw error;
+    async fetchProductData(productId) {
+      const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
+      
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch product data: ${response.statusText}`);
         }
-      },
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        throw error;
+      }
+    },
   
       async createProductCard(product, currentCampaign) {
         try {
