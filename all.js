@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.5 (nusskhayad zydgh giss assayl theme ) | 7iydgh giss kulu logs daytbanen
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.6 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls) | b9a Fixing products variants f upsell
 // Created by HMStudio
 
 (function() {
@@ -79,15 +79,14 @@
   };
   
   async function fetchProductData(productId) {
-    const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-    
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch product data: ${response.statusText}`);
+      if (window.vitrin === true) {
+        const product = await zid.products.get(productId);
+        return product;
+      } else {
+        const product = await zid.store.product.fetch(productId);
+        return product;
       }
-      const data = await response.json();
-      return data;
     } catch (error) {
       throw error;
     }
@@ -507,14 +506,22 @@
     const formData = new FormData(form);
   
     try {
-      zid.store.cart.addProduct({ 
-        formId: 'product-form',
-        data: {
+      let cartPromise;
+      if (window.vitrin === true) {
+        cartPromise = zid.cart.addProduct({ 
           product_id: formData.get('product_id'),
           quantity: formData.get('quantity')
-        }
-      })
-      .then(async function (response) {
+        })
+      } else {
+        cartPromise = zid.store.cart.addProduct({ 
+          formId: 'product-form',
+          data: {
+            product_id: formData.get('product_id'),
+            quantity: formData.get('quantity')
+          }
+        })
+      }
+      cartPromise.then(async function (response) {
         if (response.status === 'success') {
           try {
             await QuickViewStats.trackEvent('cart_add', {
@@ -2708,7 +2715,12 @@ footer.style.cssText = `
     },
     fetchCartData: async () => {
       try {
-        const response = await zid.store.cart.fetch()
+        let response;
+        if (window.vitrin === true) {
+          response = await zid.cart.get()
+        } else {
+          response = await zid.store.cart.fetch()
+        }
         if (response.status === "success") {
           return response.data.cart
         }
@@ -2720,7 +2732,11 @@ footer.style.cssText = `
 
     updateItemQuantity: async function (cartProductId, productId, newQuantity) {
       try {
-        await zid.store.cart.updateProduct(cartProductId, newQuantity, productId)
+        if (window.vitrin === true) {
+          await zid.cart.updateProduct({ product_id: productId, quantity: newQuantity })
+        } else {
+          await zid.store.cart.updateProduct(cartProductId, newQuantity, productId)
+        }
         await this.updateCartDisplay()
       } catch (error) {
       }
@@ -2728,7 +2744,11 @@ footer.style.cssText = `
 
     removeItem: async function (cartProductId, productId) {
       try {
-        await zid.store.cart.removeProduct(cartProductId, productId)
+        if (window.vitrin === true) {
+          await zid.cart.removeProduct({ product_id: productId })
+        } else {
+          await zid.store.cart.removeProduct(cartProductId, productId)
+        }
         await this.updateCartDisplay()
       } catch (error) {
       }
@@ -3128,7 +3148,12 @@ footer.style.cssText = `
         buttonText.style.opacity = "0.7"
 
         try {
-          const response = await zid.store.cart.redeemCoupon(couponCode)
+          let response;
+          if (window.vitrin === true) {
+            response = await zid.cart.applyCoupon({ coupon_code: couponCode })
+          } else {
+            response = await zid.store.cart.redeemCoupon(couponCode)
+          }
 
           if (response.status === "success") {
             showCouponMessage("success", isArabic)
@@ -3219,7 +3244,11 @@ footer.style.cssText = `
         removeButton.addEventListener("click", async (e) => {
           e.preventDefault()
           try {
-            await zid.store.cart.removeCoupon()
+            if (window.vitrin === true) {
+              await zid.cart.removeCoupons()
+            } else {
+              await zid.store.cart.removeCoupon()
+            }
             await this.updateCartDisplay()
           } catch (error) {
           }
@@ -3448,9 +3477,9 @@ footer.style.cssText = `
     handleCartUpdates: function () {
       const self = this
 
-      if (typeof zid === "undefined" || !zid.store || !zid.store.cart) {
+      if ((typeof zid === "undefined" || !zid.store || !zid.store.cart) && window.vitrin !== true) {
         const checkZid = setInterval(() => {
-          if (typeof zid !== "undefined" && zid.store && zid.store.cart) {
+          if ((typeof zid !== "undefined" && zid.store && zid.store.cart) || window.vitrin === true) {
             clearInterval(checkZid)
             initializeCartHandler()
           }
@@ -3462,19 +3491,39 @@ footer.style.cssText = `
       initializeCartHandler()
 
       function initializeCartHandler() {
-        const originalAddProduct = zid.store.cart.addProduct
-        zid.store.cart.addProduct = async (...args) => {
-          try {
-            const result = await originalAddProduct.apply(zid.store.cart, args)
-            if (result.status === "success") {
+        // For Legacy theme
+        if (zid.store && zid.store.cart) {
+          const originalAddProduct = zid.store.cart.addProduct
+          zid.store.cart.addProduct = async (...args) => {
+            try {
+              const result = await originalAddProduct.apply(zid.store.cart, args)
+              if (result.status === "success") {
+                setTimeout(() => {
+                  self.openCart()
+                  self.updateCartDisplay()
+                }, 100)
+              }
+              return result
+            } catch (error) {
+              throw error
+            }
+          }
+        }
+        
+        // For Vitrin theme
+        if (window.vitrin === true && zid.cart) {
+          const originalAdd = zid.cart.addProduct
+          zid.cart.addProduct = async (...args) => {
+            try {
+              const result = await originalAdd.apply(zid.cart, args)
               setTimeout(() => {
                 self.openCart()
                 self.updateCartDisplay()
               }, 100)
+              return result
+            } catch (error) {
+              throw error
             }
-            return result
-          } catch (error) {
-            throw error
           }
         }
       }
@@ -3960,15 +4009,14 @@ observer.observe(document.body, {
     },
   
       async fetchProductData(productId) {
-        const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-        
         try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch product data: ${response.statusText}`);
+          if (window.vitrin === true) {
+            const product = await zid.products.get(productId);
+            return product;
+          } else {
+            const product = await zid.store.product.fetch(productId);
+            return product;
           }
-          const data = await response.json();
-          return data;
         } catch (error) {
           throw error;
         }
@@ -4144,10 +4192,18 @@ observer.observe(document.body, {
               addToCartBtn.disabled = true;
               addToCartBtn.style.opacity = '0.7';
   
-              zid.store.cart.addProduct({ 
-                formId: form.id
-              })
-              .then(function(response) {
+              let cartPromise;
+              if (window.vitrin === true) {
+                cartPromise = zid.cart.addProduct({ 
+                  product_id: form.querySelector('input[name="product_id"]').value,
+                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1
+                })
+              } else {
+                cartPromise = zid.store.cart.addProduct({ 
+                  formId: form.id
+                })
+              }
+              cartPromise.then(function(response) {
                 if (response.status === 'success') {
                   if (typeof setCartBadge === 'function') {
                     setCartBadge(response.data.cart.products_count);
@@ -4490,8 +4546,16 @@ observer.observe(document.body, {
                 const priceText = priceElement.textContent.replace(/[^0-9.]/g, '');
                 const price = parseFloat(priceText) || 0;
           
-                zid.store.cart.addProduct({ formId: form.id })
-                  .then((response) => {
+                let cartPromise;
+                if (window.vitrin === true) {
+                  cartPromise = zid.cart.addProduct({ 
+                    product_id: productId,
+                    quantity: quantity
+                  })
+                } else {
+                  cartPromise = zid.store.cart.addProduct({ formId: form.id })
+                }
+                cartPromise.then((response) => {
                     if (response.status === 'success') {
                       if (typeof setCartBadge === 'function') {
                         setCartBadge(response.data.cart.products_count);
