@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.6 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls) | b9a Fixing products variants f upsell
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.0.7 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls) | b9a Fixing products variants f upsell
 // Created by HMStudio
 
 (function() {
@@ -31,6 +31,25 @@
 
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
+  }
+
+
+
+  // Wait for zid.products to be available (Vitrin theme)
+  async function waitForZidProducts(maxAttempts = 50, delayMs = 100) {
+    let attempts = 0;
+    return new Promise((resolve, reject) => {
+      const check = setInterval(() => {
+        attempts++;
+        if (window.zid && window.zid.products && typeof window.zid.products.get === 'function') {
+          clearInterval(check);
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(check);
+          reject(new Error('zid.products not available'));
+        }
+      }, delayMs);
+    });
   }
 
   // =============== QUICK VIEW FEATURE ===============
@@ -81,6 +100,7 @@
   async function fetchProductData(productId) {
     try {
       if (window.vitrin === true) {
+        await waitForZidProducts();
         const product = await zid.products.get(productId);
         return product;
       } else {
@@ -88,6 +108,7 @@
         return product;
       }
     } catch (error) {
+      console.error('Product fetch failed:', error);
       throw error;
     }
   }
