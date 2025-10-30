@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.4 (nzoyd Zid updates 29-10) - Testing Direct API call(still testing).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.5 (nzoyd Zid updates 29-10) - Testing Direct API call(still testing).
 // Created by HMStudio
 
 (function() {
@@ -84,12 +84,8 @@
         const product = await zid.products.get(productId);
         return product;
       } else {
-        const response = await zid.store.product.fetch(productId);
-        // Wrap Legacy response to match expected format
-        return {
-          status: "success",
-          data: { product: response }
-        };
+        const product = await zid.store.product.fetch(productId);
+        return product;
       }
     } catch (error) {
       throw error;
@@ -4021,12 +4017,8 @@ observer.observe(document.body, {
           const product = await zid.products.get(productId);
           return product;
         } else {
-          const response = await zid.store.product.fetch(productId);
-          // Wrap Legacy response to match expected format
-          return {
-            status: "success",
-            data: { product: response }
-          };
+          const product = await zid.store.product.fetch(productId);
+          return product;
         }
       } catch (error) {
         throw error;
