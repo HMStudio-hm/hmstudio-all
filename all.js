@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.2 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.3 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -489,7 +489,6 @@
     const form = document.getElementById('product-form');
     
     console.log('handleAddToCart called with productData:', productData);
-    console.log('Has variants:', productData.variants && productData.variants.length > 0);
     
     const quantityInput = form.querySelector('#product-quantity');
     const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
@@ -504,14 +503,15 @@
   
     let productIdToAdd = productData.id;
     
-    if (productData.variants && productData.variants.length > 0) {
-      console.log('Product has variants, checking selections...');
+    // Check if product has actual child variants (not just options)
+    if (productData.variants && productData.variants.length > 0 && productData.variants[0].id) {
+      console.log('Product has child variants');
       const selectedVariants = {};
       const missingSelections = [];
       
       form.querySelectorAll('.variant-select').forEach(select => {
         const labelText = select.previousElementSibling.textContent;
-        console.log('Variant select found:', { label: labelText, value: select.value });
+        console.log('Variant select:', { label: labelText, value: select.value });
         if (!select.value) {
           missingSelections.push(labelText);
         }
@@ -527,29 +527,24 @@
       }
   
       console.log('Selected variants:', selectedVariants);
-      console.log('Available variants:', productData.variants);
       
+      // Find matching variant by attributes
       const selectedVariant = productData.variants.find(variant => {
-        const matches = variant.attributes.every(attr => {
+        if (!variant.attributes) return false;
+        return variant.attributes.every(attr => {
           const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
           const matches = selectedVariants[attrLabel] === attr.value;
-          console.log(`Matching: ${attrLabel} (${selectedVariants[attrLabel]}) === ${attr.value}? ${matches}`);
+          console.log(`Match check: ${attrLabel} (${selectedVariants[attrLabel]}) === ${attr.value}? ${matches}`);
           return matches;
         });
-        console.log('Variant matches:', variant.id, matches);
-        return matches;
       });
   
-      if (!selectedVariant) {
-        const message = currentLang === 'ar' 
-          ? 'هذا المنتج غير متوفر بالمواصفات المختارة'
-          : 'This product variant is not available';
-        alert(message);
-        return;
+      if (selectedVariant) {
+        productIdToAdd = selectedVariant.id;
+        console.log('Using child variant ID:', productIdToAdd);
+      } else {
+        console.warn('No matching variant found, will try with parent ID');
       }
-  
-      productIdToAdd = selectedVariant.id;
-      console.log('Using variant ID:', productIdToAdd);
     }
   
     // Set the product ID
@@ -596,6 +591,7 @@
           showErrorNotification: true
         })
       }
+      
       cartPromise.then(async function (response) {
         console.log('Cart response:', response);
         if (response.status === 'success') {
@@ -608,6 +604,7 @@
                 productData.name
             });
           } catch (trackingError) {
+            console.error('Tracking error:', trackingError);
           }
   
           if (typeof setCartBadge === 'function') {
@@ -619,13 +616,14 @@
           }
         } else {
           const errorMessage = currentLang === 'ar' 
-            ? response.data.message || 'فشل إضافة المنتج إلى السلة'
-            : response.data.message || 'Failed to add product to cart';
+            ? response.data?.message || 'فشل إضافة المنتج إلى السلة'
+            : response.data?.message || 'Failed to add product to cart';
+          console.error('Add to cart failed:', errorMessage);
           alert(errorMessage);
         }
       })
       .catch(function(error) {
-        console.log('Cart error:', error);
+        console.error('Cart error:', error);
         const errorMessage = currentLang === 'ar' 
           ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
           : 'Error occurred while adding product to cart';
@@ -635,7 +633,7 @@
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
       });
     } catch (error) {
-      console.log('Catch error:', error);
+      console.error('Catch error:', error);
       loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
     }
   }
