@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.8 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.9 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -88,9 +88,26 @@
         product = response.data.product;
       }
       
+      // Format images properly for gallery display
+      if (product.images && Array.isArray(product.images)) {
+        product.images = product.images.map(img => {
+          const imageObj = img.image || img;
+          return {
+            url: imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+            thumbnail: imageObj.thumbnail || imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+            alt_text: img.alt_text || 'Product Image'
+          };
+        });
+      }
+      
       // Map options to variants for compatibility
       if (product.options && product.options.length > 0) {
         product.variants = product.options;
+      }
+      
+      // Ensure variants array exists even if empty
+      if (!product.variants) {
+        product.variants = [];
       }
       
       return product;
@@ -420,7 +437,7 @@
   
       const addToCartBtn = form.querySelector('.add-to-cart-btn');
       if (addToCartBtn) {
-        if (!selectedVariant.unavailable && !selectedVariant.out_of_stock) {
+        if (!selectedVariant.unavailable) {
           addToCartBtn.disabled = false;
           addToCartBtn.classList.remove('disabled');
           addToCartBtn.style.opacity = '1';
@@ -715,31 +732,8 @@
       });
       
       const gallery = createImageGallery(formattedImages);
-      gallery.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        align-items: center;
-        width: 100%;
-      `;
       gallery.id = 'quickViewGallery';
       gallerySection.appendChild(gallery);
-    } else {
-      // Fallback if no images
-      const noImagePlaceholder = document.createElement('div');
-      noImagePlaceholder.style.cssText = `
-        width: 100%;
-        height: 300px;
-        background-color: #f3f4f6;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #9ca3af;
-        font-size: 14px;
-      `;
-      noImagePlaceholder.textContent = currentLang === 'ar' ? 'لا توجد صور متاحة' : 'No images available';
-      gallerySection.appendChild(noImagePlaceholder);
     }
   
     const detailsSection = document.createElement('div');
@@ -900,6 +894,14 @@
       detailsSection.appendChild(description);
     }
   
+    // Debug: Log variants data
+    console.log('Quick View - Variants data:', {
+      hasVariants: !!productData.variants,
+      variantsLength: productData.variants?.length,
+      has_variants: productData.has_variants,
+      variants: productData.variants
+    });
+
     if (productData.variants && productData.variants.length > 0) {
       const variantsSection = createVariantsSection(productData);
       variantsSection.style.cssText += `
