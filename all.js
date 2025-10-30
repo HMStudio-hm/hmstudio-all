@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.1 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.2 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -202,20 +202,36 @@
     if (productData.variants && productData.variants.length > 0) {
       const variantAttributes = new Map();
       
-      productData.variants.forEach(variant => {
-        if (variant.attributes && variant.attributes.length > 0) {
-          variant.attributes.forEach(attr => {
-            if (!variantAttributes.has(attr.name)) {
-              variantAttributes.set(attr.name, {
-                name: attr.name,
-                slug: attr.slug,
-                values: new Set()
-              });
-            }
-            variantAttributes.get(attr.name).values.add(attr.value[currentLang]);
+      // Check if variants have attributes (new API format)
+      const hasAttributes = productData.variants.some(v => v.attributes && v.attributes.length > 0);
+      
+      if (hasAttributes) {
+        // New format: extract from variant.attributes
+        productData.variants.forEach(variant => {
+          if (variant.attributes && variant.attributes.length > 0) {
+            variant.attributes.forEach(attr => {
+              if (!variantAttributes.has(attr.name)) {
+                variantAttributes.set(attr.name, {
+                  name: attr.name,
+                  slug: attr.slug,
+                  values: new Set()
+                });
+              }
+              // attr.value is a STRING, not an object with language keys
+              variantAttributes.get(attr.name).values.add(attr.value);
+            });
+          }
+        });
+      } else if (productData.options && productData.options.length > 0) {
+        // Old format: use options directly
+        productData.options.forEach(option => {
+          variantAttributes.set(option.name, {
+            name: option.name,
+            slug: option.slug,
+            values: new Set(option.choices || [])
           });
-        }
-      });
+        });
+      }
   
       variantAttributes.forEach(attr => {
         const select = document.createElement('select');
@@ -472,6 +488,9 @@
     const currentLang = getCurrentLanguage();
     const form = document.getElementById('product-form');
     
+    console.log('handleAddToCart called with productData:', productData);
+    console.log('Has variants:', productData.variants && productData.variants.length > 0);
+    
     const quantityInput = form.querySelector('#product-quantity');
     const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
     
@@ -483,12 +502,16 @@
       return;
     }
   
+    let productIdToAdd = productData.id;
+    
     if (productData.variants && productData.variants.length > 0) {
+      console.log('Product has variants, checking selections...');
       const selectedVariants = {};
       const missingSelections = [];
       
       form.querySelectorAll('.variant-select').forEach(select => {
         const labelText = select.previousElementSibling.textContent;
+        console.log('Variant select found:', { label: labelText, value: select.value });
         if (!select.value) {
           missingSelections.push(labelText);
         }
@@ -503,12 +526,18 @@
         return;
       }
   
+      console.log('Selected variants:', selectedVariants);
+      console.log('Available variants:', productData.variants);
+      
       const selectedVariant = productData.variants.find(variant => {
-        return variant.attributes.every(attr => {
+        const matches = variant.attributes.every(attr => {
           const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-          // attr.value is a string, not an object with language keys
-          return selectedVariants[attrLabel] === attr.value;
+          const matches = selectedVariants[attrLabel] === attr.value;
+          console.log(`Matching: ${attrLabel} (${selectedVariants[attrLabel]}) === ${attr.value}? ${matches}`);
+          return matches;
         });
+        console.log('Variant matches:', variant.id, matches);
+        return matches;
       });
   
       if (!selectedVariant) {
@@ -519,21 +548,19 @@
         return;
       }
   
-      const productIdInput = form.querySelector('input[name="product_id"]');
-      if (productIdInput) {
-        productIdInput.value = selectedVariant.id;
-      }
-    } else {
-      // Only set parent ID if there are no variants
-      let productIdInput = form.querySelector('input[name="product_id"]');
-      if (!productIdInput) {
-        productIdInput = document.createElement('input');
-        productIdInput.type = 'hidden';
-        productIdInput.name = 'product_id';
-        form.appendChild(productIdInput);
-      }
-      productIdInput.value = productData.id;
+      productIdToAdd = selectedVariant.id;
+      console.log('Using variant ID:', productIdToAdd);
     }
+  
+    // Set the product ID
+    let productIdInput = form.querySelector('input[name="product_id"]');
+    if (!productIdInput) {
+      productIdInput = document.createElement('input');
+      productIdInput.type = 'hidden';
+      productIdInput.name = 'product_id';
+      form.appendChild(productIdInput);
+    }
+    productIdInput.value = productIdToAdd;
   
     let formQuantityInput = form.querySelector('input[name="quantity"]');
     if (!formQuantityInput) {
@@ -547,32 +574,35 @@
     const loadingSpinners = document.querySelectorAll('.add-to-cart-progress');
     loadingSpinners.forEach(spinner => spinner.classList.remove('d-none'));
   
-    const formData = new FormData(form);
+    console.log('Adding to cart:', { productId: productIdToAdd, quantity });
   
     try {
       let cartPromise;
       if (window.vitrin === true) {
+        console.log('Using vitrin API');
         cartPromise = zid.cart.addProduct({ 
-          product_id: formData.get('product_id'),
-          quantity: formData.get('quantity'),
+          product_id: productIdToAdd,
+          quantity: quantity,
           showErrorNotification: true
         })
       } else {
+        console.log('Using store API');
         cartPromise = zid.store.cart.addProduct({ 
           formId: 'product-form',
           data: {
-            product_id: formData.get('product_id'),
-            quantity: formData.get('quantity')
+            product_id: productIdToAdd,
+            quantity: quantity
           },
           showErrorNotification: true
         })
       }
       cartPromise.then(async function (response) {
+        console.log('Cart response:', response);
         if (response.status === 'success') {
           try {
             await QuickViewStats.trackEvent('cart_add', {
-              productId: formData.get('product_id'),
-              quantity: parseInt(formData.get('quantity')),
+              productId: productIdToAdd,
+              quantity: quantity,
               productName: typeof productData.name === 'object' ? 
                 productData.name[currentLang] : 
                 productData.name
@@ -595,6 +625,7 @@
         }
       })
       .catch(function(error) {
+        console.log('Cart error:', error);
         const errorMessage = currentLang === 'ar' 
           ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
           : 'Error occurred while adding product to cart';
@@ -604,6 +635,7 @@
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
       });
     } catch (error) {
+      console.log('Catch error:', error);
       loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
     }
   }
