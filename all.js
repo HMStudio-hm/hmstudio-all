@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.6 (nzoyd Zid updates 29-10) - Testing Direct API call(still testing).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.8 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -80,12 +80,20 @@
   
   async function fetchProductData(productId) {
     try {
+      let product;
       if (window.vitrin === true) {
-        return await zid.products.get(productId);
+        product = await zid.products.get(productId);
       } else {
         const response = await zid.store.product.fetch(productId);
-        return response.data.product;
+        product = response.data.product;
       }
+      
+      // Map options to variants for compatibility
+      if (product.options && product.options.length > 0) {
+        product.variants = product.options;
+      }
+      
+      return product;
     } catch (error) {
       throw error;
     }
@@ -4012,12 +4020,20 @@ observer.observe(document.body, {
   
     async fetchProductData(productId) {
       try {
+        let product;
         if (window.vitrin === true) {
-          return await zid.products.get(productId);
+          product = await zid.products.get(productId);
         } else {
           const response = await zid.store.product.fetch(productId);
-          return response.data.product;
+          product = response.data.product;
         }
+        
+        // Map options to variants for compatibility
+        if (product.options && product.options.length > 0) {
+          product.variants = product.options;
+        }
+        
+        return product;
       } catch (error) {
         throw error;
       }
