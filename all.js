@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.7 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.8 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -386,7 +386,7 @@
     const selectedVariant = productData.variants.find(variant => {
       return variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        return selectedValues[attrLabel] === attr.value[currentLang];
+        return selectedValues[attrLabel] === attr.value[currentLang] || selectedValues[attrLabel] === attr.value;
       });
     });
   
@@ -420,7 +420,7 @@
   
       const addToCartBtn = form.querySelector('.add-to-cart-btn');
       if (addToCartBtn) {
-        if (!selectedVariant.unavailable) {
+        if (!selectedVariant.unavailable && !selectedVariant.out_of_stock) {
           addToCartBtn.disabled = false;
           addToCartBtn.classList.remove('disabled');
           addToCartBtn.style.opacity = '1';
@@ -428,6 +428,24 @@
           addToCartBtn.disabled = true;
           addToCartBtn.classList.add('disabled');
           addToCartBtn.style.opacity = '0.5';
+        }
+      }
+
+      // Update gallery images for selected variant
+      if (selectedVariant.images && selectedVariant.images.length > 0) {
+        const gallery = document.getElementById('quickViewGallery');
+        if (gallery) {
+          const formattedImages = selectedVariant.images.map(img => {
+            const imageObj = img.image || img;
+            return {
+              url: imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+              thumbnail: imageObj.thumbnail || imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+              alt_text: img.alt_text || 'Product Image'
+            };
+          });
+          gallery.innerHTML = '';
+          const newGallery = createImageGallery(formattedImages);
+          gallery.appendChild(newGallery);
         }
       }
     }
@@ -681,8 +699,22 @@
       align-items: center;
     `;
   
-    if (productData.images && productData.images.length > 0) {
-      const gallery = createImageGallery(productData.images);
+    // Use images from selected_product if it has variants, otherwise use parent images
+    const imagesToDisplay = productData.selected_product?.images && productData.selected_product.images.length > 0 
+      ? productData.selected_product.images 
+      : (productData.images && productData.images.length > 0 ? productData.images : []);
+
+    if (imagesToDisplay.length > 0) {
+      const formattedImages = imagesToDisplay.map(img => {
+        const imageObj = img.image || img;
+        return {
+          url: imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+          thumbnail: imageObj.thumbnail || imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+          alt_text: img.alt_text || 'Product Image'
+        };
+      });
+      
+      const gallery = createImageGallery(formattedImages);
       gallery.style.cssText = `
         display: flex;
         flex-direction: column;
@@ -690,7 +722,24 @@
         align-items: center;
         width: 100%;
       `;
+      gallery.id = 'quickViewGallery';
       gallerySection.appendChild(gallery);
+    } else {
+      // Fallback if no images
+      const noImagePlaceholder = document.createElement('div');
+      noImagePlaceholder.style.cssText = `
+        width: 100%;
+        height: 300px;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-size: 14px;
+      `;
+      noImagePlaceholder.textContent = currentLang === 'ar' ? 'لا توجد صور متاحة' : 'No images available';
+      gallerySection.appendChild(noImagePlaceholder);
     }
   
     const detailsSection = document.createElement('div');
