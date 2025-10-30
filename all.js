@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.3 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.4 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -416,14 +416,25 @@
       }
     });
   
+    console.log('Updating variant with selected values:', selectedValues);
+    
     const selectedVariant = productData.variants.find(variant => {
+      if (!variant.attributes) return false;
       return variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        return selectedValues[attrLabel] === attr.value[currentLang] || selectedValues[attrLabel] === attr.value;
+        // attr.value is a string, not an object with language keys
+        const matches = selectedValues[attrLabel] === attr.value;
+        console.log(`Checking ${attrLabel}: ${selectedValues[attrLabel]} === ${attr.value} ? ${matches}`);
+        return matches;
       });
     });
   
     if (selectedVariant) {
+      console.log('Selected variant found:', selectedVariant.id);
+      
+      // Update the selected_product in productData
+      productData.selected_product = selectedVariant;
+      
       let productIdInput = form.querySelector('input[name="product_id"]');
       if (!productIdInput) {
         productIdInput = document.createElement('input');
@@ -481,14 +492,14 @@
           gallery.appendChild(newGallery);
         }
       }
+    } else {
+      console.log('No matching variant found');
     }
   }
   
   async function handleAddToCart(productData) {
     const currentLang = getCurrentLanguage();
     const form = document.getElementById('product-form');
-    
-    console.log('handleAddToCart called with productData:', productData);
     
     const quantityInput = form.querySelector('#product-quantity');
     const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
@@ -503,48 +514,10 @@
   
     let productIdToAdd = productData.id;
     
-    // Check if product has actual child variants (not just options)
-    if (productData.variants && productData.variants.length > 0 && productData.variants[0].id) {
-      console.log('Product has child variants');
-      const selectedVariants = {};
-      const missingSelections = [];
-      
-      form.querySelectorAll('.variant-select').forEach(select => {
-        const labelText = select.previousElementSibling.textContent;
-        console.log('Variant select:', { label: labelText, value: select.value });
-        if (!select.value) {
-          missingSelections.push(labelText);
-        }
-        selectedVariants[labelText] = select.value;
-      });
-  
-      if (missingSelections.length > 0) {
-        const message = currentLang === 'ar' 
-          ? `الرجاء اختيار ${missingSelections.join(', ')}`
-          : `Please select ${missingSelections.join(', ')}`;
-        alert(message);
-        return;
-      }
-  
-      console.log('Selected variants:', selectedVariants);
-      
-      // Find matching variant by attributes
-      const selectedVariant = productData.variants.find(variant => {
-        if (!variant.attributes) return false;
-        return variant.attributes.every(attr => {
-          const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-          const matches = selectedVariants[attrLabel] === attr.value;
-          console.log(`Match check: ${attrLabel} (${selectedVariants[attrLabel]}) === ${attr.value}? ${matches}`);
-          return matches;
-        });
-      });
-  
-      if (selectedVariant) {
-        productIdToAdd = selectedVariant.id;
-        console.log('Using child variant ID:', productIdToAdd);
-      } else {
-        console.warn('No matching variant found, will try with parent ID');
-      }
+    // If product has variants, use the selected_product that was set by updateSelectedVariant
+    if (productData.selected_product && productData.selected_product.id) {
+      productIdToAdd = productData.selected_product.id;
+      console.log('Using selected_product ID:', productIdToAdd);
     }
   
     // Set the product ID
@@ -574,14 +547,12 @@
     try {
       let cartPromise;
       if (window.vitrin === true) {
-        console.log('Using vitrin API');
         cartPromise = zid.cart.addProduct({ 
           product_id: productIdToAdd,
           quantity: quantity,
           showErrorNotification: true
         })
       } else {
-        console.log('Using store API');
         cartPromise = zid.store.cart.addProduct({ 
           formId: 'product-form',
           data: {
