@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.2 (nzoyd Zid updates 29-10 - nsbdel api fetching calls to direct calls wlkn makhdamash, I got back to backend 7ta njreb mn b3d).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.1.3 (nzoyd Zid updates 29-10) - Testing Direct API call(still testing).
 // Created by HMStudio
 
 (function() {
@@ -31,23 +31,6 @@
 
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
-  }
-
-  // Wait for zid.products to be available (Vitrin theme)
-  async function waitForZidProducts(maxAttempts = 50, delayMs = 100) {
-    let attempts = 0;
-    return new Promise((resolve, reject) => {
-      const check = setInterval(() => {
-        attempts++;
-        if (window.zid && window.zid.products && typeof window.zid.products.get === 'function') {
-          clearInterval(check);
-          resolve();
-        } else if (attempts >= maxAttempts) {
-          clearInterval(check);
-          reject(new Error('zid.products not available'));
-        }
-      }, delayMs);
-    });
   }
 
   // =============== QUICK VIEW FEATURE ===============
@@ -96,15 +79,14 @@
   };
   
   async function fetchProductData(productId) {
-    const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-    
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch product data: ${response.statusText}`);
+      if (window.vitrin === true) {
+        const product = await zid.products.get(productId);
+        return product;
+      } else {
+        const product = await zid.store.product.fetch(productId);
+        return product;
       }
-      const data = await response.json();
-      return data;
     } catch (error) {
       throw error;
     }
@@ -395,11 +377,9 @@
     });
   
     const selectedVariant = productData.variants.find(variant => {
-      if (!variant.attributes || variant.attributes.length === 0) return false;
-      
       return variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        return selectedValues[attrLabel] === attr.name;
+        return selectedValues[attrLabel] === attr.value[currentLang];
       });
     });
   
@@ -500,16 +480,17 @@
       if (productIdInput) {
         productIdInput.value = selectedVariant.id;
       }
+    } else {
+      // Only set parent ID if there are no variants
+      let productIdInput = form.querySelector('input[name="product_id"]');
+      if (!productIdInput) {
+        productIdInput = document.createElement('input');
+        productIdInput.type = 'hidden';
+        productIdInput.name = 'product_id';
+        form.appendChild(productIdInput);
+      }
+      productIdInput.value = productData.id;
     }
-  
-    let productIdInput = form.querySelector('input[name="product_id"]');
-    if (!productIdInput) {
-      productIdInput = document.createElement('input');
-      productIdInput.type = 'hidden';
-      productIdInput.name = 'product_id';
-      form.appendChild(productIdInput);
-    }
-    productIdInput.value = productData.id;
   
     let formQuantityInput = form.querySelector('input[name="quantity"]');
     if (!formQuantityInput) {
@@ -530,7 +511,8 @@
       if (window.vitrin === true) {
         cartPromise = zid.cart.addProduct({ 
           product_id: formData.get('product_id'),
-          quantity: formData.get('quantity')
+          quantity: formData.get('quantity'),
+          showErrorNotification: true
         })
       } else {
         cartPromise = zid.store.cart.addProduct({ 
@@ -538,7 +520,8 @@
           data: {
             product_id: formData.get('product_id'),
             quantity: formData.get('quantity')
-          }
+          },
+          showErrorNotification: true
         })
       }
       cartPromise.then(async function (response) {
@@ -4029,15 +4012,14 @@ observer.observe(document.body, {
     },
   
     async fetchProductData(productId) {
-      const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-      
       try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch product data: ${response.statusText}`);
+        if (window.vitrin === true) {
+          const product = await zid.products.get(productId);
+          return product;
+        } else {
+          const product = await zid.store.product.fetch(productId);
+          return product;
         }
-        const data = await response.json();
-        return data;
       } catch (error) {
         throw error;
       }
@@ -4217,11 +4199,13 @@ observer.observe(document.body, {
               if (window.vitrin === true) {
                 cartPromise = zid.cart.addProduct({ 
                   product_id: form.querySelector('input[name="product_id"]').value,
-                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1
+                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1,
+                  showErrorNotification: true
                 })
               } else {
                 cartPromise = zid.store.cart.addProduct({ 
-                  formId: form.id
+                  formId: form.id,
+                  showErrorNotification: true
                 })
               }
               cartPromise.then(function(response) {
@@ -4571,10 +4555,11 @@ observer.observe(document.body, {
                 if (window.vitrin === true) {
                   cartPromise = zid.cart.addProduct({ 
                     product_id: productId,
-                    quantity: quantity
+                    quantity: quantity,
+                    showErrorNotification: true
                   })
                 } else {
-                  cartPromise = zid.store.cart.addProduct({ formId: form.id })
+                  cartPromise = zid.store.cart.addProduct({ formId: form.id, showErrorNotification: true })
                 }
                 cartPromise.then((response) => {
                     if (response.status === 'success') {
