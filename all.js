@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.0 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.1 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -129,7 +129,7 @@
     const mainImageContainer = document.createElement('div');
     mainImageContainer.style.cssText = `
       width: 100%;
-      height: 450px;
+      height: 400px;
       overflow: hidden;
       border-radius: 8px;
       position: relative;
@@ -202,36 +202,20 @@
     if (productData.variants && productData.variants.length > 0) {
       const variantAttributes = new Map();
       
-      // Check if variants have attributes (new API format)
-      const hasAttributes = productData.variants.some(v => v.attributes && v.attributes.length > 0);
-      
-      if (hasAttributes) {
-        // New format: extract from variant.attributes
-        productData.variants.forEach(variant => {
-          if (variant.attributes && variant.attributes.length > 0) {
-            variant.attributes.forEach(attr => {
-              if (!variantAttributes.has(attr.name)) {
-                variantAttributes.set(attr.name, {
-                  name: attr.name,
-                  slug: attr.slug,
-                  values: new Set()
-                });
-              }
-              // attr.value is a string, not an object with language keys
-              variantAttributes.get(attr.name).values.add(attr.value);
-            });
-          }
-        });
-      } else if (productData.options && productData.options.length > 0) {
-        // Old format: use options directly
-        productData.options.forEach(option => {
-          variantAttributes.set(option.name, {
-            name: option.name,
-            slug: option.slug,
-            values: new Set(option.choices || [])
+      productData.variants.forEach(variant => {
+        if (variant.attributes && variant.attributes.length > 0) {
+          variant.attributes.forEach(attr => {
+            if (!variantAttributes.has(attr.name)) {
+              variantAttributes.set(attr.name, {
+                name: attr.name,
+                slug: attr.slug,
+                values: new Set()
+              });
+            }
+            variantAttributes.get(attr.name).values.add(attr.value[currentLang]);
           });
-        });
-      }
+        }
+      });
   
       variantAttributes.forEach(attr => {
         const select = document.createElement('select');
@@ -522,7 +506,8 @@
       const selectedVariant = productData.variants.find(variant => {
         return variant.attributes.every(attr => {
           const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-          return selectedVariants[attrLabel] === attr.value[currentLang];
+          // attr.value is a string, not an object with language keys
+          return selectedVariants[attrLabel] === attr.value;
         });
       });
   
@@ -897,6 +882,7 @@
   
     detailsSection.appendChild(priceContainer);
   
+    // Short description
     if (productData.short_description && productData.short_description[currentLang]) {
       const description = document.createElement('p');
       description.className = 'quick-view-description';
@@ -908,6 +894,22 @@
       `;
       description.textContent = productData.short_description[currentLang];
       detailsSection.appendChild(description);
+    }
+    
+    // Long description
+    if (productData.description) {
+      const longDesc = document.createElement('p');
+      longDesc.className = 'quick-view-long-description';
+      longDesc.style.cssText = `
+        margin-bottom: 20px;
+        line-height: 1.6;
+        color: #6b7280;
+        font-size: 13px;
+        max-height: 150px;
+        overflow-y: auto;
+      `;
+      longDesc.textContent = productData.description;
+      detailsSection.appendChild(longDesc);
     }
   
     // Debug: Log variants data
