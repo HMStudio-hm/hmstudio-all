@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.3 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️ (trying changing price with selected var).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.4 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️
 // Created by HMStudio
 
 (function() {
