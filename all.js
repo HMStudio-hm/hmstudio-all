@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.0 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.1 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -379,44 +379,50 @@
     if (!form) return;
   
     try {
-      // Fetch full product with all variants
-      const fullProduct = await zid.products.get(productData.id);
+      const response = await zid.store.product.fetch(productData.id);
+      const fullProduct = response.data.product;
       const allVariants = fullProduct.variants || [];
+      const options = productData.options || [];
       
-      console.log('Available variants:', allVariants.length);
+      console.log('=== Variants ===', allVariants.map(v => ({
+        id: v.id,
+        attrs: v.attributes?.map(a => `${a.slug}=${a.value}`)
+      })));
+      
+      console.log('=== Options ===', options.map(o => `${o.slug}: ${o.choices}`));
       
       const selectedValues = {};
       
-      // Get selected values from dropdowns using select names/labels
-      form.querySelectorAll('.variant-select').forEach(select => {
-        if (select.value) {
-          const label = select.previousElementSibling.textContent.trim();
-          selectedValues[label] = select.value;
-          console.log(`Selected ${label}: ${select.value}`);
+      // Match select dropdowns to options by index
+      const selects = form.querySelectorAll('.variant-select');
+      selects.forEach((select, index) => {
+        if (select.value && options[index]) {
+          selectedValues[options[index].slug] = select.value;
+          console.log(`Selected options[${index}].slug="${options[index].slug}" = "${select.value}"`);
         }
       });
       
-      console.log('Selected:', selectedValues);
+      console.log('=== Looking for match ===', selectedValues);
       
-      // Find matching variant
+      // Find variant where all attributes match selectedValues
       const selectedVariant = allVariants.find(variant => {
         if (!variant.attributes || !variant.id) return false;
         
-        // Check if all attributes match
-        return variant.attributes.every(attr => {
-          // Use the attribute name/slug as the label
-          const attrLabel = attr.name || attr.slug;
-          const selectedValue = selectedValues[attrLabel];
-          const matches = selectedValue === attr.value;
-          console.log(`Check ${attrLabel}: "${selectedValue}" === "${attr.value}" ? ${matches}`);
-          return matches;
+        const allMatch = variant.attributes.every(attr => {
+          const selected = selectedValues[attr.slug];
+          const match = selected === attr.value;
+          console.log(`Attr ${attr.slug}: "${selected}" === "${attr.value}" ? ${match}`);
+          return match;
         });
+        
+        if (allMatch) {
+          console.log(`✓ MATCH FOUND: ${variant.id}`);
+        }
+        return allMatch;
       });
       
       if (selectedVariant) {
-        console.log('✓ Variant matched:', selectedVariant.id, selectedVariant.name);
         productData.selected_product = selectedVariant;
-        
         let productIdInput = form.querySelector('input[name="product_id"]');
         if (!productIdInput) {
           productIdInput = document.createElement('input');
