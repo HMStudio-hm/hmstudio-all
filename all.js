@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.6 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.7 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -199,11 +199,18 @@
       padding: 10px 0;
     `;
   
-    if (productData.variants && productData.variants.length > 0) {
+    // Filter to get only CHILD VARIANTS (structure: "child") with actual attributes
+    const childVariants = productData.variants ? productData.variants.filter(v => 
+      v.id && v.attributes && v.attributes.length > 0 && v.structure === 'child'
+    ) : [];
+    
+    console.log('Child variants found:', childVariants.length, childVariants);
+    
+    if (childVariants.length > 0) {
       const variantAttributes = new Map();
       
       // Collect all unique attribute names and their values from child variants
-      productData.variants.forEach(variant => {
+      childVariants.forEach(variant => {
         if (variant.attributes && variant.attributes.length > 0) {
           variant.attributes.forEach(attr => {
             if (!variantAttributes.has(attr.name)) {
@@ -217,6 +224,8 @@
           });
         }
       });
+      
+      console.log('Variant attributes:', Object.fromEntries(variantAttributes));
   
       variantAttributes.forEach(attr => {
         const select = document.createElement('select');
@@ -256,6 +265,8 @@
         variantsContainer.appendChild(label);
         variantsContainer.appendChild(select);
       });
+    } else {
+      console.log('No child variants with attributes found');
     }
   
     return variantsContainer;
