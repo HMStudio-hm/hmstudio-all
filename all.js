@@ -1,7 +1,8 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.4 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.5 (nzoyd Zid updates 29-10) - Upsell/Quick View working with Direct API ✔️
 // Created by HMStudio
 
 (function() {
+  console.log('HMStudio initialized');
 
   // Common utility to get URL parameters
   function getScriptParams() {
@@ -34,6 +35,7 @@
 
   // =============== QUICK VIEW FEATURE ===============
   if (params.quickView) {
+    console.log('Initializing Quick View feature');
     
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -375,33 +377,36 @@
     if (!form) return;
   
     try {
-      const selectedValues = {};
+      const response = await zid.store.product.fetch(productData.id);
+      const fullProduct = response.data.product;
+      const allVariants = fullProduct.variants || [];
       const options = productData.options || [];
-      const selects = form.querySelectorAll('.variant-select');
       
+      const selectedValues = {};
+      
+      const selects = form.querySelectorAll('.variant-select');
       selects.forEach((select, index) => {
         if (select.value && options[index]) {
           selectedValues[options[index].slug] = select.value;
         }
       });
-      
-      // Use variants already in productData
-      const allVariants = productData.variants || [];
-      
-      // Find matching variant by comparing attributes
-      const selectedVariant = allVariants.find(variant => {
-        if (!variant.attributes || variant.attributes.length === 0 || !variant.id) return false;
         
-        // Check if all variant attributes match selected values
-        return variant.attributes.every(attr => {
-          return selectedValues[attr.slug] === attr.value;
+      const selectedVariant = allVariants.find(variant => {
+        if (!variant.attributes || !variant.id) return false;
+        
+        const allMatch = variant.attributes.every(attr => {
+          const selected = selectedValues[attr.slug];
+          const match = selected === attr.value;
+          return match;
         });
+        
+        if (allMatch) {
+        }
+        return allMatch;
       });
       
       if (selectedVariant) {
         productData.selected_product = selectedVariant;
-        
-        // Update hidden product ID
         let productIdInput = form.querySelector('input[name="product_id"]');
         if (!productIdInput) {
           productIdInput = document.createElement('input');
@@ -410,28 +415,9 @@
           form.appendChild(productIdInput);
         }
         productIdInput.value = selectedVariant.id;
-        
-        // Update price display
-        const priceElement = form.querySelector('#product-price');
-        const oldPriceElement = form.querySelector('#product-old-price');
-        
-        if (priceElement) {
-          if (selectedVariant.formatted_sale_price && selectedVariant.formatted_sale_price.trim()) {
-            priceElement.textContent = selectedVariant.formatted_sale_price;
-            if (oldPriceElement) {
-              oldPriceElement.textContent = selectedVariant.formatted_price;
-              oldPriceElement.style.display = 'inline';
-            }
-          } else {
-            priceElement.textContent = selectedVariant.formatted_price;
-            if (oldPriceElement) {
-              oldPriceElement.style.display = 'none';
-            }
-          }
-        }
       }
     } catch (error) {
-      console.error('Error updating variant:', error);
+      console.error('Error:', error);
     }
   }
   
@@ -452,12 +438,10 @@
   
     let productIdToAdd = productData.id;
     
-    // If product has variants, use the selected_product that was set by updateSelectedVariant
     if (productData.selected_product && productData.selected_product.id) {
       productIdToAdd = productData.selected_product.id;
     }
   
-    // Set the product ID
     let productIdInput = form.querySelector('input[name="product_id"]');
     if (!productIdInput) {
       productIdInput = document.createElement('input');
@@ -476,7 +460,8 @@
     }
     formQuantityInput.value = quantity;
   
-    console.log('Adding to cart:', { productId: productIdToAdd, quantity });
+    const loadingSpinners = document.querySelectorAll('.add-to-cart-progress');
+    loadingSpinners.forEach(spinner => spinner.classList.remove('d-none'));
   
     try {
       let cartPromise;
@@ -727,48 +712,49 @@
     `;
     detailsSection.appendChild(title);
   
-    // Always display rating section
-    const ratingContainer = document.createElement('div');
-    ratingContainer.className = 'quick-view-rating';
-    ratingContainer.style.cssText = `
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      font-size: 14px;
-    `;
+    if (productData.rating) {
+const ratingContainer = document.createElement('div');
+ratingContainer.className = 'quick-view-rating';
+ratingContainer.style.cssText = `
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+`;
 
-    const starRating = document.createElement('div');
-    starRating.style.cssText = `
-      display: flex;
-      align-items: center;
-    `;
+const starRating = document.createElement('div');
+starRating.style.cssText = `
+  display: flex;
+  align-items: center;
+`;
 
-    const rating = productData.rating || { average: 0, total_count: 0 };
-    const fullStars = Math.floor(rating.average);
-    const remainingStars = 5 - fullStars;
+const rating = productData.rating || { average: 0, total_count: 0 };
+const fullStars = Math.floor(rating.average);
+const remainingStars = 5 - fullStars;
 
-    for (let i = 0; i < fullStars; i++) {
-      const star = document.createElement('span');
-      star.textContent = '★';
-      star.style.color = '#fbbf24';
-      starRating.appendChild(star);
+for (let i = 0; i < fullStars; i++) {
+  const star = document.createElement('span');
+  star.textContent = '★';
+  star.style.color = '#fbbf24';
+  starRating.appendChild(star);
+}
+
+for (let i = 0; i < remainingStars; i++) {
+  const star = document.createElement('span');
+  star.textContent = '☆';
+  star.style.color = '#e5e7eb';
+  starRating.appendChild(star);
+}
+
+const ratingText = document.createElement('span');
+ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'تقييم' : 'reviews'}`;
+ratingText.style.color = '#6b7280';
+
+ratingContainer.appendChild(starRating);
+ratingContainer.appendChild(ratingText);
+detailsSection.appendChild(ratingContainer);
     }
-
-    for (let i = 0; i < remainingStars; i++) {
-      const star = document.createElement('span');
-      star.textContent = '☆';
-      star.style.color = '#e5e7eb';
-      starRating.appendChild(star);
-    }
-
-    const ratingText = document.createElement('span');
-    ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'تقييم' : 'reviews'}`;
-    ratingText.style.color = '#6b7280';
-
-    ratingContainer.appendChild(starRating);
-    ratingContainer.appendChild(ratingText);
-    detailsSection.appendChild(ratingContainer);
   
     const priceContainer = document.createElement('div');
     priceContainer.className = 'quick-view-price-container';
@@ -848,7 +834,7 @@
   
     if (productData.variants && productData.variants.length > 0) {
       const variantsSection = createVariantsSection(productData);
-      variantsSection.style.cssText = `
+      variantsSection.style.cssText += `
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
@@ -1348,6 +1334,7 @@ try {
 
   // =============== ANNOUNCEMENT BAR FEATURE ===============
   if (params.announcement) {
+    console.log('Initializing Announcement Bar feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -1577,6 +1564,7 @@ if (targetLocation) {
 
 // =============== SMART CART FEATURE ===============
 if (params.smartCart) {
+  console.log('Initializing Smart Cart feature');
 
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -2544,6 +2532,7 @@ if (productBottom) {
 
 // =============== SLIDING CART FEATURE ===============
 if (params.slidingCart) {
+  console.log('Initializing Sliding Cart feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || "ar"
@@ -3628,6 +3617,7 @@ observer.observe(document.body, {
 
   // =============== UPSELL FEATURE ===============
   if (params.upsell) {
+    console.log('Initializing Upsell feature');
     
   const styleTag = document.createElement('style');
   styleTag.textContent = `
