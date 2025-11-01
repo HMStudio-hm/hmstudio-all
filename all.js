@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.6 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.7 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -811,7 +811,7 @@ detailsSection.appendChild(ratingContainer);
         color: #4b5563;
         font-size: 14px;
       `;
-      description.textContent = productData.short_description[currentLang];
+      description.innerHTML = productData.short_description[currentLang];
       detailsSection.appendChild(description);
     }
     
@@ -827,7 +827,7 @@ detailsSection.appendChild(ratingContainer);
         max-height: 150px;
         overflow-y: auto;
       `;
-      longDesc.textContent = productData.description;
+      longDesc.innerHTML = productData.description;
       detailsSection.appendChild(longDesc);
     }
   
