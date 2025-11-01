@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.5 (nzoyd Zid updates 29-10) - Upsell/Quick View working with Direct API ✔️
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.6 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️
 // Created by HMStudio
 
 (function() {
@@ -712,26 +712,26 @@
     `;
     detailsSection.appendChild(title);
   
-    if (productData.rating) {
-const ratingContainer = document.createElement('div');
-ratingContainer.className = 'quick-view-rating';
-ratingContainer.style.cssText = `
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
-`;
-
-const starRating = document.createElement('div');
-starRating.style.cssText = `
-  display: flex;
-  align-items: center;
-`;
-
-const rating = productData.rating || { average: 0, total_count: 0 };
-const fullStars = Math.floor(rating.average);
-const remainingStars = 5 - fullStars;
+    // Always display rating section
+    const ratingContainer = document.createElement('div');
+    ratingContainer.className = 'quick-view-rating';
+    ratingContainer.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    `;
+    
+    const starRating = document.createElement('div');
+    starRating.style.cssText = `
+      display: flex;
+      align-items: center;
+    `;
+    
+    const rating = productData.rating || { average: 0, total_count: 0 };
+    const fullStars = Math.floor(rating.average);
+    const remainingStars = 5 - fullStars;
 
 for (let i = 0; i < fullStars; i++) {
   const star = document.createElement('span');
@@ -754,7 +754,6 @@ ratingText.style.color = '#6b7280';
 ratingContainer.appendChild(starRating);
 ratingContainer.appendChild(ratingText);
 detailsSection.appendChild(ratingContainer);
-    }
   
     const priceContainer = document.createElement('div');
     priceContainer.className = 'quick-view-price-container';
