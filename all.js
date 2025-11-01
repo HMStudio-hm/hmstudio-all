@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.8 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.9 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -378,28 +378,25 @@
     const form = document.getElementById('product-form');
     if (!form) return;
   
-    const currentLang = getCurrentLanguage();
     const selectedValues = {};
     const options = productData.options || [];
   
-    // Collect selected values from dropdowns
+    // Collect selected values using option slug as key
     form.querySelectorAll('.variant-select').forEach((select, index) => {
       if (select.value && options[index]) {
         selectedValues[options[index].slug] = select.value;
+        console.log(`Selected ${options[index].slug}: ${select.value}`);
       }
     });
   
     console.log('Selected values:', selectedValues);
     
-    // Fetch child variants to find matching one
     try {
       let allVariants = [];
       
       if (productData.variants && productData.variants.length > 0) {
-        // If variants already loaded, use them
         allVariants = productData.variants;
       } else {
-        // Otherwise fetch them from API
         let response;
         if (window.vitrin === true) {
           response = await zid.products.get(productData.id);
@@ -416,13 +413,18 @@
       const selectedVariant = allVariants.find(variant => {
         if (!variant.attributes || !variant.id) return false;
         
-        return variant.attributes.every(attr => {
-          const attrSlug = attr.slug;
+        // Check if ALL selected values match this variant's attributes
+        const allMatch = variant.attributes.every(attr => {
+          const attrSlug = attr.slug; // e.g., "ar-المقاس-en-size"
           const selectedValue = selectedValues[attrSlug];
-          const matches = selectedValue === attr.value;
-          console.log(`Check: ${attrSlug} = "${selectedValue}" vs "${attr.value}" ? ${matches}`);
+          const variantValue = attr.value; // e.g., "M", "L", "XXL", "S"
+          const matches = selectedValue === variantValue;
+          
+          console.log(`Match check - ${attrSlug}: "${selectedValue}" === "${variantValue}" ? ${matches}`);
           return matches;
         });
+        
+        return allMatch;
       });
       
       if (selectedVariant) {
@@ -453,6 +455,8 @@
           priceElement.textContent = selectedVariant.formatted_price;
           if (oldPriceElement) oldPriceElement.style.display = 'none';
         }
+      } else {
+        console.log('✗ No matching variant found');
       }
     } catch (error) {
       console.error('Error updating variant:', error);
