@@ -1,8 +1,7 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.1 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.2 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️ (trying changing price with selected var).
 // Created by HMStudio
 
 (function() {
-  console.log('HMStudio initialized');
 
   // Common utility to get URL parameters
   function getScriptParams() {
@@ -35,7 +34,6 @@
 
   // =============== QUICK VIEW FEATURE ===============
   if (params.quickView) {
-    console.log('Initializing Quick View feature');
     
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -379,50 +377,32 @@
     if (!form) return;
   
     try {
-      const response = await zid.store.product.fetch(productData.id);
-      const fullProduct = response.data.product;
-      const allVariants = fullProduct.variants || [];
-      const options = productData.options || [];
-      
-      console.log('=== Variants ===', allVariants.map(v => ({
-        id: v.id,
-        attrs: v.attributes?.map(a => `${a.slug}=${a.value}`)
-      })));
-      
-      console.log('=== Options ===', options.map(o => `${o.slug}: ${o.choices}`));
-      
       const selectedValues = {};
-      
-      // Match select dropdowns to options by index
+      const options = productData.options || [];
       const selects = form.querySelectorAll('.variant-select');
+      
       selects.forEach((select, index) => {
         if (select.value && options[index]) {
           selectedValues[options[index].slug] = select.value;
-          console.log(`Selected options[${index}].slug="${options[index].slug}" = "${select.value}"`);
         }
       });
       
-      console.log('=== Looking for match ===', selectedValues);
+      const storeId = productData.store_id;
+      const response = await fetch(`https://api.zid.store/v1/products/${productData.id}?store_id=${storeId}`, {
+        headers: { 'Accept': 'application/json' }
+      });
       
-      // Find variant where all attributes match selectedValues
+      const data = await response.json();
+      const allVariants = data.data?.product?.variants || [];
+      
       const selectedVariant = allVariants.find(variant => {
         if (!variant.attributes || !variant.id) return false;
-        
-        const allMatch = variant.attributes.every(attr => {
-          const selected = selectedValues[attr.slug];
-          const match = selected === attr.value;
-          console.log(`Attr ${attr.slug}: "${selected}" === "${attr.value}" ? ${match}`);
-          return match;
-        });
-        
-        if (allMatch) {
-          console.log(`✓ MATCH FOUND: ${variant.id}`);
-        }
-        return allMatch;
+        return variant.attributes.every(attr => selectedValues[attr.slug] === attr.value);
       });
       
       if (selectedVariant) {
         productData.selected_product = selectedVariant;
+        
         let productIdInput = form.querySelector('input[name="product_id"]');
         if (!productIdInput) {
           productIdInput = document.createElement('input');
@@ -431,9 +411,28 @@
           form.appendChild(productIdInput);
         }
         productIdInput.value = selectedVariant.id;
+        
+        // Update price
+        const priceElement = form.querySelector('#product-price');
+        const oldPriceElement = form.querySelector('#product-old-price');
+        
+        if (priceElement) {
+          if (selectedVariant.formatted_sale_price) {
+            priceElement.textContent = selectedVariant.formatted_sale_price;
+            if (oldPriceElement) {
+              oldPriceElement.textContent = selectedVariant.formatted_price;
+              oldPriceElement.style.display = 'inline';
+            }
+          } else {
+            priceElement.textContent = selectedVariant.formatted_price;
+            if (oldPriceElement) {
+              oldPriceElement.style.display = 'none';
+            }
+          }
+        }
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error updating variant:', error);
     }
   }
   
@@ -734,48 +733,48 @@
     `;
     detailsSection.appendChild(title);
   
-    if (productData.rating) {
-      const ratingContainer = document.createElement('div');
-      ratingContainer.className = 'quick-view-rating';
-      ratingContainer.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 16px;
-        font-size: 14px;
-      `;
-  
-      const starRating = document.createElement('div');
-      starRating.style.cssText = `
-        display: flex;
-        align-items: center;
-      `;
-  
-      const fullStars = Math.floor(productData.rating.average);
-      const remainingStars = 5 - fullStars;
-  
-      for (let i = 0; i < fullStars; i++) {
-        const star = document.createElement('span');
-        star.textContent = '★';
-        star.style.color = '#fbbf24';
-        starRating.appendChild(star);
-      }
-  
-      for (let i = 0; i < remainingStars; i++) {
-        const star = document.createElement('span');
-        star.textContent = '☆';
-        star.style.color = '#e5e7eb';
-        starRating.appendChild(star);
-      }
-  
-      const ratingText = document.createElement('span');
-      ratingText.textContent = `(${productData.rating.average.toFixed(1)})`;
-      ratingText.style.color = '#6b7280';
-  
-      ratingContainer.appendChild(starRating);
-      ratingContainer.appendChild(ratingText);
-      detailsSection.appendChild(ratingContainer);
+    // Always display rating section
+    const ratingContainer = document.createElement('div');
+    ratingContainer.className = 'quick-view-rating';
+    ratingContainer.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    `;
+
+    const starRating = document.createElement('div');
+    starRating.style.cssText = `
+      display: flex;
+      align-items: center;
+    `;
+
+    const rating = productData.rating || { average: 0, total_count: 0 };
+    const fullStars = Math.floor(rating.average);
+    const remainingStars = 5 - fullStars;
+
+    for (let i = 0; i < fullStars; i++) {
+      const star = document.createElement('span');
+      star.textContent = '★';
+      star.style.color = '#fbbf24';
+      starRating.appendChild(star);
     }
+
+    for (let i = 0; i < remainingStars; i++) {
+      const star = document.createElement('span');
+      star.textContent = '☆';
+      star.style.color = '#e5e7eb';
+      starRating.appendChild(star);
+    }
+
+    const ratingText = document.createElement('span');
+    ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'تقييم' : 'reviews'}`;
+    ratingText.style.color = '#6b7280';
+
+    ratingContainer.appendChild(starRating);
+    ratingContainer.appendChild(ratingText);
+    detailsSection.appendChild(ratingContainer);
   
     const priceContainer = document.createElement('div');
     priceContainer.className = 'quick-view-price-container';
@@ -856,7 +855,7 @@
     // Debug: Log variants data
     console.log('Quick View - Variants data:', {
       hasVariants: !!productData.variants,
-      variantsLength: productData.variants?.length,
+      variantsLength: productData.variants ? productData.variants.length : 0,
       has_variants: productData.has_variants,
       variants: productData.variants
     });
@@ -1363,7 +1362,6 @@ try {
 
   // =============== ANNOUNCEMENT BAR FEATURE ===============
   if (params.announcement) {
-    console.log('Initializing Announcement Bar feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -1593,7 +1591,6 @@ if (targetLocation) {
 
 // =============== SMART CART FEATURE ===============
 if (params.smartCart) {
-  console.log('Initializing Smart Cart feature');
 
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -2561,7 +2558,6 @@ if (productBottom) {
 
 // =============== SLIDING CART FEATURE ===============
 if (params.slidingCart) {
-  console.log('Initializing Sliding Cart feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || "ar"
@@ -3646,7 +3642,6 @@ observer.observe(document.body, {
 
   // =============== UPSELL FEATURE ===============
   if (params.upsell) {
-    console.log('Initializing Upsell feature');
     
   const styleTag = document.createElement('style');
   styleTag.textContent = `
