@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.2 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️ (trying changing price with selected var).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.3 (nzoyd Zid updates 29-10) - Testing Direct API call | Upsell/Quick View working with Direct API ✔️ (trying changing price with selected var).
 // Created by HMStudio
 
 (function() {
@@ -200,8 +200,6 @@
     // Use options array as variants (this is how Zid API returns them)
     const variants = productData.options && productData.options.length > 0 ? productData.options : [];
     
-    console.log('Variants to display:', variants);
-    
     if (variants.length > 0) {
       variants.forEach(option => {
         if (option.choices && option.choices.length > 0) {
@@ -387,22 +385,23 @@
         }
       });
       
-      const storeId = productData.store_id;
-      const response = await fetch(`https://api.zid.store/v1/products/${productData.id}?store_id=${storeId}`, {
-        headers: { 'Accept': 'application/json' }
-      });
+      // Use variants already in productData
+      const allVariants = productData.variants || [];
       
-      const data = await response.json();
-      const allVariants = data.data?.product?.variants || [];
-      
+      // Find matching variant by comparing attributes
       const selectedVariant = allVariants.find(variant => {
-        if (!variant.attributes || !variant.id) return false;
-        return variant.attributes.every(attr => selectedValues[attr.slug] === attr.value);
+        if (!variant.attributes || variant.attributes.length === 0 || !variant.id) return false;
+        
+        // Check if all variant attributes match selected values
+        return variant.attributes.every(attr => {
+          return selectedValues[attr.slug] === attr.value;
+        });
       });
       
       if (selectedVariant) {
         productData.selected_product = selectedVariant;
         
+        // Update hidden product ID
         let productIdInput = form.querySelector('input[name="product_id"]');
         if (!productIdInput) {
           productIdInput = document.createElement('input');
@@ -412,12 +411,12 @@
         }
         productIdInput.value = selectedVariant.id;
         
-        // Update price
+        // Update price display
         const priceElement = form.querySelector('#product-price');
         const oldPriceElement = form.querySelector('#product-old-price');
         
         if (priceElement) {
-          if (selectedVariant.formatted_sale_price) {
+          if (selectedVariant.formatted_sale_price && selectedVariant.formatted_sale_price.trim()) {
             priceElement.textContent = selectedVariant.formatted_sale_price;
             if (oldPriceElement) {
               oldPriceElement.textContent = selectedVariant.formatted_price;
@@ -456,7 +455,6 @@
     // If product has variants, use the selected_product that was set by updateSelectedVariant
     if (productData.selected_product && productData.selected_product.id) {
       productIdToAdd = productData.selected_product.id;
-      console.log('Using selected_product ID:', productIdToAdd);
     }
   
     // Set the product ID
@@ -477,9 +475,6 @@
       form.appendChild(formQuantityInput);
     }
     formQuantityInput.value = quantity;
-  
-    const loadingSpinners = document.querySelectorAll('.add-to-cart-progress');
-    loadingSpinners.forEach(spinner => spinner.classList.remove('d-none'));
   
     console.log('Adding to cart:', { productId: productIdToAdd, quantity });
   
@@ -503,7 +498,6 @@
       }
       
       cartPromise.then(async function (response) {
-        console.log('Cart response:', response);
         if (response.status === 'success') {
           try {
             await QuickViewStats.trackEvent('cart_add', {
@@ -852,17 +846,9 @@
       detailsSection.appendChild(longDesc);
     }
   
-    // Debug: Log variants data
-    console.log('Quick View - Variants data:', {
-      hasVariants: !!productData.variants,
-      variantsLength: productData.variants ? productData.variants.length : 0,
-      has_variants: productData.has_variants,
-      variants: productData.variants
-    });
-
     if (productData.variants && productData.variants.length > 0) {
       const variantsSection = createVariantsSection(productData);
-      variantsSection.style.cssText += `
+      variantsSection.style.cssText = `
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
