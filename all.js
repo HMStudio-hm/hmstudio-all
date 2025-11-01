@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.9 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.0 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -378,60 +378,45 @@
     const form = document.getElementById('product-form');
     if (!form) return;
   
-    const selectedValues = {};
-    const options = productData.options || [];
-  
-    // Collect selected values using option slug as key
-    form.querySelectorAll('.variant-select').forEach((select, index) => {
-      if (select.value && options[index]) {
-        selectedValues[options[index].slug] = select.value;
-        console.log(`Selected ${options[index].slug}: ${select.value}`);
-      }
-    });
-  
-    console.log('Selected values:', selectedValues);
-    
     try {
-      let allVariants = [];
-      
-      if (productData.variants && productData.variants.length > 0) {
-        allVariants = productData.variants;
-      } else {
-        let response;
-        if (window.vitrin === true) {
-          response = await zid.products.get(productData.id);
-        } else {
-          response = await zid.store.product.fetch(productData.id);
-          response = response.data?.product;
-        }
-        allVariants = response.variants || [];
-      }
+      // Fetch full product with all variants
+      const fullProduct = await zid.products.get(productData.id);
+      const allVariants = fullProduct.variants || [];
       
       console.log('Available variants:', allVariants.length);
       
-      // Find matching child variant
+      const selectedValues = {};
+      
+      // Get selected values from dropdowns using select names/labels
+      form.querySelectorAll('.variant-select').forEach(select => {
+        if (select.value) {
+          const label = select.previousElementSibling.textContent.trim();
+          selectedValues[label] = select.value;
+          console.log(`Selected ${label}: ${select.value}`);
+        }
+      });
+      
+      console.log('Selected:', selectedValues);
+      
+      // Find matching variant
       const selectedVariant = allVariants.find(variant => {
         if (!variant.attributes || !variant.id) return false;
         
-        // Check if ALL selected values match this variant's attributes
-        const allMatch = variant.attributes.every(attr => {
-          const attrSlug = attr.slug; // e.g., "ar-المقاس-en-size"
-          const selectedValue = selectedValues[attrSlug];
-          const variantValue = attr.value; // e.g., "M", "L", "XXL", "S"
-          const matches = selectedValue === variantValue;
-          
-          console.log(`Match check - ${attrSlug}: "${selectedValue}" === "${variantValue}" ? ${matches}`);
+        // Check if all attributes match
+        return variant.attributes.every(attr => {
+          // Use the attribute name/slug as the label
+          const attrLabel = attr.name || attr.slug;
+          const selectedValue = selectedValues[attrLabel];
+          const matches = selectedValue === attr.value;
+          console.log(`Check ${attrLabel}: "${selectedValue}" === "${attr.value}" ? ${matches}`);
           return matches;
         });
-        
-        return allMatch;
       });
       
       if (selectedVariant) {
         console.log('✓ Variant matched:', selectedVariant.id, selectedVariant.name);
         productData.selected_product = selectedVariant;
         
-        // Update hidden product ID input
         let productIdInput = form.querySelector('input[name="product_id"]');
         if (!productIdInput) {
           productIdInput = document.createElement('input');
@@ -440,26 +425,9 @@
           form.appendChild(productIdInput);
         }
         productIdInput.value = selectedVariant.id;
-        
-        // Update price
-        const priceElement = form.querySelector('#product-price');
-        const oldPriceElement = form.querySelector('#product-old-price');
-        
-        if (priceElement && selectedVariant.formatted_sale_price) {
-          priceElement.textContent = selectedVariant.formatted_sale_price;
-          if (oldPriceElement) {
-            oldPriceElement.textContent = selectedVariant.formatted_price;
-            oldPriceElement.style.display = 'block';
-          }
-        } else if (priceElement) {
-          priceElement.textContent = selectedVariant.formatted_price;
-          if (oldPriceElement) oldPriceElement.style.display = 'none';
-        }
-      } else {
-        console.log('✗ No matching variant found');
       }
     } catch (error) {
-      console.error('Error updating variant:', error);
+      console.error('Error:', error);
     }
   }
   
