@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.5 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.6 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -206,22 +206,19 @@
       productData.variants.forEach(variant => {
         if (variant.attributes && variant.attributes.length > 0) {
           variant.attributes.forEach(attr => {
-            const attrKey = `${attr.name}|${attr.slug}`; // Use both name and slug as key
-            if (!variantAttributes.has(attrKey)) {
-              variantAttributes.set(attrKey, {
+            if (!variantAttributes.has(attr.name)) {
+              variantAttributes.set(attr.name, {
                 name: attr.name,
                 slug: attr.slug,
                 values: new Set()
               });
             }
-            variantAttributes.get(attrKey).values.add(attr.value);
+            variantAttributes.get(attr.name).values.add(attr.value);
           });
         }
       });
   
-      console.log('Variant attributes found:', Object.fromEntries(variantAttributes));
-      
-      variantAttributes.forEach((attr, key) => {
+      variantAttributes.forEach(attr => {
         const select = document.createElement('select');
         select.className = 'variant-select';
         select.style.cssText = `
@@ -246,9 +243,7 @@
         
         let optionsHTML = `<option value="">${placeholderText}</option>`;
         
-        // Sort values for consistent display
-        const sortedValues = Array.from(attr.values).sort();
-        sortedValues.forEach(value => {
+        Array.from(attr.values).forEach(value => {
           optionsHTML += `<option value="${value}">${value}</option>`;
         });
         
@@ -406,24 +401,25 @@
       }
     });
   
-    console.log('Updating variant with selected values:', selectedValues);
+    console.log('Selected values:', selectedValues);
     
     // Find matching child variant
     const selectedVariant = productData.variants.find(variant => {
       if (!variant.attributes || variant.attributes.length === 0) return false;
       
       // Check if all selected values match this variant's attributes
-      return variant.attributes.every(attr => {
+      const allMatch = variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        const selectedValue = selectedValues[attrLabel];
-        const matches = selectedValue === attr.value;
-        console.log(`Comparing - ${attrLabel}: "${selectedValue}" === "${attr.value}" ? ${matches}`);
+        const selected = selectedValues[attrLabel];
+        const matches = selected === attr.value;
         return matches;
       });
+      
+      return allMatch;
     });
   
     if (selectedVariant) {
-      console.log('✓ Selected variant found:', selectedVariant.id, selectedVariant.name);
+      console.log('✓ Variant matched:', selectedVariant.id, selectedVariant.name);
       
       // Update the selected_product in productData
       productData.selected_product = selectedVariant;
@@ -437,7 +433,7 @@
       }
       productIdInput.value = selectedVariant.id;
   
-      // Update price
+      // Update price if elements exist
       const priceElement = form.querySelector('#product-price');
       const oldPriceElement = form.querySelector('#product-old-price');
       
@@ -470,7 +466,7 @@
         }
       }
 
-      // Update gallery images
+      // Update gallery images if they exist
       if (selectedVariant.images && selectedVariant.images.length > 0) {
         const gallery = document.getElementById('quickViewGallery');
         if (gallery) {
@@ -487,8 +483,6 @@
           gallery.appendChild(newGallery);
         }
       }
-    } else {
-      console.log('✗ No matching variant found');
     }
   }
   
