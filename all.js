@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.4 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.2.5 (nzoyd Zid updates 29-10) - Testing Direct API call | upsell working with Direct API(still testing Quick View).
 // Created by HMStudio
 
 (function() {
@@ -202,38 +202,26 @@
     if (productData.variants && productData.variants.length > 0) {
       const variantAttributes = new Map();
       
-      // Check if variants have attributes (new API format)
-      const hasAttributes = productData.variants.some(v => v.attributes && v.attributes.length > 0);
-      
-      if (hasAttributes) {
-        // New format: extract from variant.attributes
-        productData.variants.forEach(variant => {
-          if (variant.attributes && variant.attributes.length > 0) {
-            variant.attributes.forEach(attr => {
-              if (!variantAttributes.has(attr.name)) {
-                variantAttributes.set(attr.name, {
-                  name: attr.name,
-                  slug: attr.slug,
-                  values: new Set()
-                });
-              }
-              // attr.value is a STRING, not an object with language keys
-              variantAttributes.get(attr.name).values.add(attr.value);
-            });
-          }
-        });
-      } else if (productData.options && productData.options.length > 0) {
-        // Old format: use options directly
-        productData.options.forEach(option => {
-          variantAttributes.set(option.name, {
-            name: option.name,
-            slug: option.slug,
-            values: new Set(option.choices || [])
+      // Collect all unique attribute names and their values from child variants
+      productData.variants.forEach(variant => {
+        if (variant.attributes && variant.attributes.length > 0) {
+          variant.attributes.forEach(attr => {
+            const attrKey = `${attr.name}|${attr.slug}`; // Use both name and slug as key
+            if (!variantAttributes.has(attrKey)) {
+              variantAttributes.set(attrKey, {
+                name: attr.name,
+                slug: attr.slug,
+                values: new Set()
+              });
+            }
+            variantAttributes.get(attrKey).values.add(attr.value);
           });
-        });
-      }
+        }
+      });
   
-      variantAttributes.forEach(attr => {
+      console.log('Variant attributes found:', Object.fromEntries(variantAttributes));
+      
+      variantAttributes.forEach((attr, key) => {
         const select = document.createElement('select');
         select.className = 'variant-select';
         select.style.cssText = `
@@ -258,7 +246,9 @@
         
         let optionsHTML = `<option value="">${placeholderText}</option>`;
         
-        Array.from(attr.values).forEach(value => {
+        // Sort values for consistent display
+        const sortedValues = Array.from(attr.values).sort();
+        sortedValues.forEach(value => {
           optionsHTML += `<option value="${value}">${value}</option>`;
         });
         
@@ -418,19 +408,22 @@
   
     console.log('Updating variant with selected values:', selectedValues);
     
+    // Find matching child variant
     const selectedVariant = productData.variants.find(variant => {
-      if (!variant.attributes) return false;
+      if (!variant.attributes || variant.attributes.length === 0) return false;
+      
+      // Check if all selected values match this variant's attributes
       return variant.attributes.every(attr => {
         const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        // attr.value is a string, not an object with language keys
-        const matches = selectedValues[attrLabel] === attr.value;
-        console.log(`Checking ${attrLabel}: ${selectedValues[attrLabel]} === ${attr.value} ? ${matches}`);
+        const selectedValue = selectedValues[attrLabel];
+        const matches = selectedValue === attr.value;
+        console.log(`Comparing - ${attrLabel}: "${selectedValue}" === "${attr.value}" ? ${matches}`);
         return matches;
       });
     });
   
     if (selectedVariant) {
-      console.log('Selected variant found:', selectedVariant.id);
+      console.log('✓ Selected variant found:', selectedVariant.id, selectedVariant.name);
       
       // Update the selected_product in productData
       productData.selected_product = selectedVariant;
@@ -444,6 +437,7 @@
       }
       productIdInput.value = selectedVariant.id;
   
+      // Update price
       const priceElement = form.querySelector('#product-price');
       const oldPriceElement = form.querySelector('#product-old-price');
       
@@ -462,6 +456,7 @@
         }
       }
   
+      // Update button state
       const addToCartBtn = form.querySelector('.add-to-cart-btn');
       if (addToCartBtn) {
         if (!selectedVariant.unavailable) {
@@ -475,7 +470,7 @@
         }
       }
 
-      // Update gallery images for selected variant
+      // Update gallery images
       if (selectedVariant.images && selectedVariant.images.length > 0) {
         const gallery = document.getElementById('quickViewGallery');
         if (gallery) {
@@ -493,7 +488,7 @@
         }
       }
     } else {
-      console.log('No matching variant found');
+      console.log('✗ No matching variant found');
     }
   }
   
