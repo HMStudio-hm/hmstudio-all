@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.9
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.0 (nzoyd Zid updates 29-10 | no direct API calling for products)
 // Created by HMStudio
 
 (function() {
@@ -523,7 +523,8 @@
         })
       }
       cartPromise.then(async function (response) {
-        if (response.status === 'success') {
+        const isSuccess = response && (response.status === 'success' || response.message === 'Added to cart');
+        if (isSuccess) {
           try {
             await QuickViewStats.trackEvent('cart_add', {
               productId: formData.get('product_id'),
@@ -536,7 +537,9 @@
           }
   
           if (typeof setCartBadge === 'function') {
-            setCartBadge(response.data.cart.products_count);
+            if (response.data && response.data.cart) {
+              setCartBadge(response.data.cart.products_count);
+            }
           }
           const modal = document.querySelector('.quick-view-modal');
           if (modal) {
@@ -838,7 +841,7 @@
         color: #4b5563;
         font-size: 14px;
       `;
-      description.textContent = productData.short_description[currentLang];
+      description.textContent = productData.short_description[currentLang].replace(/<[^>]*>/g, '');
       detailsSection.appendChild(description);
     }
   
