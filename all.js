@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.0 (nzoyd Zid updates 29-10) trying to fix variants in upsell
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.1 (nzoyd Zid updates 29-10) trying to fix variants in upsell
 // Created by HMStudio
 
 (function() {
@@ -4097,6 +4097,8 @@ observer.observe(document.body, {
             const variantsContainer = document.createElement('div');
             variantsContainer.className = 'hmstudio-upsell-variants';
             
+            const self = this; // Capture this context
+            
             fullProductData.options.forEach(option => {
               if (option.choices && option.choices.length > 0) {
                 const select = document.createElement('select');
@@ -4131,7 +4133,7 @@ observer.observe(document.body, {
                 select.innerHTML = optionsHTML;
                 
                 select.addEventListener('change', async () => {
-                  await this.updateUpsellVariant(form, fullProductData);
+                  await self.updateUpsellVariant(form, fullProductData);
                 });
                 
                 variantsContainer.appendChild(label);
@@ -4199,6 +4201,7 @@ observer.observe(document.body, {
           addToCartBtn.textContent = originalText;
   
           addToCartBtn.addEventListener('click', async () => {
+            const self = this;
             try {
               if (fullProductData.has_options && fullProductData.options?.length > 0) {
                 const selects = form.querySelectorAll('.variant-select');
@@ -4220,7 +4223,7 @@ observer.observe(document.body, {
                 }
                 
                 // Update variant before adding to cart
-                await this.updateUpsellVariant(form, fullProductData);
+                await self.updateUpsellVariant(form, fullProductData);
               }
   
               const quantityValue = parseInt(quantityInput.value);
@@ -4597,6 +4600,7 @@ observer.observe(document.body, {
           });
       
           addAllButton.addEventListener('click', async () => {
+            const self = this;
             const forms = content.querySelectorAll('form');
             const variantForms = Array.from(forms).filter(form => form.querySelector('.variant-select'));
             
@@ -4625,7 +4629,7 @@ observer.observe(document.body, {
                 if (productDataAttr) {
                   try {
                     const productData = JSON.parse(productDataAttr);
-                    await this.updateUpsellVariant(form, productData);
+                    await self.updateUpsellVariant(form, productData);
                   } catch (e) {
                     console.error('Error parsing product data:', e);
                   }
