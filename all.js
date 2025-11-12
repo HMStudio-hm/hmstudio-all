@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.7 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.8 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -4011,6 +4011,7 @@ observer.observe(document.body, {
         // Map options to variants for compatibility
         if (product.options && product.options.length > 0) {
           product.variants = product.options;
+          product.has_options = true;
         }
         
         return product;
