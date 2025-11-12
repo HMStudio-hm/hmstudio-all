@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.6 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.7 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -503,10 +503,10 @@
           if (modal) {
             modal.remove();
           }
-        } else {
+        } else if (response.data?.message) {
           const errorMessage = currentLang === 'ar' 
-            ? response.data?.message || 'فشل إضافة المنتج إلى السلة'
-            : response.data?.message || 'Failed to add product to cart';
+            ? response.data.message
+            : response.data.message;
           console.error('Add to cart failed:', errorMessage);
           alert(errorMessage);
         }
@@ -4174,59 +4174,8 @@ observer.observe(document.body, {
                   alert(message);
                   return;
                 }
-
-                // For products with variants, fetch full data and find matching variant ID
-                (async () => {
-                  try {
-                    const response = await zid.store.product.fetch(fullProductData.id);
-                    const fullProduct = response.data.product;
-                    const allVariants = fullProduct.variants || [];
-                    const options = fullProductData.options || [];
-                    
-                    const selectedValues = {};
-                    
-                    const selects = form.querySelectorAll('.variant-select');
-                    selects.forEach((select, index) => {
-                      if (select.value && options[index]) {
-                        selectedValues[options[index].slug] = select.value;
-                      }
-                    });
-                      
-                    const selectedVariant = allVariants.find(variant => {
-                      if (!variant.attributes || !variant.id) return false;
-                      
-                      const allMatch = variant.attributes.every(attr => {
-                        const selected = selectedValues[attr.slug];
-                        const match = selected === attr.value[currentLang];
-                        return match;
-                      });
-                      
-                      return allMatch;
-                    });
-                    
-                    if (selectedVariant) {
-                      const productIdInput = form.querySelector('input[name="product_id"]');
-                      if (productIdInput) {
-                        productIdInput.value = selectedVariant.id;
-                      }
-                    }
-                  } catch (error) {
-                    console.error('Error fetching variant:', error);
-                  }
-                  
-                  proceedWithAddToCart();
-                })();
-                return;
               }
-              
-              proceedWithAddToCart();
-            } catch (error) {
-              addToCartBtn.textContent = originalText;
-              addToCartBtn.disabled = false;
-              addToCartBtn.style.opacity = '1';
-            }
-
-            async function proceedWithAddToCart() {
+  
               const quantityValue = parseInt(quantityInput.value);
               if (isNaN(quantityValue) || quantityValue < 1) {
                 const message = currentLang === 'ar' 
@@ -4288,10 +4237,10 @@ observer.observe(document.body, {
                     });
                   } catch (error) {
                   }              
-                } else {
+                } else if (response.data?.message) {
                   const errorMessage = currentLang === 'ar' 
-                    ? response.data.message || 'فشل إضافة المنتج إلى السلة'
-                    : response.data.message || 'Failed to add product to cart';
+                    ? response.data.message
+                    : response.data.message;
                   alert(errorMessage);
                 }
               })
@@ -4306,6 +4255,10 @@ observer.observe(document.body, {
                 addToCartBtn.disabled = false;
                 addToCartBtn.style.opacity = '1';
               });
+            } catch (error) {
+              addToCartBtn.textContent = originalText;
+              addToCartBtn.disabled = false;
+              addToCartBtn.style.opacity = '1';
             }
           });
         
@@ -4409,6 +4362,7 @@ observer.observe(document.body, {
         });
       
         if (selectedVariant) {
+          product.selected_product = selectedVariant;
           const productIdInput = form.querySelector('input[name="product_id"]');
           if (productIdInput) {
             productIdInput.value = selectedVariant.id;
