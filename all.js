@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.7 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.8 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -225,7 +225,7 @@
             font-weight: bold;
           `;
     
-          const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
+          const placeholderText = currentLang === 'ar' ? `Ø§Ø®ØªØ± ${labelText}` : `Select ${labelText}`;
           
           let optionsHTML = `<option value="">${placeholderText}</option>`;
           
@@ -258,7 +258,7 @@
     `;
   
     const quantityLabel = document.createElement('label');
-    quantityLabel.textContent = currentLang === 'ar' ? 'الكمية:' : 'Quantity:';
+    quantityLabel.textContent = currentLang === 'ar' ? 'Ø§Ù„ÙƒÙ…ÙŠØ©:' : 'Quantity:';
     quantityLabel.style.cssText = `
       font-weight: bold;
       color: #333;
@@ -430,7 +430,7 @@
     
     if (isNaN(quantity) || quantity < 1) {
       const message = currentLang === 'ar' 
-        ? 'الرجاء إدخال كمية صحيحة'
+        ? 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ…ÙŠØ© ØµØ­ÙŠØ­Ø©'
         : 'Please enter a valid quantity';
       alert(message);
       return;
@@ -503,10 +503,10 @@
           if (modal) {
             modal.remove();
           }
-        } else if (response.data?.message) {
+        } else {
           const errorMessage = currentLang === 'ar' 
-            ? response.data.message
-            : response.data.message;
+            ? response.data?.message || 'ÙØ´Ù„ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ù†ØªØ¬ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©'
+            : response.data?.message || 'Failed to add product to cart';
           console.error('Add to cart failed:', errorMessage);
           alert(errorMessage);
         }
@@ -514,7 +514,7 @@
       .catch(function(error) {
         console.error('Cart error:', error);
         const errorMessage = currentLang === 'ar' 
-          ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
+          ? 'Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ù†ØªØ¬ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©'
           : 'Error occurred while adding product to cart';
         alert(errorMessage);
       })
@@ -735,20 +735,20 @@
 
 for (let i = 0; i < fullStars; i++) {
   const star = document.createElement('span');
-  star.textContent = '★';
+  star.textContent = 'â˜…';
   star.style.color = '#fbbf24';
   starRating.appendChild(star);
 }
 
 for (let i = 0; i < remainingStars; i++) {
   const star = document.createElement('span');
-  star.textContent = '☆';
+  star.textContent = 'â˜†';
   star.style.color = '#e5e7eb';
   starRating.appendChild(star);
 }
 
 const ratingText = document.createElement('span');
-ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'تقييم' : 'reviews'}`;
+ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'ØªÙ‚ÙŠÙŠÙ…' : 'reviews'}`;
 ratingText.style.color = '#6b7280';
 
 ratingContainer.appendChild(starRating);
@@ -764,7 +764,7 @@ detailsSection.appendChild(ratingContainer);
       margin-bottom: 20px;
     `;
   
-    const currencySymbol = currentLang === 'ar' ? 'ر.س' : 'SAR';
+    const currencySymbol = currentLang === 'ar' ? 'Ø±.Ø³' : 'SAR';
   
     if (productData.sale_price) {
       const salePrice = document.createElement('span');
@@ -910,7 +910,7 @@ detailsSection.appendChild(ratingContainer);
     `;
   
     const addToCartBtn = document.createElement('button');
-    addToCartBtn.textContent = currentLang === 'ar' ? 'أضف إلى السلة' : 'Add to Cart';
+    addToCartBtn.textContent = currentLang === 'ar' ? 'Ø£Ø¶Ù Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©' : 'Add to Cart';
     addToCartBtn.className = 'btn btn-primary add-to-cart-btn quick-view-add-to-cart-btn';
     addToCartBtn.type = 'button';
     addToCartBtn.style.cssText = `
@@ -1202,7 +1202,7 @@ if (!document.querySelector('#quick-view-spinner-style')) {
                     <svg class="quick-view-spinner" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 12a9 9 0 11-6.219-8.56"/>
                     </svg>
-                    <span>عرض سريع</span>
+                    <span>Ø¹Ø±Ø¶ Ø³Ø±ÙŠØ¹</span>
                 `;
                 
                 // Add spinner animation style
@@ -1263,7 +1263,7 @@ if (!document.querySelector('#quick-view-spinner-style')) {
                   // For Assayl theme, also update text
                   if (currentTheme === 'assayl') {
                       const text = button.querySelector('span');
-                      if (text) text.textContent = 'جاري التحميل...';
+                      if (text) text.textContent = 'Ø¬Ø§Ø±ÙŠ Ø§Ù„ØªØ­Ù…ÙŠÙ„...';
                   }
               }
               
@@ -1279,7 +1279,7 @@ if (!document.querySelector('#quick-view-spinner-style')) {
                           // For Assayl theme, also reset text
                           if (currentTheme === 'assayl') {
                               const text = button.querySelector('span');
-                              if (text) text.textContent = 'عرض سريع';
+                              if (text) text.textContent = 'Ø¹Ø±Ø¶ Ø³Ø±ÙŠØ¹';
                           }
                       }, 300);
                   }
@@ -1642,7 +1642,7 @@ if (params.smartCart) {
       `;
 
       const quantityLabel = document.createElement('span');
-      quantityLabel.textContent = getCurrentLanguage() === 'ar' ? 'الكمية:' : 'Quantity:';
+      quantityLabel.textContent = getCurrentLanguage() === 'ar' ? 'Ø§Ù„ÙƒÙ…ÙŠØ©:' : 'Quantity:';
       quantityLabel.style.cssText = `
         font-size: ${isMobile() ? '14px' : '12px'};
         color: #666;
@@ -1777,7 +1777,7 @@ if (params.smartCart) {
       });
     
       const addButton = document.createElement('button');
-      addButton.textContent = getCurrentLanguage() === 'ar' ? 'أضف للسلة' : 'Add to Cart';
+      addButton.textContent = getCurrentLanguage() === 'ar' ? 'Ø£Ø¶Ù Ù„Ù„Ø³Ù„Ø©' : 'Add to Cart';
       addButton.style.cssText = `
         background-color: var(--mainColor, var(--theme-primary, #00b286));
         color: white;
@@ -2130,10 +2130,10 @@ if (params.smartCart) {
       `;
 
       const timeUnits = [
-        { value: days, label: getCurrentLanguage() === 'ar' ? 'ي' : 'd' },
-        { value: hours, label: getCurrentLanguage() === 'ar' ? 'س' : 'h' },
-        { value: minutes, label: getCurrentLanguage() === 'ar' ? 'د' : 'm' },
-        { value: seconds, label: getCurrentLanguage() === 'ar' ? 'ث' : 's' }
+        { value: days, label: getCurrentLanguage() === 'ar' ? 'ÙŠ' : 'd' },
+        { value: hours, label: getCurrentLanguage() === 'ar' ? 'Ø³' : 'h' },
+        { value: minutes, label: getCurrentLanguage() === 'ar' ? 'Ø¯' : 'm' },
+        { value: seconds, label: getCurrentLanguage() === 'ar' ? 'Ø«' : 's' }
       ];
 
       timeUnits.forEach((unit, index) => {
@@ -2547,27 +2547,27 @@ document.head.appendChild(styleSheet)
 
 const couponMessages = {
   invalidCoupon: {
-    ar: "القسيمة غير صالحة",
+    ar: "Ø§Ù„Ù‚Ø³ÙŠÙ…Ø© ØºÙŠØ± ØµØ§Ù„Ø­Ø©",
     en: "Invalid coupon code",
   },
   expiredCoupon: {
-    ar: "انتهت صلاحية القسيمة",
+    ar: "Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ù‚Ø³ÙŠÙ…Ø©",
     en: "Coupon has expired",
   },
   productNotEligible: {
-    ar: "هذه القسيمة غير متوفرة للمنتجات المختارة",
+    ar: "Ù‡Ø°Ù‡ Ø§Ù„Ù‚Ø³ÙŠÙ…Ø© ØºÙŠØ± Ù…ØªÙˆÙØ±Ø© Ù„Ù„Ù…Ù†ØªØ¬Ø§Øª Ø§Ù„Ù…Ø®ØªØ§Ø±Ø©",
     en: "This coupon is not available for the selected products",
   },
   minimumNotMet: {
-    ar: "لم يتم الوصول إلى الحد الأدنى للطلب",
+    ar: "Ù„Ù… ÙŠØªÙ… Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ø¯Ù†Ù‰ Ù„Ù„Ø·Ù„Ø¨",
     en: "Minimum order amount not met",
   },
   alreadyUsed: {
-    ar: "تم استخدام هذه القسيمة من قبل",
+    ar: "ØªÙ… Ø§Ø³ØªØ®Ø¯Ø§Ù… Ù‡Ø°Ù‡ Ø§Ù„Ù‚Ø³ÙŠÙ…Ø© Ù…Ù† Ù‚Ø¨Ù„",
     en: "This coupon has already been used",
   },
   success: {
-    ar: "تم تطبيق القسيمة بنجاح",
+    ar: "ØªÙ… ØªØ·Ø¨ÙŠÙ‚ Ø§Ù„Ù‚Ø³ÙŠÙ…Ø© Ø¨Ù†Ø¬Ø§Ø­",
     en: "Coupon applied successfully",
   },
 }
@@ -2626,7 +2626,7 @@ const couponMessages = {
 
       const title = document.createElement("h2")
       title.className = "hmstudio-cart-title"
-      title.textContent = currentLang === "ar" ? "سلة التسوق" : "Shopping Cart"
+      title.textContent = currentLang === "ar" ? "Ø³Ù„Ø© Ø§Ù„ØªØ³ÙˆÙ‚" : "Shopping Cart"
       title.style.cssText = `
         margin: 0;
         font-size: 1.25rem;
@@ -2635,7 +2635,7 @@ const couponMessages = {
 
       const closeButton = document.createElement("button")
       closeButton.className = "hmstudio-cart-close"
-      closeButton.innerHTML = "✕"
+      closeButton.innerHTML = "âœ•"
       closeButton.style.cssText = `
         background: none;
         border: none;
@@ -2799,8 +2799,8 @@ footer.style.cssText = `
         const salePrice = document.createElement("div")
         salePrice.className = "hmstudio-cart-item-sale-price"
         const formattedSalePrice = isArabic
-          ? `${item.gross_sale_price.toFixed(2)} ${currentLang === "en" ? "SAR" : "ر.س"}`
-          : `${currentLang === "en" ? "SAR" : "ر.س"} ${item.gross_sale_price.toFixed(2)}`
+          ? `${item.gross_sale_price.toFixed(2)} ${currentLang === "en" ? "SAR" : "Ø±.Ø³"}`
+          : `${currentLang === "en" ? "SAR" : "Ø±.Ø³"} ${item.gross_sale_price.toFixed(2)}`
         salePrice.textContent = formattedSalePrice
         salePrice.style.cssText = `
           font-weight: bold;
@@ -2810,8 +2810,8 @@ footer.style.cssText = `
         const originalPrice = document.createElement("div")
         originalPrice.className = "hmstudio-cart-item-original-price"
         const formattedOriginalPrice = isArabic
-          ? `${item.gross_price.toFixed(2)} ${currentLang === "en" ? "SAR" : "ر.س"}`
-          : `${currentLang === "en" ? "SAR" : "ر.س"} ${item.gross_price.toFixed(2)}`
+          ? `${item.gross_price.toFixed(2)} ${currentLang === "en" ? "SAR" : "Ø±.Ø³"}`
+          : `${currentLang === "en" ? "SAR" : "Ø±.Ø³"} ${item.gross_price.toFixed(2)}`
         originalPrice.textContent = formattedOriginalPrice
         originalPrice.style.cssText = `
           text-decoration: line-through;
@@ -2832,8 +2832,8 @@ footer.style.cssText = `
         price.className = "hmstudio-cart-item-price"
         const priceValue = item.gross_price || item.price
         const formattedPrice = isArabic
-          ? `${priceValue.toFixed(2)} ${currentLang === "en" ? "SAR" : "ر.س"}`
-          : `${currentLang === "en" ? "SAR" : "ر.س"} ${priceValue.toFixed(2)}`
+          ? `${priceValue.toFixed(2)} ${currentLang === "en" ? "SAR" : "Ø±.Ø³"}`
+          : `${currentLang === "en" ? "SAR" : "Ø±.Ø³"} ${priceValue.toFixed(2)}`
         price.textContent = formattedPrice
         price.style.cssText = `
           font-weight: bold;
@@ -2898,7 +2898,7 @@ footer.style.cssText = `
 
       const removeBtn = document.createElement("button")
       removeBtn.className = "hmstudio-cart-item-remove"
-      removeBtn.innerHTML = "🗑️"
+      removeBtn.innerHTML = "ðŸ—‘ï¸"
       removeBtn.style.cssText = `
         background: none;
         border: none;
@@ -2935,7 +2935,7 @@ footer.style.cssText = `
     },
     createFooterContent: function (cartData, currentLang) {
       const isArabic = currentLang === "ar"
-      const currencySymbol = currentLang === "en" ? "SAR" : "ر.س"
+      const currencySymbol = currentLang === "en" ? "SAR" : "Ø±.Ø³"
       
 
       const footer = document.createElement("div")
@@ -2951,25 +2951,25 @@ footer.style.cssText = `
         const errorMessage = (response.data?.message || "").toLowerCase()
 
         if (
-          errorMessage.includes("فترة إستخدام الكوبون لم تبدأ بعد أو أنها انتهت") ||
-          errorMessage.includes("لم تبدأ بعد أو أنها انتهت") ||
-          errorMessage.includes("منتهية الصلاحية") ||
+          errorMessage.includes("ÙØªØ±Ø© Ø¥Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„ÙƒÙˆØ¨ÙˆÙ† Ù„Ù… ØªØ¨Ø¯Ø£ Ø¨Ø¹Ø¯ Ø£Ùˆ Ø£Ù†Ù‡Ø§ Ø§Ù†ØªÙ‡Øª") ||
+          errorMessage.includes("Ù„Ù… ØªØ¨Ø¯Ø£ Ø¨Ø¹Ø¯ Ø£Ùˆ Ø£Ù†Ù‡Ø§ Ø§Ù†ØªÙ‡Øª") ||
+          errorMessage.includes("Ù…Ù†ØªÙ‡ÙŠØ© Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ©") ||
           errorMessage.includes("expired")
         ) {
           return "expiredCoupon"
         }
 
         if (
-          errorMessage.includes("قيمة منتجات") ||
-          errorMessage.includes("حد أدنى") ||
+          errorMessage.includes("Ù‚ÙŠÙ…Ø© Ù…Ù†ØªØ¬Ø§Øª") ||
+          errorMessage.includes("Ø­Ø¯ Ø£Ø¯Ù†Ù‰") ||
           errorMessage.includes("200.00") ||
-          errorMessage.includes("يتطلب حد")
+          errorMessage.includes("ÙŠØªØ·Ù„Ø¨ Ø­Ø¯")
         ) {
           return "minimumNotMet"
         }
 
         if (
-          errorMessage.includes("السلة لا تحتوي أي منتج من المنتجات المشمولة") ||
+          errorMessage.includes("Ø§Ù„Ø³Ù„Ø© Ù„Ø§ ØªØ­ØªÙˆÙŠ Ø£ÙŠ Ù…Ù†ØªØ¬ Ù…Ù† Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª Ø§Ù„Ù…Ø´Ù…ÙˆÙ„Ø©") ||
           errorMessage.includes("not eligible") ||
           errorMessage.includes("not applicable")
         ) {
@@ -2977,8 +2977,8 @@ footer.style.cssText = `
         }
 
         if (
-          errorMessage.includes("تم استخدام") ||
-          errorMessage.includes("مستخدمة مسبقا") ||
+          errorMessage.includes("ØªÙ… Ø§Ø³ØªØ®Ø¯Ø§Ù…") ||
+          errorMessage.includes("Ù…Ø³ØªØ®Ø¯Ù…Ø© Ù…Ø³Ø¨Ù‚Ø§") ||
           errorMessage.includes("already used") ||
           errorMessage.includes("used before")
         ) {
@@ -3026,7 +3026,7 @@ footer.style.cssText = `
       const couponInput = document.createElement("input")
       couponInput.className = "hmstudio-cart-coupon-input"
       couponInput.type = "text"
-      couponInput.placeholder = isArabic ? "أدخل رمز القسيمة" : "Enter coupon code"
+      couponInput.placeholder = isArabic ? "Ø£Ø¯Ø®Ù„ Ø±Ù…Ø² Ø§Ù„Ù‚Ø³ÙŠÙ…Ø©" : "Enter coupon code"
       couponInput.style.cssText = `
         flex: 1;
         padding: 8px 12px;
@@ -3123,7 +3123,7 @@ footer.style.cssText = `
 
       const buttonText = document.createElement("span")
       buttonText.className = "hmstudio-cart-coupon-button-text"
-      buttonText.textContent = isArabic ? "تطبيق" : "Apply"
+      buttonText.textContent = isArabic ? "ØªØ·Ø¨ÙŠÙ‚" : "Apply"
 
       applyButton.appendChild(spinner)
       applyButton.appendChild(buttonText)
@@ -3195,7 +3195,7 @@ footer.style.cssText = `
 
         const couponTitle = document.createElement("span")
         couponTitle.className = "hmstudio-cart-coupon-title"
-        couponTitle.textContent = isArabic ? "القسيمة المطبقة:" : "Applied Coupon:"
+        couponTitle.textContent = isArabic ? "Ø§Ù„Ù‚Ø³ÙŠÙ…Ø© Ø§Ù„Ù…Ø·Ø¨Ù‚Ø©:" : "Applied Coupon:"
         couponTitle.style.cssText = `
           font-size: 0.8rem;
           color: #666;
@@ -3211,7 +3211,7 @@ footer.style.cssText = `
 
         const removeButton = document.createElement("button")
         removeButton.className = "hmstudio-cart-coupon-remove"
-        removeButton.innerHTML = "✕"
+        removeButton.innerHTML = "âœ•"
         removeButton.style.cssText = `
           border: none;
           background: none;
@@ -3271,7 +3271,7 @@ footer.style.cssText = `
         : `${currencySymbol} ${originalSubtotal.toFixed(2)}`
 
       subtotal.innerHTML = `
-        <span>${isArabic ? "المجموع الفرعي:" : "Subtotal:"}</span>
+        <span>${isArabic ? "Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹ Ø§Ù„ÙØ±Ø¹ÙŠ:" : "Subtotal:"}</span>
         <span>${subTotalFormatted}</span>
       `
 
@@ -3312,7 +3312,7 @@ footer.style.cssText = `
           : `${currencySymbol} ${totalDiscount.toFixed(2)}`
 
         discountInfo.innerHTML = `
-          <span>${isArabic ? "قيمة الخصم:" : "Discount:"}</span>
+          <span>${isArabic ? "Ù‚ÙŠÙ…Ø© Ø§Ù„Ø®ØµÙ…:" : "Discount:"}</span>
           <span>${formattedDiscount}</span>
         `
 
@@ -3332,11 +3332,11 @@ footer.style.cssText = `
 
         const taxAmount = (cartData.products_subtotal * (cartData.tax_percentage / 100)).toFixed(2)
         const formattedTax = isArabic
-          ? `${taxAmount} ${currencySymbol} (${cartData.tax_percentage}٪)`
+          ? `${taxAmount} ${currencySymbol} (${cartData.tax_percentage}Ùª)`
           : `${currencySymbol} ${taxAmount} (${cartData.tax_percentage}%)`
 
         taxInfo.innerHTML = `
-          <span>${isArabic ? "الضريبة:" : "Tax:"}</span>
+          <span>${isArabic ? "Ø§Ù„Ø¶Ø±ÙŠØ¨Ø©:" : "Tax:"}</span>
           <span>${formattedTax}</span>
         `
 
@@ -3360,7 +3360,7 @@ footer.style.cssText = `
         : `${currencySymbol} ${cartData.total.value.toFixed(2)}`
 
       total.innerHTML = `
-        <span>${isArabic ? "المجموع:" : "Total:"}</span>
+        <span>${isArabic ? "Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹:" : "Total:"}</span>
         <span>${formattedTotal}</span>
       `
 
@@ -3368,7 +3368,7 @@ footer.style.cssText = `
 
       const checkoutBtn = document.createElement("button")
       checkoutBtn.className = "hmstudio-cart-checkout-button"
-      checkoutBtn.textContent = isArabic ? "إتمام الطلب" : "Checkout"
+      checkoutBtn.textContent = isArabic ? "Ø¥ØªÙ…Ø§Ù… Ø§Ù„Ø·Ù„Ø¨" : "Checkout"
       checkoutBtn.style.cssText = `
        width: 100%;
        padding: 15px;
@@ -3424,7 +3424,7 @@ footer.style.cssText = `
          padding: 40px 20px;
          color: rgba(0, 0, 0, 0.5);
        `
-        emptyMessage.textContent = currentLang === "ar" ? "سلة التسوق فارغة" : "Your cart is empty"
+        emptyMessage.textContent = currentLang === "ar" ? "Ø³Ù„Ø© Ø§Ù„ØªØ³ÙˆÙ‚ ÙØ§Ø±ØºØ©" : "Your cart is empty"
         content.appendChild(emptyMessage)
 
         footer.style.display = "none"
@@ -4011,6 +4011,7 @@ observer.observe(document.body, {
         // Map options to variants for compatibility
         if (product.options && product.options.length > 0) {
           product.variants = product.options;
+          product.has_options = true;
         }
         
         return product;
@@ -4075,18 +4076,18 @@ observer.observe(document.body, {
           oldPrice.style.color = '#999';
           oldPrice.style.fontSize = '0.9em';
       
-          const currencySymbol = currentLang === 'ar' ? 'ر.س' : 'SAR';
+          const currencySymbol = currentLang === 'ar' ? 'Ø±.Ø³' : 'SAR';
       
           if (fullProductData.formatted_sale_price) {
-            const priceValue = fullProductData.formatted_sale_price.replace(' ر.س', '').replace('SAR', '').trim();
-            const oldPriceValue = fullProductData.formatted_price.replace(' ر.س', '').replace('SAR', '').trim();
+            const priceValue = fullProductData.formatted_sale_price.replace(' Ø±.Ø³', '').replace('SAR', '').trim();
+            const oldPriceValue = fullProductData.formatted_price.replace(' Ø±.Ø³', '').replace('SAR', '').trim();
             
             currentPrice.textContent = isRTL ? `${priceValue} ${currencySymbol}` : `${currencySymbol} ${priceValue}`;
             oldPrice.textContent = isRTL ? `${oldPriceValue} ${currencySymbol}` : `${currencySymbol} ${oldPriceValue}`;
             priceContainer.appendChild(currentPrice);
             priceContainer.appendChild(oldPrice);
           } else {
-            const priceValue = fullProductData.formatted_price.replace(' ر.س', '').replace('SAR', '').trim();
+            const priceValue = fullProductData.formatted_price.replace(' Ø±.Ø³', '').replace('SAR', '').trim();
             currentPrice.textContent = isRTL ? `${priceValue} ${currencySymbol}` : `${currencySymbol} ${priceValue}`;
             priceContainer.appendChild(currentPrice);
           }
@@ -4150,13 +4151,13 @@ observer.observe(document.body, {
           const addToCartBtn = document.createElement('button');
           addToCartBtn.className = 'addToCartBtn';
           addToCartBtn.type = 'button';
-          const originalText = currentLang === 'ar' ? 'إضافة للسلة' : 'Add to Cart';
-          const loadingText = currentLang === 'ar' ? 'جاري الإضافة...' : 'Adding...';
+          const originalText = currentLang === 'ar' ? 'Ø¥Ø¶Ø§ÙØ© Ù„Ù„Ø³Ù„Ø©' : 'Add to Cart';
+          const loadingText = currentLang === 'ar' ? 'Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø¥Ø¶Ø§ÙØ©...' : 'Adding...';
           addToCartBtn.textContent = originalText;
   
           addToCartBtn.addEventListener('click', () => {
             try {
-              if (fullProductData.has_options && fullProductData.options?.length > 0) {
+              if (fullProductData.has_options && fullProductData.variants?.length > 0) {
                 const selects = form.querySelectorAll('.variant-select');
                 const missingSelections = [];
                 
@@ -4169,7 +4170,7 @@ observer.observe(document.body, {
   
                 if (missingSelections.length > 0) {
                   const message = currentLang === 'ar' 
-                    ? `الرجاء اختيار ${missingSelections.join(', ')}`
+                    ? `Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± ${missingSelections.join(', ')}`
                     : `Please select ${missingSelections.join(', ')}`;
                   alert(message);
                   return;
@@ -4179,7 +4180,7 @@ observer.observe(document.body, {
               const quantityValue = parseInt(quantityInput.value);
               if (isNaN(quantityValue) || quantityValue < 1) {
                 const message = currentLang === 'ar' 
-                  ? 'الرجاء إدخال كمية صحيحة'
+                  ? 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ…ÙŠØ© ØµØ­ÙŠØ­Ø©'
                   : 'Please enter a valid quantity';
                 alert(message);
                 return;
@@ -4237,16 +4238,16 @@ observer.observe(document.body, {
                     });
                   } catch (error) {
                   }              
-                } else if (response.data?.message) {
+                } else {
                   const errorMessage = currentLang === 'ar' 
-                    ? response.data.message
-                    : response.data.message;
+                    ? response.data.message || 'ÙØ´Ù„ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ù†ØªØ¬ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©'
+                    : response.data.message || 'Failed to add product to cart';
                   alert(errorMessage);
                 }
               })
               .catch(function(error) {
                 const errorMessage = currentLang === 'ar' 
-                  ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
+                  ? 'Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ù†ØªØ¬ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©'
                   : 'Error occurred while adding product to cart';
                 alert(errorMessage);
               })
@@ -4318,7 +4319,7 @@ observer.observe(document.body, {
               font-weight: bold;
             `;
       
-            const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
+            const placeholderText = currentLang === 'ar' ? `Ø§Ø®ØªØ± ${labelText}` : `Select ${labelText}`;
             let optionsHTML = `<option value="">${placeholderText}</option>`;
             
             Array.from(attr.values).forEach(value => {
@@ -4362,7 +4363,6 @@ observer.observe(document.body, {
         });
       
         if (selectedVariant) {
-          product.selected_product = selectedVariant;
           const productIdInput = form.querySelector('input[name="product_id"]');
           if (productIdInput) {
             productIdInput.value = selectedVariant.id;
@@ -4370,7 +4370,7 @@ observer.observe(document.body, {
   
           const priceElement = form.querySelector('.product-price');
           const oldPriceElement = form.querySelector('.product-old-price');
-          const currencySymbol = currentLang === 'ar' ? 'ر.س' : 'SAR';
+          const currencySymbol = currentLang === 'ar' ? 'Ø±.Ø³' : 'SAR';
   
           if (priceElement) {
             if (selectedVariant.formatted_sale_price) {
@@ -4441,7 +4441,7 @@ observer.observe(document.body, {
           content.className = 'hmstudio-upsell-content';
       
           const closeButton = document.createElement('button');
-          closeButton.innerHTML = '✕';
+          closeButton.innerHTML = 'âœ•';
           closeButton.style.cssText = `
             position: absolute;
             top: 15px;
@@ -4489,11 +4489,11 @@ observer.observe(document.body, {
             color: #333;
             font-weight: bold;
           `;
-          benefitText.textContent = currentLang === 'ar' ? 'استفد من العرض' : 'Benefit from the Offer';
+          benefitText.textContent = currentLang === 'ar' ? 'Ø§Ø³ØªÙØ¯ Ù…Ù† Ø§Ù„Ø¹Ø±Ø¶' : 'Benefit from the Offer';
           sidebar.appendChild(benefitText);
       
           const addAllButton = document.createElement('button');
-          addAllButton.textContent = currentLang === 'ar' ? 'أضف الكل إلى السلة' : 'Add All to Cart';
+          addAllButton.textContent = currentLang === 'ar' ? 'Ø£Ø¶Ù Ø§Ù„ÙƒÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©' : 'Add All to Cart';
           addAllButton.style.cssText = `
             width: 100%;
             padding: 12px 20px;
@@ -4525,7 +4525,7 @@ observer.observe(document.body, {
           
             if (!allVariantsSelected) {
               const message = currentLang === 'ar' 
-                ? 'الرجاء اختيار جميع الخيارات المطلوبة قبل الإضافة إلى السلة'
+                ? 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø®ÙŠØ§Ø±Ø§Øª Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø© Ù‚Ø¨Ù„ Ø§Ù„Ø¥Ø¶Ø§ÙØ© Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©'
                 : 'Please select all required options before adding to cart';
               alert(message);
               return;
@@ -4534,7 +4534,7 @@ observer.observe(document.body, {
             addAllButton.disabled = true;
             addAllButton.style.opacity = '0.7';
             const originalText = addAllButton.textContent;
-            addAllButton.textContent = currentLang === 'ar' ? 'جاري الإضافة...' : 'Adding...';
+            addAllButton.textContent = currentLang === 'ar' ? 'Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø¥Ø¶Ø§ÙØ©...' : 'Adding...';
           
             for (const form of forms) {
               await new Promise((resolve) => {
