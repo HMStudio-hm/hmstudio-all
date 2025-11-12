@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.8 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.9 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -4011,7 +4011,6 @@ observer.observe(document.body, {
         // Map options to variants for compatibility
         if (product.options && product.options.length > 0) {
           product.variants = product.options;
-          product.has_options = true;
         }
         
         return product;
@@ -4093,10 +4092,53 @@ observer.observe(document.body, {
           }
           contentContainer.appendChild(priceContainer);
       
-          if (fullProductData.has_options && fullProductData.variants?.length > 0) {
-            const variantsSection = this.createVariantsSection(fullProductData, currentLang);
-            variantsSection.className = 'hmstudio-upsell-variants';
-            contentContainer.appendChild(variantsSection);
+          if (fullProductData.has_options && fullProductData.options?.length > 0) {
+            const variantsContainer = document.createElement('div');
+            variantsContainer.className = 'hmstudio-upsell-variants';
+            
+            fullProductData.options.forEach(option => {
+              if (option.choices && option.choices.length > 0) {
+                const select = document.createElement('select');
+                select.className = 'variant-select';
+                select.style.cssText = `
+                  margin: 5px 0;
+                  padding: 8px;
+                  border: 1px solid #ddd;
+                  border-radius: 4px;
+                  width: 100%;
+                `;
+                
+                const labelText = currentLang === 'ar' ? option.slug : option.name;
+                
+                const label = document.createElement('label');
+                label.textContent = labelText;
+                label.style.cssText = `
+                  display: block;
+                  margin-bottom: 5px;
+                  font-weight: bold;
+                  font-size: 14px;
+                `;
+                
+                const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
+                
+                let optionsHTML = `<option value="">${placeholderText}</option>`;
+                
+                option.choices.forEach(choice => {
+                  optionsHTML += `<option value="${choice}">${choice}</option>`;
+                });
+                
+                select.innerHTML = optionsHTML;
+                
+                select.addEventListener('change', async () => {
+                  await this.updateUpsellVariant(form, fullProductData);
+                });
+                
+                variantsContainer.appendChild(label);
+                variantsContainer.appendChild(select);
+              }
+            });
+            
+            contentContainer.appendChild(variantsContainer);
           }
       
           const controlsContainer = document.createElement('div');
@@ -4399,6 +4441,42 @@ observer.observe(document.body, {
               addToCartBtn.style.cursor = 'not-allowed';
             }
           }
+        }
+      },
+
+      async updateUpsellVariant(form, productData) {
+        try {
+          const response = await zid.store.product.fetch(productData.id);
+          const fullProduct = response.data.product;
+          const allVariants = fullProduct.variants || [];
+          const options = productData.options || [];
+          
+          const selectedValues = {};
+          
+          const selects = form.querySelectorAll('.variant-select');
+          selects.forEach((select, index) => {
+            if (select.value && options[index]) {
+              selectedValues[options[index].slug] = select.value;
+            }
+          });
+          
+          // Find matching variant
+          const selectedVariant = allVariants.find(variant => {
+            if (!variant.attributes || !variant.id) return false;
+            
+            return variant.attributes.every(attr => {
+              return selectedValues[attr.slug] === attr.value;
+            });
+          });
+          
+          if (selectedVariant) {
+            const productIdInput = form.querySelector('input[name="product_id"]');
+            if (productIdInput) {
+              productIdInput.value = selectedVariant.id;
+            }
+          }
+        } catch (error) {
+          console.error('Error updating upsell variant:', error);
         }
       },
   
