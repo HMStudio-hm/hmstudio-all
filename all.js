@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.3.9 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.0 (nzoyd Zid updates 29-10) trying to fix variants in upsell
 // Created by HMStudio
 
 (function() {
@@ -4041,6 +4041,7 @@ observer.observe(document.body, {
           const form = document.createElement('form');
           form.id = `product-form-${fullProductData.id}`;
           form.className = 'hmstudio-upsell-product-form';
+          form.setAttribute('data-product-data', JSON.stringify(fullProductData));
       
           const productIdInput = document.createElement('input');
           productIdInput.type = 'hidden';
@@ -4197,9 +4198,9 @@ observer.observe(document.body, {
           const loadingText = currentLang === 'ar' ? 'جاري الإضافة...' : 'Adding...';
           addToCartBtn.textContent = originalText;
   
-          addToCartBtn.addEventListener('click', () => {
+          addToCartBtn.addEventListener('click', async () => {
             try {
-              if (fullProductData.has_options && fullProductData.variants?.length > 0) {
+              if (fullProductData.has_options && fullProductData.options?.length > 0) {
                 const selects = form.querySelectorAll('.variant-select');
                 const missingSelections = [];
                 
@@ -4217,6 +4218,9 @@ observer.observe(document.body, {
                   alert(message);
                   return;
                 }
+                
+                // Update variant before adding to cart
+                await this.updateUpsellVariant(form, fullProductData);
               }
   
               const quantityValue = parseInt(quantityInput.value);
@@ -4615,6 +4619,19 @@ observer.observe(document.body, {
             addAllButton.textContent = currentLang === 'ar' ? 'جاري الإضافة...' : 'Adding...';
           
             for (const form of forms) {
+              // Update variants before adding to cart
+              if (form.querySelector('.variant-select')) {
+                const productDataAttr = form.getAttribute('data-product-data');
+                if (productDataAttr) {
+                  try {
+                    const productData = JSON.parse(productDataAttr);
+                    await this.updateUpsellVariant(form, productData);
+                  } catch (e) {
+                    console.error('Error parsing product data:', e);
+                  }
+                }
+              }
+              
               await new Promise((resolve) => {
                 const productId = form.querySelector('input[name="product_id"]').value;
                 const productName = form.querySelector('.hmstudio-upsell-product-title').textContent;
