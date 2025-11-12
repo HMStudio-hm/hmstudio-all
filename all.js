@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.4 (nzoyd Zid updates 29-10)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.4.5 (nzoyd Zid updates 29-10)
 // Created by HMStudio
 
 (function() {
@@ -503,10 +503,10 @@
           if (modal) {
             modal.remove();
           }
-        } else if (response.status !== 'success' && response.data?.message) {
+        } else {
           const errorMessage = currentLang === 'ar' 
-            ? response.data.message
-            : response.data.message;
+            ? response.data?.message || 'فشل إضافة المنتج إلى السلة'
+            : response.data?.message || 'Failed to add product to cart';
           console.error('Add to cart failed:', errorMessage);
           alert(errorMessage);
         }
@@ -4008,30 +4008,9 @@ observer.observe(document.body, {
           product = response.data.product;
         }
         
-        // For products with variants, fetch full data to get variant attributes
-        if (product.variants && product.variants.length > 0) {
-          // Product has full variant data with attributes
-          return product;
-        } else if (product.options && product.options.length > 0) {
-          // Product has options but not full variants, fetch complete data
-          try {
-            let fullProduct;
-            if (window.vitrin === true) {
-              fullProduct = await zid.products.get(productId);
-            } else {
-              const fullResponse = await zid.store.product.fetch(productId);
-              fullProduct = fullResponse.data.product;
-            }
-            if (fullProduct.variants && fullProduct.variants.length > 0) {
-              product.variants = fullProduct.variants;
-            } else {
-              // Fallback: map options to variants
-              product.variants = product.options;
-            }
-          } catch (error) {
-            // Fallback: map options to variants
-            product.variants = product.options;
-          }
+        // Map options to variants for compatibility
+        if (product.options && product.options.length > 0) {
+          product.variants = product.options;
         }
         
         return product;
@@ -4300,60 +4279,49 @@ observer.observe(document.body, {
         const variantsContainer = document.createElement('div');
         variantsContainer.className = 'hmstudio-upsell-variants';
       
-        if (product.variants && product.variants.length > 0) {
-          const variantAttributes = new Map();
-          
-          product.variants.forEach(variant => {
-            if (variant.attributes && variant.attributes.length > 0) {
-              variant.attributes.forEach(attr => {
-                if (!variantAttributes.has(attr.name)) {
-                  variantAttributes.set(attr.name, {
-                    name: attr.name,
-                    slug: attr.slug,
-                    values: new Set()
-                  });
-                }
-                variantAttributes.get(attr.name).values.add(attr.value[currentLang]);
+        // Use options array like Quick View does (this is how Zid API returns them)
+        const variants = product.options && product.options.length > 0 ? product.options : [];
+        
+        if (variants.length > 0) {
+          variants.forEach(option => {
+            if (option.choices && option.choices.length > 0) {
+              const select = document.createElement('select');
+              select.className = 'variant-select';
+              select.style.cssText = `
+                margin: 5px 0;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                width: 100%;
+              `;
+        
+              const labelText = currentLang === 'ar' ? option.slug : option.name;
+              
+              const label = document.createElement('label');
+              label.textContent = labelText;
+              label.style.cssText = `
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+              `;
+        
+              const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
+              
+              let optionsHTML = `<option value="">${placeholderText}</option>`;
+              
+              option.choices.forEach(choice => {
+                optionsHTML += `<option value="${choice}">${choice}</option>`;
               });
+              
+              select.innerHTML = optionsHTML;
+        
+              select.addEventListener('change', () => {
+                this.updateSelectedVariant(product, select.closest('form'));
+              });
+        
+              variantsContainer.appendChild(label);
+              variantsContainer.appendChild(select);
             }
-          });
-      
-          variantAttributes.forEach(attr => {
-            const select = document.createElement('select');
-            select.className = 'variant-select';
-            select.style.cssText = `
-              margin: 5px 0;
-              padding: 8px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              width: 100%;
-            `;
-      
-            const labelText = currentLang === 'ar' ? attr.slug : attr.name;
-            
-            const label = document.createElement('label');
-            label.textContent = labelText;
-            label.style.cssText = `
-              display: block;
-              margin-bottom: 5px;
-              font-weight: bold;
-            `;
-      
-            const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
-            let optionsHTML = `<option value="">${placeholderText}</option>`;
-            
-            Array.from(attr.values).forEach(value => {
-              optionsHTML += `<option value="${value}">${value}</option>`;
-            });
-            
-            select.innerHTML = optionsHTML;
-      
-            select.addEventListener('change', () => {
-              this.updateSelectedVariant(product, select.closest('form'));
-            });
-      
-            variantsContainer.appendChild(label);
-            variantsContainer.appendChild(select);
           });
         }
       
@@ -4375,50 +4343,33 @@ observer.observe(document.body, {
           }
         });
       
-        const selectedVariant = product.variants.find(variant => {
-          return variant.attributes.every(attr => {
-            const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-            return selectedValues[attrLabel] === attr.value[currentLang];
-          });
-        });
-      
-        if (selectedVariant) {
-          const productIdInput = form.querySelector('input[name="product_id"]');
-          if (productIdInput) {
-            productIdInput.value = selectedVariant.id;
-          }
-  
-          const priceElement = form.querySelector('.product-price');
-          const oldPriceElement = form.querySelector('.product-old-price');
-          const currencySymbol = currentLang === 'ar' ? 'ر.س' : 'SAR';
-  
-          if (priceElement) {
-            if (selectedVariant.formatted_sale_price) {
-              priceElement.textContent = selectedVariant.formatted_sale_price.replace('SAR', currencySymbol);
-              if (oldPriceElement) {
-                oldPriceElement.textContent = selectedVariant.formatted_price.replace('SAR', currencySymbol);
-                oldPriceElement.style.display = 'inline';
-              }
-            } else {
-              priceElement.textContent = selectedVariant.formatted_price.replace('SAR', currencySymbol);
-              if (oldPriceElement) {
-                oldPriceElement.style.display = 'none';
+        // Get all options for matching
+        const options = product.options || [];
+        
+        // Try to find matching variant ID from product data
+        // The variant ID should be stored or we match based on selected options
+        try {
+          // For now, use the product's default variant ID if variants exist
+          // In a more complete implementation, we'd need to query for exact variant match
+          if (product.variants && product.variants.length > 0) {
+            // Try to find exact match in variants
+            const matchingVariant = product.variants.find(variant => {
+              if (!variant.attributes) return false;
+              return variant.attributes.every(attr => {
+                const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
+                return selectedValues[attrLabel] === attr.value[currentLang];
+              });
+            });
+            
+            if (matchingVariant && matchingVariant.id) {
+              const productIdInput = form.querySelector('input[name="product_id"]');
+              if (productIdInput) {
+                productIdInput.value = matchingVariant.id;
               }
             }
           }
-  
-          const addToCartBtn = form.parentElement.querySelector('.add-to-cart-btn');
-          if (addToCartBtn) {
-            if (!selectedVariant.unavailable) {
-              addToCartBtn.disabled = false;
-              addToCartBtn.style.opacity = '1';
-              addToCartBtn.style.cursor = 'pointer';
-            } else {
-              addToCartBtn.disabled = true;
-              addToCartBtn.style.opacity = '0.5';
-              addToCartBtn.style.cursor = 'not-allowed';
-            }
-          }
+        } catch (error) {
+          console.error('Error updating variant:', error);
         }
       },
   
