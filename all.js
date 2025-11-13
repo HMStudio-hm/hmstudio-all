@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.2 (nzoyd Zid updates 29-10 | no direct API calling for products)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.3 (nzoyd Zid updates 29-10) - trying to get back to Direct API 
 // Created by HMStudio
 
 (function() {
@@ -79,15 +79,38 @@
   };
   
   async function fetchProductData(productId) {
-    const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-    
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch product data: ${response.statusText}`);
+      let product;
+      if (window.vitrin === true) {
+        product = await zid.products.get(productId);
+      } else {
+        const response = await zid.store.product.fetch(productId);
+        product = response.data.product;
       }
-      const data = await response.json();
-      return data;
+      
+      // Format images properly for gallery display
+      if (product.images && Array.isArray(product.images)) {
+        product.images = product.images.map(img => {
+          const imageObj = img.image || img;
+          return {
+            url: imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+            thumbnail: imageObj.thumbnail || imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+            alt_text: img.alt_text || 'Product Image'
+          };
+        });
+      }
+      
+      // Map options to variants for compatibility
+      if (product.options && product.options.length > 0) {
+        product.variants = product.options;
+      }
+      
+      // Ensure variants array exists even if empty
+      if (!product.variants) {
+        product.variants = [];
+      }
+      
+      return product;
     } catch (error) {
       throw error;
     }
@@ -106,7 +129,7 @@
     const mainImageContainer = document.createElement('div');
     mainImageContainer.style.cssText = `
       width: 100%;
-      height: 300px;
+      height: 400px;
       overflow: hidden;
       border-radius: 8px;
       position: relative;
@@ -176,61 +199,49 @@
       padding: 10px 0;
     `;
   
-    if (productData.variants && productData.variants.length > 0) {
-      const variantAttributes = new Map();
-      
-      productData.variants.forEach(variant => {
-        if (variant.attributes && variant.attributes.length > 0) {
-          variant.attributes.forEach(attr => {
-            if (!variantAttributes.has(attr.name)) {
-              variantAttributes.set(attr.name, {
-                name: attr.name,
-                slug: attr.slug,
-                values: new Set()
-              });
-            }
-            variantAttributes.get(attr.name).values.add(attr.value[currentLang]);
+    // Use options array as variants (this is how Zid API returns them)
+    const variants = productData.options && productData.options.length > 0 ? productData.options : [];
+    
+    if (variants.length > 0) {
+      variants.forEach(option => {
+        if (option.choices && option.choices.length > 0) {
+          const select = document.createElement('select');
+          select.className = 'variant-select';
+          select.style.cssText = `
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+          `;
+    
+          const labelText = currentLang === 'ar' ? option.slug : option.name;
+          
+          const label = document.createElement('label');
+          label.textContent = labelText;
+          label.style.cssText = `
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+          `;
+    
+          const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
+          
+          let optionsHTML = `<option value="">${placeholderText}</option>`;
+          
+          option.choices.forEach(choice => {
+            optionsHTML += `<option value="${choice}">${choice}</option>`;
           });
+          
+          select.innerHTML = optionsHTML;
+    
+          select.addEventListener('change', () => {
+            updateSelectedVariant(productData);
+          });
+    
+          variantsContainer.appendChild(label);
+          variantsContainer.appendChild(select);
         }
-      });
-  
-      variantAttributes.forEach(attr => {
-        const select = document.createElement('select');
-        select.className = 'variant-select';
-        select.style.cssText = `
-          margin: 5px 0;
-          padding: 8px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          width: 100%;
-        `;
-  
-        const labelText = currentLang === 'ar' ? attr.slug : attr.name;
-        
-        const label = document.createElement('label');
-        label.textContent = labelText;
-        label.style.cssText = `
-          display: block;
-          margin-bottom: 5px;
-          font-weight: bold;
-        `;
-  
-        const placeholderText = currentLang === 'ar' ? `اختر ${labelText}` : `Select ${labelText}`;
-        
-        let optionsHTML = `<option value="">${placeholderText}</option>`;
-        
-        Array.from(attr.values).forEach(value => {
-          optionsHTML += `<option value="${value}">${value}</option>`;
-        });
-        
-        select.innerHTML = optionsHTML;
-  
-        select.addEventListener('change', () => {
-          updateSelectedVariant(productData);
-        });
-  
-        variantsContainer.appendChild(label);
-        variantsContainer.appendChild(select);
       });
     }
   
@@ -361,69 +372,53 @@
     return quantityContainer;
   }
   
-  function updateSelectedVariant(productData) {
+  async function updateSelectedVariant(productData) {
     const form = document.getElementById('product-form');
-    if (!form) {
-      return;
-    }
+    if (!form) return;
   
-    const currentLang = getCurrentLanguage();
-    const selectedValues = {};
-  
-    form.querySelectorAll('.variant-select').forEach(select => {
-      if (select.value) {
-        const labelText = select.previousElementSibling.textContent;
-        selectedValues[labelText] = select.value;
-      }
-    });
-  
-    const selectedVariant = productData.variants.find(variant => {
-      return variant.attributes.every(attr => {
-        const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-        return selectedValues[attrLabel] === attr.value[currentLang];
-      });
-    });
-  
-    if (selectedVariant) {
-      let productIdInput = form.querySelector('input[name="product_id"]');
-      if (!productIdInput) {
-        productIdInput = document.createElement('input');
-        productIdInput.type = 'hidden';
-        productIdInput.name = 'product_id';
-        form.appendChild(productIdInput);
-      }
-      productIdInput.value = selectedVariant.id;
-  
-      const priceElement = form.querySelector('#product-price');
-      const oldPriceElement = form.querySelector('#product-old-price');
+    try {
+      const response = await zid.store.product.fetch(productData.id);
+      const fullProduct = response.data.product;
+      const allVariants = fullProduct.variants || [];
+      const options = productData.options || [];
       
-      if (priceElement) {
-        if (selectedVariant.formatted_sale_price) {
-          priceElement.textContent = selectedVariant.formatted_sale_price;
-          if (oldPriceElement) {
-            oldPriceElement.textContent = selectedVariant.formatted_price;
-            oldPriceElement.style.display = 'block';
-          }
-        } else {
-          priceElement.textContent = selectedVariant.formatted_price;
-          if (oldPriceElement) {
-            oldPriceElement.style.display = 'none';
+      const selectedValues = {};
+      const attributeMap = {};
+      
+      // Collect selected values
+      const selects = form.querySelectorAll('.variant-select');
+      selects.forEach((select, index) => {
+        if (select.value && options[index]) {
+          selectedValues[options[index].slug] = select.value;
+        }
+      });
+      
+      // Build attribute map for API
+      allVariants.forEach(variant => {
+        if (variant.attributes) {
+          variant.attributes.forEach(attr => {
+            if (selectedValues[attr.slug] === attr.value) {
+              attributeMap[attr.attribute_id] = attr.id;
+            }
+          });
+        }
+      });
+      
+      // Get resolved product using Zid API
+      if (Object.keys(attributeMap).length > 0) {
+        const resolvedProduct = await zid.products.getProductOptions(productData.id, {
+          attributes: attributeMap
+        });
+        
+        if (resolvedProduct?.id) {
+          const productIdInput = form.querySelector('input[name="product_id"]');
+          if (productIdInput) {
+            productIdInput.value = resolvedProduct.id;
           }
         }
       }
-  
-      const addToCartBtn = form.querySelector('.add-to-cart-btn');
-      if (addToCartBtn) {
-        if (!selectedVariant.unavailable) {
-          addToCartBtn.disabled = false;
-          addToCartBtn.classList.remove('disabled');
-          addToCartBtn.style.opacity = '1';
-        } else {
-          addToCartBtn.disabled = true;
-          addToCartBtn.classList.add('disabled');
-          addToCartBtn.style.opacity = '0.5';
-        }
-      }
+    } catch (error) {
+      console.error('Error:', error);
     }
   }
   
@@ -442,45 +437,10 @@
       return;
     }
   
-    if (productData.variants && productData.variants.length > 0) {
-      const selectedVariants = {};
-      const missingSelections = [];
-      
-      form.querySelectorAll('.variant-select').forEach(select => {
-        const labelText = select.previousElementSibling.textContent;
-        if (!select.value) {
-          missingSelections.push(labelText);
-        }
-        selectedVariants[labelText] = select.value;
-      });
-  
-      if (missingSelections.length > 0) {
-        const message = currentLang === 'ar' 
-          ? `الرجاء اختيار ${missingSelections.join(', ')}`
-          : `Please select ${missingSelections.join(', ')}`;
-        alert(message);
-        return;
-      }
-  
-      const selectedVariant = productData.variants.find(variant => {
-        return variant.attributes.every(attr => {
-          const attrLabel = currentLang === 'ar' ? attr.slug : attr.name;
-          return selectedVariants[attrLabel] === attr.value[currentLang];
-        });
-      });
-  
-      if (!selectedVariant) {
-        const message = currentLang === 'ar' 
-          ? 'هذا المنتج غير متوفر بالمواصفات المختارة'
-          : 'This product variant is not available';
-        alert(message);
-        return;
-      }
-  
-      const productIdInput = form.querySelector('input[name="product_id"]');
-      if (productIdInput) {
-        productIdInput.value = selectedVariant.id;
-      }
+    let productIdToAdd = productData.id;
+    
+    if (productData.selected_product && productData.selected_product.id) {
+      productIdToAdd = productData.selected_product.id;
     }
   
     let productIdInput = form.querySelector('input[name="product_id"]');
@@ -490,7 +450,7 @@
       productIdInput.name = 'product_id';
       form.appendChild(productIdInput);
     }
-    productIdInput.value = productData.id;
+    productIdInput.value = productIdToAdd;
   
     let formQuantityInput = form.querySelector('input[name="quantity"]');
     if (!formQuantityInput) {
@@ -504,26 +464,39 @@
     const loadingSpinners = document.querySelectorAll('.add-to-cart-progress');
     loadingSpinners.forEach(spinner => spinner.classList.remove('d-none'));
   
-    const formData = new FormData(form);
-  
     try {
       let cartPromise;
       if (window.vitrin === true) {
         cartPromise = zid.cart.addProduct({ 
-          product_id: formData.get('product_id'),
-          quantity: formData.get('quantity')
+          product_id: productIdToAdd,
+          quantity: quantity,
+          showErrorNotification: true
         })
       } else {
         cartPromise = zid.store.cart.addProduct({ 
           formId: 'product-form',
           data: {
-            product_id: formData.get('product_id'),
-            quantity: formData.get('quantity')
-          }
+            product_id: productIdToAdd,
+            quantity: quantity
+          },
+          showErrorNotification: true
         })
       }
+      
       cartPromise.then(async function (response) {
         if (response.status === 'success') {
+          try {
+            await QuickViewStats.trackEvent('cart_add', {
+              productId: productIdToAdd,
+              quantity: quantity,
+              productName: typeof productData.name === 'object' ? 
+                productData.name[currentLang] : 
+                productData.name
+            });
+          } catch (trackingError) {
+            console.error('Tracking error:', trackingError);
+          }
+  
           if (typeof setCartBadge === 'function') {
             setCartBadge(response.data.cart.products_count);
           }
@@ -531,32 +504,26 @@
           if (modal) {
             modal.remove();
           }
-          
-          // Track event after success (don't block on this)
-          try {
-            await QuickViewStats.trackEvent('cart_add', {
-              productId: formData.get('product_id'),
-              quantity: parseInt(formData.get('quantity')),
-              productName: typeof productData.name === 'object' ? 
-                productData.name[currentLang] : 
-                productData.name
-            });
-          } catch (trackingError) {
-          }
         } else {
           const errorMessage = currentLang === 'ar' 
-            ? response.data.message || 'فشل إضافة المنتج إلى السلة'
-            : response.data.message || 'Failed to add product to cart';
+            ? response.data?.message || 'فشل إضافة المنتج إلى السلة'
+            : response.data?.message || 'Failed to add product to cart';
+          console.error('Add to cart failed:', errorMessage);
           alert(errorMessage);
         }
       })
       .catch(function(error) {
         console.error('Cart error:', error);
+        const errorMessage = currentLang === 'ar' 
+          ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
+          : 'Error occurred while adding product to cart';
+        alert(errorMessage);
       })
       .finally(function() {
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
       });
     } catch (error) {
+      console.error('Catch error:', error);
       loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
     }
   }
@@ -670,15 +637,23 @@
       align-items: center;
     `;
   
-    if (productData.images && productData.images.length > 0) {
-      const gallery = createImageGallery(productData.images);
-      gallery.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        align-items: center;
-        width: 100%;
-      `;
+    // Use images from selected_product if it has variants, otherwise use parent images
+    const imagesToDisplay = productData.selected_product?.images && productData.selected_product.images.length > 0 
+      ? productData.selected_product.images 
+      : (productData.images && productData.images.length > 0 ? productData.images : []);
+
+    if (imagesToDisplay.length > 0) {
+      const formattedImages = imagesToDisplay.map(img => {
+        const imageObj = img.image || img;
+        return {
+          url: imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+          thumbnail: imageObj.thumbnail || imageObj.large || imageObj.full_size || imageObj.medium || imageObj.small,
+          alt_text: img.alt_text || 'Product Image'
+        };
+      });
+      
+      const gallery = createImageGallery(formattedImages);
+      gallery.id = 'quickViewGallery';
       gallerySection.appendChild(gallery);
     }
   
@@ -738,48 +713,48 @@
     `;
     detailsSection.appendChild(title);
   
-    if (productData.rating) {
-      const ratingContainer = document.createElement('div');
-      ratingContainer.className = 'quick-view-rating';
-      ratingContainer.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 16px;
-        font-size: 14px;
-      `;
-  
-      const starRating = document.createElement('div');
-      starRating.style.cssText = `
-        display: flex;
-        align-items: center;
-      `;
-  
-      const fullStars = Math.floor(productData.rating.average);
-      const remainingStars = 5 - fullStars;
-  
-      for (let i = 0; i < fullStars; i++) {
-        const star = document.createElement('span');
-        star.textContent = '★';
-        star.style.color = '#fbbf24';
-        starRating.appendChild(star);
-      }
-  
-      for (let i = 0; i < remainingStars; i++) {
-        const star = document.createElement('span');
-        star.textContent = '☆';
-        star.style.color = '#e5e7eb';
-        starRating.appendChild(star);
-      }
-  
-      const ratingText = document.createElement('span');
-      ratingText.textContent = `(${productData.rating.average.toFixed(1)})`;
-      ratingText.style.color = '#6b7280';
-  
-      ratingContainer.appendChild(starRating);
-      ratingContainer.appendChild(ratingText);
-      detailsSection.appendChild(ratingContainer);
-    }
+    // Always display rating section
+    const ratingContainer = document.createElement('div');
+    ratingContainer.className = 'quick-view-rating';
+    ratingContainer.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    `;
+    
+    const starRating = document.createElement('div');
+    starRating.style.cssText = `
+      display: flex;
+      align-items: center;
+    `;
+    
+    const rating = productData.rating || { average: 0, total_count: 0 };
+    const fullStars = Math.floor(rating.average);
+    const remainingStars = 5 - fullStars;
+
+for (let i = 0; i < fullStars; i++) {
+  const star = document.createElement('span');
+  star.textContent = '★';
+  star.style.color = '#fbbf24';
+  starRating.appendChild(star);
+}
+
+for (let i = 0; i < remainingStars; i++) {
+  const star = document.createElement('span');
+  star.textContent = '☆';
+  star.style.color = '#e5e7eb';
+  starRating.appendChild(star);
+}
+
+const ratingText = document.createElement('span');
+ratingText.textContent = `(${rating.average.toFixed(1)}) ${rating.total_count} ${currentLang === 'ar' ? 'تقييم' : 'reviews'}`;
+ratingText.style.color = '#6b7280';
+
+ratingContainer.appendChild(starRating);
+ratingContainer.appendChild(ratingText);
+detailsSection.appendChild(ratingContainer);
   
     const priceContainer = document.createElement('div');
     priceContainer.className = 'quick-view-price-container';
@@ -827,6 +802,7 @@
   
     detailsSection.appendChild(priceContainer);
   
+    // Short description
     if (productData.short_description && productData.short_description[currentLang]) {
       const description = document.createElement('p');
       description.className = 'quick-view-description';
@@ -836,8 +812,24 @@
         color: #4b5563;
         font-size: 14px;
       `;
-      description.textContent = productData.short_description[currentLang];
+      description.innerHTML = productData.short_description[currentLang];
       detailsSection.appendChild(description);
+    }
+    
+    // Long description
+    if (productData.description) {
+      const longDesc = document.createElement('p');
+      longDesc.className = 'quick-view-long-description';
+      longDesc.style.cssText = `
+        margin-bottom: 20px;
+        line-height: 1.6;
+        color: #6b7280;
+        font-size: 13px;
+        max-height: 150px;
+        overflow-y: auto;
+      `;
+      longDesc.innerHTML = productData.description;
+      detailsSection.appendChild(longDesc);
     }
   
     if (productData.variants && productData.variants.length > 0) {
@@ -4007,20 +3999,26 @@ observer.observe(document.body, {
       }
     },
   
-      async fetchProductData(productId) {
-        const url = `https://europe-west3-hmstudio-85f42.cloudfunctions.net/getProductData?storeId=${storeId}&productId=${productId}`;
-        
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch product data: ${response.statusText}`);
-          }
-          const data = await response.json();
-          return data;
-        } catch (error) {
-          throw error;
+    async fetchProductData(productId) {
+      try {
+        let product;
+        if (window.vitrin === true) {
+          product = await zid.products.get(productId);
+        } else {
+          const response = await zid.store.product.fetch(productId);
+          product = response.data.product;
         }
-      },
+        
+        // Map options to variants for compatibility
+        if (product.options && product.options.length > 0) {
+          product.variants = product.options;
+        }
+        
+        return product;
+      } catch (error) {
+        throw error;
+      }
+    },
   
       async createProductCard(product, currentCampaign) {
         try {
@@ -4196,11 +4194,13 @@ observer.observe(document.body, {
               if (window.vitrin === true) {
                 cartPromise = zid.cart.addProduct({ 
                   product_id: form.querySelector('input[name="product_id"]').value,
-                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1
+                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1,
+                  showErrorNotification: true
                 })
               } else {
                 cartPromise = zid.store.cart.addProduct({ 
-                  formId: form.id
+                  formId: form.id,
+                  showErrorNotification: true
                 })
               }
               cartPromise.then(function(response) {
@@ -4246,7 +4246,10 @@ observer.observe(document.body, {
                 }
               })
               .catch(function(error) {
-                console.error('Cart error:', error);
+                const errorMessage = currentLang === 'ar' 
+                  ? 'حدث خطأ أثناء إضافة المنتج إلى السلة'
+                  : 'Error occurred while adding product to cart';
+                alert(errorMessage);
               })
               .finally(function() {
                 addToCartBtn.textContent = originalText;
@@ -4398,6 +4401,50 @@ observer.observe(document.body, {
           }
         }
       },
+
+      async updateUpsellVariant(form, productData) {
+        try {
+          const response = await zid.store.product.fetch(productData.id);
+          const fullProduct = response.data.product;
+          const allVariants = fullProduct.variants || [];
+          const options = productData.options || [];
+          
+          const selectedValues = {};
+          const attributeMap = {};
+          
+          const selects = form.querySelectorAll('.variant-select');
+          selects.forEach((select, index) => {
+            if (select.value && options[index]) {
+              selectedValues[options[index].slug] = select.value;
+            }
+          });
+          
+          allVariants.forEach(variant => {
+            if (variant.attributes) {
+              variant.attributes.forEach(attr => {
+                if (selectedValues[attr.slug] === attr.value) {
+                  attributeMap[attr.attribute_id] = attr.id;
+                }
+              });
+            }
+          });
+          
+          if (Object.keys(attributeMap).length > 0) {
+            const resolvedProduct = await zid.products.getProductOptions(productData.id, {
+              attributes: attributeMap
+            });
+            
+            if (resolvedProduct?.id) {
+              const productIdInput = form.querySelector('input[name="product_id"]');
+              if (productIdInput) {
+                productIdInput.value = resolvedProduct.id;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error updating upsell variant:', error);
+        }
+      },
   
       async showUpsellModal(campaign, productCart) {
         if (!campaign?.upsellProducts?.length) {
@@ -4547,10 +4594,11 @@ observer.observe(document.body, {
                 if (window.vitrin === true) {
                   cartPromise = zid.cart.addProduct({ 
                     product_id: productId,
-                    quantity: quantity
+                    quantity: quantity,
+                    showErrorNotification: true
                   })
                 } else {
-                  cartPromise = zid.store.cart.addProduct({ formId: form.id })
+                  cartPromise = zid.store.cart.addProduct({ formId: form.id, showErrorNotification: true })
                 }
                 cartPromise.then((response) => {
                     if (response.status === 'success') {
