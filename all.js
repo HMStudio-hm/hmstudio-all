@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.5 (nzoyd Zid updates 29-10) - trying to get back to Direct API  - TEST_03
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.6 (nzoyd Zid updates 29-10) - All working(see confirmation on git)
 // Created by HMStudio
 
 (function() {
@@ -424,6 +424,27 @@
   async function handleAddToCart(productData) {
     const currentLang = getCurrentLanguage();
     const form = document.getElementById('product-form');
+    
+    // Check if product has variants and validate selection
+    if (productData.variants && productData.variants.length > 0) {
+      const selects = form.querySelectorAll('.variant-select');
+      const missingSelections = [];
+      
+      selects.forEach(select => {
+        const labelText = select.previousElementSibling.textContent;
+        if (!select.value) {
+          missingSelections.push(labelText);
+        }
+      });
+
+      if (missingSelections.length > 0) {
+        const message = currentLang === 'ar' 
+          ? `الرجاء اختيار ${missingSelections.join(', ')}`
+          : `Please select ${missingSelections.join(', ')}`;
+        alert(message);
+        return;
+      }
+    }
     
     const quantityInput = form.querySelector('#product-quantity');
     const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
