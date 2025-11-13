@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.1 (nzoyd Zid updates 29-10 | no direct API calling for products)
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.2 (nzoyd Zid updates 29-10 | no direct API calling for products)
 // Created by HMStudio
 
 (function() {
@@ -522,40 +522,37 @@
           }
         })
       }
-      cartPromise
-        .then(async function (response) {
-          const isSuccess = response && (response.status === 'success' || response.message === 'Added to cart');
-          if (isSuccess) {
-            try {
-              await QuickViewStats.trackEvent('cart_add', {
-                productId: formData.get('product_id'),
-                quantity: parseInt(formData.get('quantity')),
-                productName: typeof productData.name === 'object' ? 
-                  productData.name[currentLang] : 
-                  productData.name
-              });
-            } catch (trackingError) {
-            }
-    
-            if (typeof setCartBadge === 'function') {
-              if (response.data && response.data.cart) {
-                setCartBadge(response.data.cart.products_count);
-              }
-            }
-            const modal = document.querySelector('.quick-view-modal');
-            if (modal) {
-              modal.remove();
-            }
-          } else {
-            const errorMessage = currentLang === 'ar' 
-              ? response.data?.message || 'فشل إضافة المنتج إلى السلة'
-              : response.data?.message || 'Failed to add product to cart';
-            alert(errorMessage);
+      cartPromise.then(async function (response) {
+        if (response.status === 'success') {
+          if (typeof setCartBadge === 'function') {
+            setCartBadge(response.data.cart.products_count);
           }
-        })
-        .catch(function(error) {
-          console.error('Cart add error:', error);
-        })
+          const modal = document.querySelector('.quick-view-modal');
+          if (modal) {
+            modal.remove();
+          }
+          
+          // Track event after success (don't block on this)
+          try {
+            await QuickViewStats.trackEvent('cart_add', {
+              productId: formData.get('product_id'),
+              quantity: parseInt(formData.get('quantity')),
+              productName: typeof productData.name === 'object' ? 
+                productData.name[currentLang] : 
+                productData.name
+            });
+          } catch (trackingError) {
+          }
+        } else {
+          const errorMessage = currentLang === 'ar' 
+            ? response.data.message || 'فشل إضافة المنتج إلى السلة'
+            : response.data.message || 'Failed to add product to cart';
+          alert(errorMessage);
+        }
+      })
+      .catch(function(error) {
+        console.error('Cart error:', error);
+      })
       .finally(function() {
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
       });
@@ -839,7 +836,7 @@
         color: #4b5563;
         font-size: 14px;
       `;
-      description.textContent = productData.short_description[currentLang].replace(/<[^>]*>/g, '');
+      description.textContent = productData.short_description[currentLang];
       detailsSection.appendChild(description);
     }
   
@@ -4249,7 +4246,7 @@ observer.observe(document.body, {
                 }
               })
               .catch(function(error) {
-                console.error('Upsell add error:', error);
+                console.error('Cart error:', error);
               })
               .finally(function() {
                 addToCartBtn.textContent = originalText;
@@ -4556,12 +4553,9 @@ observer.observe(document.body, {
                   cartPromise = zid.store.cart.addProduct({ formId: form.id })
                 }
                 cartPromise.then((response) => {
-                    const isSuccess = response && (response.status === 'success' || response.message === 'Added to cart');
-                    if (isSuccess) {
+                    if (response.status === 'success') {
                       if (typeof setCartBadge === 'function') {
-                        if (response.data && response.data.cart) {
-                          setCartBadge(response.data.cart.products_count);
-                        }
+                        setCartBadge(response.data.cart.products_count);
                       }
           
                       fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
@@ -4585,7 +4579,6 @@ observer.observe(document.body, {
                     resolve();
                   })
                   .catch((error) => {
-                    console.error('Add all error:', error);
                     resolve();
                   });
               });
