@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.4 (nzoyd Zid updates 29-10) getting back to direct api and testing it for upsell variants.
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.5 (nzoyd Zid updates 29-10) - trying to get back to Direct API  - TEST_03
 // Created by HMStudio
 
 (function() {
@@ -4371,7 +4371,9 @@ observer.observe(document.body, {
           
           const allMatch = variant.attributes.every(attr => {
             const selected = selectedValues[attr.slug];
-            const match = selected === attr.value[currentLang];
+            // Compare attr.value directly, not attr.value[currentLang]
+            // attr.value is already the string value from the variant
+            const match = selected === attr.value;
             return match;
           });
           
