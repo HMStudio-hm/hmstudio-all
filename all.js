@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.1 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.2 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -3417,8 +3417,14 @@ footer.style.cssText = `
     },
 
     updateCartDisplay: async function () {
+      console.log('🔄 updateCartDisplay called');
       const cartData = await this.fetchCartData()
-      if (!cartData) return
+      console.log('📊 Cart data:', cartData);
+      
+      if (!cartData) {
+        console.log('❌ No cart data returned');
+        return;
+      }
 
       const currentLang = getCurrentLanguage()
       const { content, footer } = this.cartElement
@@ -3426,6 +3432,7 @@ footer.style.cssText = `
       content.innerHTML = ""
 
       if (!cartData.products || cartData.products.length === 0) {
+        console.log('🛒 Cart is empty');
         const emptyMessage = document.createElement("div")
         emptyMessage.className = "hmstudio-cart-empty-message"
         emptyMessage.style.cssText = `
@@ -3438,6 +3445,7 @@ footer.style.cssText = `
 
         footer.style.display = "none"
       } else {
+        console.log('📦 Cart has', cartData.products.length, 'products');
         cartData.products.forEach((item) => {
           content.appendChild(this.createCartItem(item, currentLang))
         })
@@ -3525,16 +3533,30 @@ footer.style.cssText = `
         
         // For Vitrin theme
         if (window.vitrin === true && zid.cart) {
+          console.log('🔧 Setting up Vitrin cart handler');
           const originalAdd = zid.cart.addProduct
           zid.cart.addProduct = async (...args) => {
             try {
+              console.log('➕ Vitrin addProduct called with args:', args);
               const result = await originalAdd.apply(zid.cart, args)
-              setTimeout(() => {
-                self.openCart()
-                self.updateCartDisplay()
-              }, 100)
+              console.log('📦 Vitrin addProduct result:', result);
+              
+              if (result?.status === "success" || result?.data) {
+                console.log('✅ Vitrin product added successfully, opening cart');
+                setTimeout(() => {
+                  self.openCart()
+                  self.updateCartDisplay()
+                }, 100)
+              } else {
+                console.log('⚠️ Vitrin addProduct returned:', result);
+                // Still try to open/update even if response is unclear
+                setTimeout(() => {
+                  self.updateCartDisplay()
+                }, 100)
+              }
               return result
             } catch (error) {
+              console.error('❌ Vitrin addProduct error:', error);
               throw error
             }
           }
