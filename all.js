@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.7 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -2917,8 +2917,8 @@ footer.style.cssText = `
 
       const decreaseBtn = createButton("-", () => {
         if (item.quantity > 1) {
-          console.log('📉 Decrease quantity - product_id:', item.product_id);
-          this.updateItemQuantity(item.product_id, item.product_id, item.quantity - 1)
+          console.log('📉 Decrease quantity - product_id:', item.product_id, 'new qty:', item.quantity - 1);
+          this.updateItemQuantity(item.product_id, item.quantity - 1)
         }
       })
 
@@ -2931,8 +2931,8 @@ footer.style.cssText = `
       `
 
       const increaseBtn = createButton("+", () => {
-        console.log('📈 Increase quantity - product_id:', item.product_id);
-        this.updateItemQuantity(item.product_id, item.product_id, item.quantity + 1)
+        console.log('📈 Increase quantity - product_id:', item.product_id, 'new qty:', item.quantity + 1);
+        this.updateItemQuantity(item.product_id, item.quantity + 1)
       })
 
       const removeBtn = document.createElement("button")
