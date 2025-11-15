@@ -1,8 +1,7 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.8 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.9 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [Sliding cart functionality is fixed.]
 // Created by HMStudio
 
 (function() {
-  console.log('HMStudio initialized');
 
   // Common utility to get URL parameters
   function getScriptParams() {
@@ -25,7 +24,6 @@
   const storeId = params.storeId;
 
   if (!storeId) {
-    console.error('Store ID not found in script URL');
     return;
   }
 
@@ -35,7 +33,6 @@
 
   // =============== QUICK VIEW FEATURE ===============
   if (params.quickView) {
-    console.log('Initializing Quick View feature');
     
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -551,7 +548,6 @@
         }
       })
       .catch(function(error) {
-        console.error('Cart error:', error);
       })
       .finally(function() {
         loadingSpinners.forEach(spinner => spinner.classList.add('d-none'));
@@ -1342,7 +1338,6 @@ try {
 
   // =============== ANNOUNCEMENT BAR FEATURE ===============
   if (params.announcement) {
-    console.log('Initializing Announcement Bar feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -1572,7 +1567,6 @@ if (targetLocation) {
 
 // =============== SMART CART FEATURE ===============
 if (params.smartCart) {
-  console.log('Initializing Smart Cart feature');
 
   function getCurrentLanguage() {
     return document.documentElement.lang || 'ar';
@@ -1602,7 +1596,6 @@ if (params.smartCart) {
         this.campaigns = data.activeCampaigns || [];
         return this.campaigns;
       } catch (error) {
-        console.error('Error fetching campaigns:', error);
         return [];
       }
     },
@@ -2716,23 +2709,17 @@ footer.style.cssText = `
       try {
         let response;
         if (window.vitrin === true) {
-          console.log('🔍 Fetching Vitrin cart...');
           response = await zid.cart.get()
-          console.log('📥 Vitrin response:', response);
           
           // Vitrin returns cart directly, not wrapped in {status, data}
           if (response && response.products !== undefined) {
-            console.log('✅ Vitrin cart fetched:', response);
             return response;
           } else if (response && response.data && response.data.cart) {
-            console.log('✅ Vitrin cart fetched (wrapped):', response.data.cart);
             return response.data.cart;
           }
           throw new Error("Invalid Vitrin response structure");
         } else {
-          console.log('🔍 Fetching Legacy cart...');
           response = await zid.store.cart.fetch()
-          console.log('📥 Legacy response:', response);
           
           if (response.status === "success") {
             return response.data.cart
@@ -2740,44 +2727,33 @@ footer.style.cssText = `
           throw new Error("Failed to fetch cart data")
         }
       } catch (error) {
-        console.error('❌ fetchCartData error:', error);
         return null
       }
     },
 
     updateItemQuantity: async function (productId, newQuantity) {
       try {
-        console.log('📝 updateItemQuantity - productId:', productId, 'newQuantity:', newQuantity);
         
         if (window.vitrin === true) {
-          console.log('📝 Vitrin updateProduct with product_id:', productId, 'quantity:', newQuantity);
           await zid.cart.updateProduct({ product_id: productId, quantity: newQuantity })
         } else {
-          console.log('📝 Legacy updateProduct');
           await zid.store.cart.updateProduct(productId, newQuantity, productId)
         }
-        console.log('✅ Product quantity updated');
         await this.updateCartDisplay()
       } catch (error) {
-        console.error('❌ updateItemQuantity error:', error);
       }
     },
 
     removeItem: async function (productId) {
       try {
-        console.log('🗑️ removeItem called - productId:', productId);
         
         if (window.vitrin === true) {
-          console.log('🗑️ Vitrin removeProduct with product_id:', productId);
           await zid.cart.removeProduct({ product_id: productId })
         } else {
-          console.log('🗑️ Legacy removeProduct');
           await zid.store.cart.removeProduct(productId, productId)
         }
-        console.log('✅ Product removed successfully');
         await this.updateCartDisplay()
       } catch (error) {
-        console.error('❌ removeItem error:', error);
       }
     },
 
@@ -2917,7 +2893,6 @@ footer.style.cssText = `
 
       const decreaseBtn = createButton("-", () => {
         if (item.quantity > 1) {
-          console.log('📉 Decrease - id:', item.id, 'product_id:', item.product_id);
           this.updateItemQuantity(item.id, item.quantity - 1)
         }
       })
@@ -2931,7 +2906,6 @@ footer.style.cssText = `
       `
 
       const increaseBtn = createButton("+", () => {
-        console.log('📈 Increase - id:', item.id, 'product_id:', item.product_id);
         this.updateItemQuantity(item.id, item.quantity + 1)
       })
 
@@ -2955,7 +2929,6 @@ footer.style.cssText = `
         removeBtn.style.opacity = "0.7"
       })
       removeBtn.addEventListener("click", () => {
-        console.log('🗑️ Remove - id:', item.id);
         this.removeItem(item.id)
       })
 
@@ -3448,12 +3421,9 @@ footer.style.cssText = `
     },
 
     updateCartDisplay: async function () {
-      console.log('🔄 updateCartDisplay called');
       const cartData = await this.fetchCartData()
-      console.log('📊 Cart data:', cartData);
       
       if (!cartData) {
-        console.log('❌ No cart data returned');
         return;
       }
 
@@ -3463,7 +3433,6 @@ footer.style.cssText = `
       content.innerHTML = ""
 
       if (!cartData.products || cartData.products.length === 0) {
-        console.log('🛒 Cart is empty');
         const emptyMessage = document.createElement("div")
         emptyMessage.className = "hmstudio-cart-empty-message"
         emptyMessage.style.cssText = `
@@ -3476,7 +3445,6 @@ footer.style.cssText = `
 
         footer.style.display = "none"
       } else {
-        console.log('📦 Cart has', cartData.products.length, 'products');
         cartData.products.forEach((item) => {
           content.appendChild(this.createCartItem(item, currentLang))
         })
@@ -3488,22 +3456,18 @@ footer.style.cssText = `
     },
 
     openCart: function () {
-      console.log('🔓 openCart called, isOpen:', this.isOpen);
       
       if (this.isOpen) {
-        console.log('⚠️ Cart already open');
         return;
       }
 
       if (!this.cartElement) {
-        console.error('❌ Cart element not initialized');
         return;
       }
 
       const currentLang = getCurrentLanguage()
       const isRTL = currentLang === "ar"
 
-      console.log('📝 Language:', currentLang, 'RTL:', isRTL);
       
       this.cartElement.container.style.transform = `translateX(${isRTL ? "100%" : "-100%"})`
       this.cartElement.backdrop.style.opacity = "1"
@@ -3511,7 +3475,6 @@ footer.style.cssText = `
       document.body.style.overflow = "hidden"
       this.isOpen = true
 
-      console.log('✅ Cart opened successfully');
       
       this.updateCartDisplay()
     },
@@ -3564,22 +3527,18 @@ footer.style.cssText = `
         
         // For Vitrin theme - wrap ALL cart methods
         if (window.vitrin === true && zid.cart) {
-          console.log('🔧 Setting up Vitrin cart handler');
           
           // Wrap addProduct
           const originalAdd = zid.cart.addProduct
           zid.cart.addProduct = async (...args) => {
             try {
-              console.log('➕ Vitrin addProduct called');
               const result = await originalAdd.apply(zid.cart, args)
-              console.log('📦 Vitrin addProduct result:', result);
               setTimeout(() => {
                 self.openCart()
                 self.updateCartDisplay()
               }, 300)
               return result
             } catch (error) {
-              console.error('❌ Vitrin addProduct error:', error);
               throw error
             }
           }
@@ -3588,13 +3547,10 @@ footer.style.cssText = `
           const originalUpdate = zid.cart.updateProduct
           zid.cart.updateProduct = async (...args) => {
             try {
-              console.log('📝 Vitrin updateProduct called with args:', args);
               const result = await originalUpdate.apply(zid.cart, args)
-              console.log('✅ Vitrin updateProduct result:', result);
               setTimeout(() => self.updateCartDisplay(), 100)
               return result
             } catch (error) {
-              console.error('❌ Vitrin updateProduct error:', error);
               throw error
             }
           }
@@ -3603,13 +3559,10 @@ footer.style.cssText = `
           const originalRemove = zid.cart.removeProduct
           zid.cart.removeProduct = async (...args) => {
             try {
-              console.log('🗑️ Vitrin removeProduct called with args:', args);
               const result = await originalRemove.apply(zid.cart, args)
-              console.log('✅ Vitrin removeProduct result:', result);
               setTimeout(() => self.updateCartDisplay(), 100)
               return result
             } catch (error) {
-              console.error('❌ Vitrin removeProduct error:', error);
               throw error
             }
           }
@@ -3619,22 +3572,18 @@ footer.style.cssText = `
 
     setupCartButton: function () {
       const self = this;
-      console.log('🛒 setupCartButton called');
       
       // Use event delegation - listen on document for all cart link clicks
       document.addEventListener("click", (e) => {
         const link = e.target.closest("a[href*='/cart']");
         
         if (link) {
-          console.log('📍 Cart link clicked:', link.href);
           
           // Don't intercept if ctrl/cmd/shift is held (allow new tab/window)
           if (e.ctrlKey || e.metaKey || e.shiftKey) {
-            console.log('ℹ️ Modifier key held, allowing default behavior');
             return;
           }
           
-          console.log('✅ Intercepting cart link, opening sliding cart');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
@@ -3644,7 +3593,6 @@ footer.style.cssText = `
         // Also check for cart buttons/icons
         const cartButton = e.target.closest(".a-shopping-cart");
         if (cartButton) {
-          console.log('📍 Cart button clicked');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
@@ -3654,7 +3602,6 @@ footer.style.cssText = `
         // Assayl mobile cart
         const mobileCart = e.target.closest(".nav-mobile .view-cart");
         if (mobileCart) {
-          console.log('📍 Mobile cart clicked');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
@@ -3662,7 +3609,6 @@ footer.style.cssText = `
         }
       }, true); // Use capture phase to intercept early
       
-      console.log('✅ setupCartButton event listeners attached');
     },
 
     isMobileDevice: function () {
@@ -3670,27 +3616,21 @@ footer.style.cssText = `
     },
 
     initialize: async function () {
-      console.log('🚀 SlidingCart.initialize called');
       
       const settings = await this.fetchSettings()
-      console.log('⚙️ Sliding cart settings:', settings);
       
       if (!settings?.enabled) {
-        console.log('❌ Sliding cart not enabled');
         return
       }
 
-      console.log('✅ Sliding cart enabled, creating structure');
       this.createCartStructure()
 
       const waitForZid = () => {
-        console.log('⏳ Checking for Zid API... vitrin:', window.vitrin);
         
         const hasVitrinCart = window.vitrin === true && typeof zid !== "undefined" && zid.cart;
         const hasLegacyCart = typeof zid !== "undefined" && zid.store && zid.store.cart;
         
         if (hasVitrinCart || hasLegacyCart) {
-          console.log('✅ Zid API available (Vitrin:', hasVitrinCart, ', Legacy:', hasLegacyCart, ')');
           this.handleCartUpdates()
           this.setupCartButton()
 
@@ -3723,7 +3663,6 @@ observer.observe(document.body, {
 })
 
         } else {
-          console.log('⏳ Zid API not ready, retrying in 100ms...');
           setTimeout(waitForZid, 100)
         }
       }
@@ -3743,7 +3682,6 @@ observer.observe(document.body, {
 
   // =============== UPSELL FEATURE ===============
   if (params.upsell) {
-    console.log('Initializing Upsell feature');
     
   const styleTag = document.createElement('style');
   styleTag.textContent = `
@@ -4120,7 +4058,6 @@ observer.observe(document.body, {
         this.campaigns = data.activeCampaigns || [];
         return this.campaigns;
       } catch (error) {
-        console.error('Error fetching upsell campaigns:', error);
         return [];
       }
     },
@@ -4364,7 +4301,6 @@ observer.observe(document.body, {
                 }
               })
               .catch(function(error) {
-                console.error('Cart error:', error);
               })
               .finally(function() {
                 addToCartBtn.textContent = originalText;
@@ -4537,7 +4473,6 @@ observer.observe(document.body, {
             })
           });
         } catch (error) {
-          console.error('Error tracking upsell modal open:', error);
         }
       
         const currentLang = getCurrentLanguage();
