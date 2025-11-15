@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.8 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi khdama f aln7l ila bghit ndir backend w ikhdm dakshi.
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.9 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -3531,50 +3531,40 @@ footer.style.cssText = `
     setupCartButton: function () {
       const self = this;
       
-      // Intercept all cart navigation links (both /cart and /cart/view)
-      const cartLinks = document.querySelectorAll("a[href*='/cart']");
-      cartLinks.forEach((link) => {
-        link.addEventListener("click", (e) => {
-          if (!e.ctrlKey && !e.metaKey) { // Allow normal behavior for ctrl/cmd click
-            e.preventDefault();
-            e.stopPropagation();
-            self.openCart();
+      // Use event delegation - listen on document for all cart link clicks
+      document.addEventListener("click", (e) => {
+        const link = e.target.closest("a[href*='/cart']");
+        
+        if (link) {
+          // Don't intercept if ctrl/cmd/shift is held (allow new tab/window)
+          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            return;
           }
-        });
-      });
-
-      // Header cart support
-      const headerCart = document.querySelector(".header-cart");
-      if (headerCart) {
-        headerCart.addEventListener("click", (e) => {
-          const link = e.target.closest("a[href*='/cart']");
-          if (link) {
-            e.preventDefault();
-            e.stopPropagation();
-            self.openCart();
-          }
-        });
-      }
-    
-      // Cart button icons
-      const cartButtons = document.querySelectorAll(".a-shopping-cart");
-      cartButtons.forEach((button) => {
-        button.addEventListener("click", (e) => {
+          
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
-        });
-      });
-    
-      // Assayl theme mobile cart
-      const assaylMobileCart = document.querySelector(".nav-mobile .view-cart");
-      if (assaylMobileCart) {
-        assaylMobileCart.addEventListener("click", (e) => {
+          return;
+        }
+        
+        // Also check for cart buttons/icons
+        const cartButton = e.target.closest(".a-shopping-cart");
+        if (cartButton) {
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
-        });
-      }
+          return;
+        }
+        
+        // Assayl mobile cart
+        const mobileCart = e.target.closest(".nav-mobile .view-cart");
+        if (mobileCart) {
+          e.preventDefault();
+          e.stopPropagation();
+          self.openCart();
+          return;
+        }
+      }, true); // Use capture phase to intercept early
     },
 
     isMobileDevice: function () {
