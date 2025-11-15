@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.3 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.4 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -2747,25 +2747,37 @@ footer.style.cssText = `
 
     updateItemQuantity: async function (cartProductId, productId, newQuantity) {
       try {
+        console.log('📝 updateItemQuantity - cartProductId:', cartProductId, 'productId:', productId, 'newQuantity:', newQuantity);
+        
         if (window.vitrin === true) {
+          console.log('📝 Vitrin updateProduct with product_id:', productId, 'quantity:', newQuantity);
           await zid.cart.updateProduct({ product_id: productId, quantity: newQuantity })
         } else {
+          console.log('📝 Legacy updateProduct');
           await zid.store.cart.updateProduct(cartProductId, newQuantity, productId)
         }
+        console.log('✅ Product quantity updated');
         await this.updateCartDisplay()
       } catch (error) {
+        console.error('❌ updateItemQuantity error:', error);
       }
     },
 
     removeItem: async function (cartProductId, productId) {
       try {
+        console.log('🗑️ removeItem called - cartProductId:', cartProductId, 'productId:', productId);
+        
         if (window.vitrin === true) {
+          console.log('🗑️ Vitrin removeProduct with product_id:', productId);
           await zid.cart.removeProduct({ product_id: productId })
         } else {
+          console.log('🗑️ Legacy removeProduct');
           await zid.store.cart.removeProduct(cartProductId, productId)
         }
+        console.log('✅ Product removed successfully');
         await this.updateCartDisplay()
       } catch (error) {
+        console.error('❌ removeItem error:', error);
       }
     },
 
@@ -3557,18 +3569,15 @@ footer.style.cssText = `
               const result = await originalAdd.apply(zid.cart, args)
               console.log('📦 Vitrin addProduct result:', result);
               
-              if (result?.status === "success" || result?.data) {
+              // Vitrin returns the updated cart on success
+              if (result && (result.products || result.id)) {
                 console.log('✅ Vitrin product added successfully, opening cart');
                 setTimeout(() => {
                   self.openCart()
                   self.updateCartDisplay()
-                }, 100)
+                }, 300)
               } else {
                 console.log('⚠️ Vitrin addProduct returned:', result);
-                // Still try to open/update even if response is unclear
-                setTimeout(() => {
-                  self.updateCartDisplay()
-                }, 100)
               }
               return result
             } catch (error) {
