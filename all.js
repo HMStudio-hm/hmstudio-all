@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.7 (nzoyd Zid updates 29-10 | hadi rje3t l backend tani 7itash direct makatkhdemsh f aln7l - w hadi kan7awl n7el muchkil dyal variants f quick view
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.8 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi khdama f aln7l ila bghit ndir backend w ikhdm dakshi.
 // Created by HMStudio
 
 (function() {
@@ -518,9 +518,8 @@
           formId: 'product-form',
           data: {
             product_id: formData.get('product_id'),
-            quantity: parseInt(formData.get('quantity'))
-          },
-          showErrorNotification: true
+            quantity: formData.get('quantity')
+          }
         })
       }
       cartPromise.then(async function (response) {
@@ -3530,34 +3529,51 @@ footer.style.cssText = `
     },
 
     setupCartButton: function () {
-      // Existing header cart support
-      const headerCart = document.querySelector(".header-cart")
+      const self = this;
+      
+      // Intercept all cart navigation links (both /cart and /cart/view)
+      const cartLinks = document.querySelectorAll("a[href*='/cart']");
+      cartLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          if (!e.ctrlKey && !e.metaKey) { // Allow normal behavior for ctrl/cmd click
+            e.preventDefault();
+            e.stopPropagation();
+            self.openCart();
+          }
+        });
+      });
+
+      // Header cart support
+      const headerCart = document.querySelector(".header-cart");
       if (headerCart) {
         headerCart.addEventListener("click", (e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          this.openCart()
-        })
+          const link = e.target.closest("a[href*='/cart']");
+          if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            self.openCart();
+          }
+        });
       }
     
-      // Existing cart buttons
-      const cartButtons = document.querySelectorAll(".a-shopping-cart")
+      // Cart button icons
+      const cartButtons = document.querySelectorAll(".a-shopping-cart");
       cartButtons.forEach((button) => {
         button.addEventListener("click", (e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          this.openCart()
-        })
-      })
+          e.preventDefault();
+          e.stopPropagation();
+          self.openCart();
+        });
+      });
     
-      // NEW: Assayl theme mobile cart support
-      const assaylMobileCart = document.querySelector(".nav-mobile .view-cart")
+      // Assayl theme mobile cart
+      const assaylMobileCart = document.querySelector(".nav-mobile .view-cart");
       if (assaylMobileCart) {
         assaylMobileCart.addEventListener("click", (e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          this.openCart()
-        })
+          e.preventDefault();
+          e.stopPropagation();
+          self.openCart();
+        });
       }
     },
 
