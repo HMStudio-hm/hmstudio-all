@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.5.9 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.0 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -3449,17 +3449,31 @@ footer.style.cssText = `
     },
 
     openCart: function () {
-      if (this.isOpen) return
+      console.log('🔓 openCart called, isOpen:', this.isOpen);
+      
+      if (this.isOpen) {
+        console.log('⚠️ Cart already open');
+        return;
+      }
+
+      if (!this.cartElement) {
+        console.error('❌ Cart element not initialized');
+        return;
+      }
 
       const currentLang = getCurrentLanguage()
       const isRTL = currentLang === "ar"
 
+      console.log('📝 Language:', currentLang, 'RTL:', isRTL);
+      
       this.cartElement.container.style.transform = `translateX(${isRTL ? "100%" : "-100%"})`
       this.cartElement.backdrop.style.opacity = "1"
       this.cartElement.backdrop.style.visibility = "visible"
       document.body.style.overflow = "hidden"
       this.isOpen = true
 
+      console.log('✅ Cart opened successfully');
+      
       this.updateCartDisplay()
     },
 
@@ -3530,17 +3544,22 @@ footer.style.cssText = `
 
     setupCartButton: function () {
       const self = this;
+      console.log('🛒 setupCartButton called');
       
       // Use event delegation - listen on document for all cart link clicks
       document.addEventListener("click", (e) => {
         const link = e.target.closest("a[href*='/cart']");
         
         if (link) {
+          console.log('📍 Cart link clicked:', link.href);
+          
           // Don't intercept if ctrl/cmd/shift is held (allow new tab/window)
           if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            console.log('ℹ️ Modifier key held, allowing default behavior');
             return;
           }
           
+          console.log('✅ Intercepting cart link, opening sliding cart');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
@@ -3550,6 +3569,7 @@ footer.style.cssText = `
         // Also check for cart buttons/icons
         const cartButton = e.target.closest(".a-shopping-cart");
         if (cartButton) {
+          console.log('📍 Cart button clicked');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
@@ -3559,12 +3579,15 @@ footer.style.cssText = `
         // Assayl mobile cart
         const mobileCart = e.target.closest(".nav-mobile .view-cart");
         if (mobileCart) {
+          console.log('📍 Mobile cart clicked');
           e.preventDefault();
           e.stopPropagation();
           self.openCart();
           return;
         }
       }, true); // Use capture phase to intercept early
+      
+      console.log('✅ setupCartButton event listeners attached');
     },
 
     isMobileDevice: function () {
@@ -3572,15 +3595,22 @@ footer.style.cssText = `
     },
 
     initialize: async function () {
+      console.log('🚀 SlidingCart.initialize called');
+      
       const settings = await this.fetchSettings()
+      console.log('⚙️ Sliding cart settings:', settings);
+      
       if (!settings?.enabled) {
+        console.log('❌ Sliding cart not enabled');
         return
       }
 
+      console.log('✅ Sliding cart enabled, creating structure');
       this.createCartStructure()
 
       const waitForZid = () => {
         if (typeof zid !== "undefined" && zid.store && zid.store.cart) {
+          console.log('✅ Zid API available, setting up cart');
           this.handleCartUpdates()
           this.setupCartButton()
 
