@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.0 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.1 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -3609,8 +3609,13 @@ footer.style.cssText = `
       this.createCartStructure()
 
       const waitForZid = () => {
-        if (typeof zid !== "undefined" && zid.store && zid.store.cart) {
-          console.log('✅ Zid API available, setting up cart');
+        console.log('⏳ Checking for Zid API... vitrin:', window.vitrin);
+        
+        const hasVitrinCart = window.vitrin === true && typeof zid !== "undefined" && zid.cart;
+        const hasLegacyCart = typeof zid !== "undefined" && zid.store && zid.store.cart;
+        
+        if (hasVitrinCart || hasLegacyCart) {
+          console.log('✅ Zid API available (Vitrin:', hasVitrinCart, ', Legacy:', hasLegacyCart, ')');
           this.handleCartUpdates()
           this.setupCartButton()
 
@@ -3643,6 +3648,7 @@ observer.observe(document.body, {
 })
 
         } else {
+          console.log('⏳ Zid API not ready, retrying in 100ms...');
           setTimeout(waitForZid, 100)
         }
       }
