@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.2 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.3 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -2716,15 +2716,31 @@ footer.style.cssText = `
       try {
         let response;
         if (window.vitrin === true) {
+          console.log('🔍 Fetching Vitrin cart...');
           response = await zid.cart.get()
+          console.log('📥 Vitrin response:', response);
+          
+          // Vitrin returns cart directly, not wrapped in {status, data}
+          if (response && response.products !== undefined) {
+            console.log('✅ Vitrin cart fetched:', response);
+            return response;
+          } else if (response && response.data && response.data.cart) {
+            console.log('✅ Vitrin cart fetched (wrapped):', response.data.cart);
+            return response.data.cart;
+          }
+          throw new Error("Invalid Vitrin response structure");
         } else {
+          console.log('🔍 Fetching Legacy cart...');
           response = await zid.store.cart.fetch()
+          console.log('📥 Legacy response:', response);
+          
+          if (response.status === "success") {
+            return response.data.cart
+          }
+          throw new Error("Failed to fetch cart data")
         }
-        if (response.status === "success") {
-          return response.data.cart
-        }
-        throw new Error("Failed to fetch cart data")
       } catch (error) {
+        console.error('❌ fetchCartData error:', error);
         return null
       }
     },
