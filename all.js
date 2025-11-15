@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.1 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [Sliding cart functionality is fixed -- still only fixing coupon apply.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.2 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [Sliding cart functionality is fixed -- still only fixing coupon apply.]
 // Created by HMStudio
 
 (function() {
@@ -2539,7 +2539,6 @@ if (productBottom) {
 // =============== SLIDING CART FEATURE ===============
 if (params.slidingCart) {
   console.log('Initializing Sliding Cart feature');
-  console.log('Initializing Sliding Cart feature');
   
   function getCurrentLanguage() {
     return document.documentElement.lang || "ar"
@@ -3578,10 +3577,12 @@ footer.style.cssText = `
 
           // Wrap applyCoupon
           const originalApplyCoupon = zid.cart.applyCoupon
-          zid.cart.applyCoupon = async (...args) => {
+          zid.cart.applyCoupon = async (params) => {
             try {
-              console.log('💳 Vitrin applyCoupon called with args:', args);
-              const result = await originalApplyCoupon.apply(zid.cart, args)
+              // Vitrin uses coupon_code, not coupon
+              const couponParams = params?.coupon_code ? params : { coupon_code: params };
+              console.log('💳 Vitrin applyCoupon called with params:', couponParams);
+              const result = await originalApplyCoupon.apply(zid.cart, [couponParams])
               console.log('✅ Coupon applied:', result);
               setTimeout(() => self.updateCartDisplay(), 100)
               return result
