@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.3 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [Sliding cart functionality is fixed -- still only fixing coupon apply.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.4 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[Last working BACKEND API calling.]
 // Created by HMStudio
 
 (function() {
@@ -3156,32 +3156,24 @@ footer.style.cssText = `
         buttonText.style.opacity = "0.7"
 
         try {
-          console.log('🔐 Attempting to apply coupon:', couponCode);
           let response;
           if (window.vitrin === true) {
             response = await zid.cart.applyCoupon({ coupon_code: couponCode })
-            console.log('💳 Vitrin applyCoupon response:', response);
           } else {
             response = await zid.store.cart.redeemCoupon(couponCode)
           }
 
-          // Check if coupon was successful
           if (response && (response.status === "success" || response.coupon)) {
-            console.log('✅ Coupon applied successfully');
             showCouponMessage("success", isArabic)
             await this.updateCartDisplay()
           } else if (response?.status === "error" || response?.message) {
-            console.log('❌ Coupon error:', response);
             const errorType = getErrorType(response)
             showCouponMessage(errorType, isArabic)
           } else {
-            // Assume success if no error
-            console.log('✅ Coupon applied (no error)');
             showCouponMessage("success", isArabic)
             await this.updateCartDisplay()
           }
         } catch (error) {
-          console.error('❌ Coupon apply error:', error);
           const errorResponse = {
             data: { message: error.message || "" },
             status: "error",
@@ -3590,17 +3582,11 @@ footer.style.cssText = `
           const originalApplyCoupon = zid.cart.applyCoupon
           zid.cart.applyCoupon = async (params) => {
             try {
-              // Vitrin uses coupon_code, not coupon
               const couponParams = params?.coupon_code ? params : { coupon_code: params };
-              console.log('💳 Vitrin applyCoupon called with params:', couponParams);
               const result = await originalApplyCoupon.apply(zid.cart, [couponParams])
-              console.log('✅ Coupon applied result:', result);
-              // Don't re-throw - just return the result so caller can handle status
               setTimeout(() => self.updateCartDisplay(), 100)
               return result || { status: 'success' }
             } catch (error) {
-              console.error('❌ applyCoupon error:', error);
-              // Return error response instead of throwing
               return { status: 'error', data: { message: error.message } }
             }
           }
@@ -3609,13 +3595,10 @@ footer.style.cssText = `
           const originalRemoveCoupons = zid.cart.removeCoupons
           zid.cart.removeCoupons = async (...args) => {
             try {
-              console.log('💳 Vitrin removeCoupons called');
               const result = await originalRemoveCoupons.apply(zid.cart, args)
-              console.log('✅ Coupons removed:', result);
               setTimeout(() => self.updateCartDisplay(), 100)
               return result
             } catch (error) {
-              console.error('❌ removeCoupons error:', error);
               throw error
             }
           }
