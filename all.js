@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.5 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.6.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hoya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi. [trying to fix sliding cart functionality].
 // Created by HMStudio
 
 (function() {
@@ -3562,29 +3562,54 @@ footer.style.cssText = `
           }
         }
         
-        // For Vitrin theme
+        // For Vitrin theme - wrap ALL cart methods
         if (window.vitrin === true && zid.cart) {
           console.log('🔧 Setting up Vitrin cart handler');
+          
+          // Wrap addProduct
           const originalAdd = zid.cart.addProduct
           zid.cart.addProduct = async (...args) => {
             try {
-              console.log('➕ Vitrin addProduct called with args:', args);
+              console.log('➕ Vitrin addProduct called');
               const result = await originalAdd.apply(zid.cart, args)
               console.log('📦 Vitrin addProduct result:', result);
-              
-              // Vitrin returns the updated cart on success
-              if (result && (result.products || result.id)) {
-                console.log('✅ Vitrin product added successfully, opening cart');
-                setTimeout(() => {
-                  self.openCart()
-                  self.updateCartDisplay()
-                }, 300)
-              } else {
-                console.log('⚠️ Vitrin addProduct returned:', result);
-              }
+              setTimeout(() => {
+                self.openCart()
+                self.updateCartDisplay()
+              }, 300)
               return result
             } catch (error) {
               console.error('❌ Vitrin addProduct error:', error);
+              throw error
+            }
+          }
+          
+          // Wrap updateProduct
+          const originalUpdate = zid.cart.updateProduct
+          zid.cart.updateProduct = async (...args) => {
+            try {
+              console.log('📝 Vitrin updateProduct called with args:', args);
+              const result = await originalUpdate.apply(zid.cart, args)
+              console.log('✅ Vitrin updateProduct result:', result);
+              setTimeout(() => self.updateCartDisplay(), 100)
+              return result
+            } catch (error) {
+              console.error('❌ Vitrin updateProduct error:', error);
+              throw error
+            }
+          }
+          
+          // Wrap removeProduct
+          const originalRemove = zid.cart.removeProduct
+          zid.cart.removeProduct = async (...args) => {
+            try {
+              console.log('🗑️ Vitrin removeProduct called with args:', args);
+              const result = await originalRemove.apply(zid.cart, args)
+              console.log('✅ Vitrin removeProduct result:', result);
+              setTimeout(() => self.updateCartDisplay(), 100)
+              return result
+            } catch (error) {
+              console.error('❌ Vitrin removeProduct error:', error);
               throw error
             }
           }
