@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.5 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[Last working BACKEND API calling.]
 // Created by HMStudio
 
 (function() {
@@ -3570,11 +3570,9 @@ footer.style.cssText = `
             try {
               console.log('🗑️ Vitrin removeProduct called with args:', args);
               const result = await originalRemove.apply(zid.cart, args)
-              console.log('✅ Vitrin removeProduct result:', result);
               setTimeout(() => self.updateCartDisplay(), 100)
               return result
             } catch (error) {
-              console.error('❌ Vitrin removeProduct error:', error);
               throw error
             }
           }
@@ -4285,41 +4283,32 @@ observer.observe(document.body, {
               addToCartBtn.disabled = true;
               addToCartBtn.style.opacity = '0.7';
 
-              console.log('🛒 Upsell add to cart button clicked');
-              console.log('vitrin:', window.vitrin);
 
               let cartPromise;
               if (window.vitrin === true) {
                 const productId = form.querySelector('input[name="product_id"]').value;
                 const quantity = parseInt(form.querySelector('#product-quantity').value) || 1;
-                console.log('🛒 Vitrin addProduct called with:', { product_id: productId, quantity });
                 cartPromise = zid.cart.addProduct({ 
                   product_id: productId,
                   quantity: quantity
                 })
               } else {
-                console.log('🛒 Legacy addProduct called');
                 cartPromise = zid.store.cart.addProduct({ 
                   formId: form.id
                 })
               }
               cartPromise.then(function(response) {
-                console.log('🛒 Promise .then() called');
-                console.log('🛒 Upsell cartPromise response:', response);
                 
                 // Check for success - Vitrin returns item/cart_items_quantity, Legacy returns status
                 const isSuccess = response.status === 'success' || (response.item && response.cart_items_quantity !== undefined);
                 
                 if (isSuccess) {
-                  console.log('✅ Upsell product added successfully');
-                  console.log('🛒 Entering tracking try block');
                   if (typeof setCartBadge === 'function') {
                     const cartCount = response.data?.cart?.products_count || response.cart_items_quantity || 0;
                     setCartBadge(cartCount);
                   }
               
                   try {
-                    console.log('🛒 Inside tracking try block');
                     const quantityInput = form.querySelector('#product-quantity');
                     const quantity = parseInt(quantityInput.value) || 1;
                     const productId = form.querySelector('input[name="product_id"]').value;
@@ -4328,18 +4317,14 @@ observer.observe(document.body, {
                     const priceText = priceElement.textContent.replace(/[^0-9.]/g, '');
                     const price = parseFloat(priceText) || 0;
 
-                    console.log('📊 About to track cart_add');
-                    console.log('currentCampaign:', currentCampaign);
               
                     const campaignToUse = currentCampaign;
                     console.log('campaignToUse:', campaignToUse);
                     if (!campaignToUse) {
-                      console.warn('⚠️ No campaign found!');
                       console.warn('currentCampaign is:', currentCampaign);
                       return;
                     }
 
-                    console.log('📊 Upsell tracking - cart_add (form submit):', {
                       productId,
                       productName,
                       quantity,
@@ -4367,13 +4352,9 @@ observer.observe(document.body, {
                         timestamp: new Date().toISOString()
                       })
                     }).then(res => {
-                      console.log('✅ Upsell cart_add response:', res.status);
                     }).catch(error => {
-                      console.error('❌ Upsell cart_add error:', error);
                     });
                   } catch (error) {
-                    console.error('❌ Upsell tracking error:', error);
-                    console.error('Stack:', error.stack);
                   }              
                 } else {
                   console.log('❌ Product add failed, response:', response);
@@ -4384,11 +4365,8 @@ observer.observe(document.body, {
                 }
               })
               .catch(function(error) {
-                console.error('❌ UpsellcartPromise catch error:', error);
-                console.error('Error details:', error.message, error.stack);
               })
               .finally(function() {
-                console.log('🛒 Upsell finally block');
                 addToCartBtn.textContent = originalText;
                 addToCartBtn.disabled = false;
                 addToCartBtn.style.opacity = '1';
@@ -4545,7 +4523,6 @@ observer.observe(document.body, {
         }
         
         try {
-          console.log('📊 Upsell tracking - popup_open:', {
             campaignId: campaign.id,
             campaignName: campaign.name,
             vitrin: window.vitrin === true
@@ -4565,9 +4542,7 @@ observer.observe(document.body, {
               timestamp: new Date().toISOString()
             })
           });
-          console.log('✅ Upsell popup_open tracked');
         } catch (error) {
-          console.error('❌ Upsell popup_open error:', error);
         }
       
         const currentLang = getCurrentLanguage();
@@ -4710,7 +4685,6 @@ observer.observe(document.body, {
                         setCartBadge(cartCount);
                       }
           
-                      console.log('📊 Upsell tracking - cart_add (Add All):', {
                         productId,
                         productName,
                         quantity,
@@ -4738,15 +4712,12 @@ observer.observe(document.body, {
                           timestamp: new Date().toISOString()
                         })
                       }).then(res => {
-                        console.log('✅ Upsell cart_add (Add All) response:', res.status);
                       }).catch(error => {
-                        console.error('❌ Upsell cart_add (Add All) error:', error);
                       });
                     }
                     resolve();
                   })
                   .catch((error) => {
-                    console.error('❌ Upsell Add All error:', error);
                     resolve();
                   });
               });
