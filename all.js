@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.7 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.8 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4284,20 +4284,29 @@ observer.observe(document.body, {
               addToCartBtn.textContent = loadingText;
               addToCartBtn.disabled = true;
               addToCartBtn.style.opacity = '0.7';
-  
+
+              console.log('🛒 Upsell add to cart button clicked');
+              console.log('vitrin:', window.vitrin);
+
               let cartPromise;
               if (window.vitrin === true) {
+                const productId = form.querySelector('input[name="product_id"]').value;
+                const quantity = parseInt(form.querySelector('#product-quantity').value) || 1;
+                console.log('🛒 Vitrin addProduct called with:', { product_id: productId, quantity });
                 cartPromise = zid.cart.addProduct({ 
-                  product_id: form.querySelector('input[name="product_id"]').value,
-                  quantity: parseInt(form.querySelector('#product-quantity').value) || 1
+                  product_id: productId,
+                  quantity: quantity
                 })
               } else {
+                console.log('🛒 Legacy addProduct called');
                 cartPromise = zid.store.cart.addProduct({ 
                   formId: form.id
                 })
               }
               cartPromise.then(function(response) {
+                console.log('🛒 Upsell cartPromise response:', response);
                 if (response.status === 'success') {
+                  console.log('✅ Upsell product added successfully');
                   if (typeof setCartBadge === 'function') {
                     setCartBadge(response.data.cart.products_count);
                   }
@@ -4310,14 +4319,24 @@ observer.observe(document.body, {
                     const priceElement = form.querySelector('.hmstudio-upsell-product-price');
                     const priceText = priceElement.textContent.replace(/[^0-9.]/g, '');
                     const price = parseFloat(priceText) || 0;
+
+                    console.log('📊 About to track cart_add');
+                    console.log('currentCampaign:', currentCampaign);
+                    console.log('campaign:', campaign);
               
+                    const campaignToUse = currentCampaign || campaign;
+                    if (!campaignToUse) {
+                      console.warn('⚠️ No campaign found!');
+                      return;
+                    }
+
                     console.log('📊 Upsell tracking - cart_add (form submit):', {
                       productId,
                       productName,
                       quantity,
                       price,
-                      campaignId: currentCampaign.id,
-                      campaignName: currentCampaign.name,
+                      campaignId: campaignToUse.id,
+                      campaignName: campaignToUse.name,
                       vitrin: window.vitrin === true
                     });
 
@@ -4333,8 +4352,8 @@ observer.observe(document.body, {
                         productName,
                         quantity,
                         price,
-                        campaignId: currentCampaign.id,
-                        campaignName: currentCampaign.name,
+                        campaignId: campaignToUse.id,
+                        campaignName: campaignToUse.name,
                         vitrin: window.vitrin === true,
                         timestamp: new Date().toISOString()
                       })
