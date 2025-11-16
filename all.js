@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[Last working BACKEND API calling.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.7 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[Last working BACKEND API calling.]
 // Created by HMStudio
 
 (function() {
@@ -4325,15 +4325,6 @@ observer.observe(document.body, {
                       return;
                     }
 
-                      productId,
-                      productName,
-                      quantity,
-                      price,
-                      campaignId: campaignToUse.id,
-                      campaignName: campaignToUse.name,
-                      vitrin: window.vitrin === true
-                    });
-
                     fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
                       method: 'POST',
                       headers: {
@@ -4351,13 +4342,11 @@ observer.observe(document.body, {
                         vitrin: window.vitrin === true,
                         timestamp: new Date().toISOString()
                       })
-                    }).then(res => {
                     }).catch(error => {
                     });
                   } catch (error) {
                   }              
                 } else {
-                  console.log('❌ Product add failed, response:', response);
                   const errorMessage = (response.data?.message || response.message || 'Failed to add product to cart');
                   alert(currentLang === 'ar' 
                     ? errorMessage 
@@ -4523,11 +4512,6 @@ observer.observe(document.body, {
         }
         
         try {
-            campaignId: campaign.id,
-            campaignName: campaign.name,
-            vitrin: window.vitrin === true
-          });
-
           await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
             method: 'POST',
             headers: {
@@ -4685,15 +4669,6 @@ observer.observe(document.body, {
                         setCartBadge(cartCount);
                       }
           
-                        productId,
-                        productName,
-                        quantity,
-                        price,
-                        campaignId: campaign.id,
-                        campaignName: campaign.name,
-                        vitrin: window.vitrin === true
-                      });
-
                       fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
                         method: 'POST',
                         headers: {
@@ -4711,7 +4686,6 @@ observer.observe(document.body, {
                           vitrin: window.vitrin === true,
                           timestamp: new Date().toISOString()
                         })
-                      }).then(res => {
                       }).catch(error => {
                       });
                     }
