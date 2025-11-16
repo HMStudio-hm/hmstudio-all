@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.2 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.3 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4701,18 +4701,22 @@ observer.observe(document.body, {
                   cartPromise = zid.store.cart.addProduct({ formId: form.id })
                 }
                 cartPromise.then((response) => {
-                    if (response.status === 'success') {
+                    // Check for success - Vitrin returns item/cart_items_quantity, Legacy returns status
+                    const isSuccess = response.status === 'success' || (response.item && response.cart_items_quantity !== undefined);
+                    
+                    if (isSuccess) {
                       if (typeof setCartBadge === 'function') {
-                        setCartBadge(response.data.cart.products_count);
+                        const cartCount = response.data?.cart?.products_count || response.cart_items_quantity || 0;
+                        setCartBadge(cartCount);
                       }
           
-                      console.log('📊 Upsell tracking - cart_add (promise):', {
+                      console.log('📊 Upsell tracking - cart_add (Add All):', {
                         productId,
                         productName,
                         quantity,
                         price,
-                        campaignId: campaign.id,
-                        campaignName: campaign.name,
+                        campaignId: currentCampaign.id,
+                        campaignName: currentCampaign.name,
                         vitrin: window.vitrin === true
                       });
 
@@ -4728,20 +4732,21 @@ observer.observe(document.body, {
                           productName,
                           quantity,
                           price,
-                          campaignId: campaign.id,
-                          campaignName: campaign.name,
+                          campaignId: currentCampaign.id,
+                          campaignName: currentCampaign.name,
                           vitrin: window.vitrin === true,
                           timestamp: new Date().toISOString()
                         })
                       }).then(res => {
-                        console.log('✅ Upsell cart_add (promise) response:', res.status);
+                        console.log('✅ Upsell cart_add (Add All) response:', res.status);
                       }).catch(error => {
-                        console.error('❌ Upsell cart_add (promise) error:', error);
+                        console.error('❌ Upsell cart_add (Add All) error:', error);
                       });
                     }
                     resolve();
                   })
                   .catch((error) => {
+                    console.error('❌ Upsell Add All error:', error);
                     resolve();
                   });
               });
