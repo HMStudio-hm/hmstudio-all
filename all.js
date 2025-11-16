@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.8 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.9 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4307,11 +4307,13 @@ observer.observe(document.body, {
                 console.log('🛒 Upsell cartPromise response:', response);
                 if (response.status === 'success') {
                   console.log('✅ Upsell product added successfully');
+                  console.log('🛒 Entering tracking try block');
                   if (typeof setCartBadge === 'function') {
                     setCartBadge(response.data.cart.products_count);
                   }
               
                   try {
+                    console.log('🛒 Inside tracking try block');
                     const quantityInput = form.querySelector('#product-quantity');
                     const quantity = parseInt(quantityInput.value) || 1;
                     const productId = form.querySelector('input[name="product_id"]').value;
@@ -4325,8 +4327,11 @@ observer.observe(document.body, {
                     console.log('campaign:', campaign);
               
                     const campaignToUse = currentCampaign || campaign;
+                    console.log('campaignToUse:', campaignToUse);
                     if (!campaignToUse) {
                       console.warn('⚠️ No campaign found!');
+                      console.warn('Check what currentCampaign is:', currentCampaign);
+                      console.warn('Check what campaign is:', campaign);
                       return;
                     }
 
@@ -4364,6 +4369,7 @@ observer.observe(document.body, {
                     });
                   } catch (error) {
                     console.error('❌ Upsell tracking error:', error);
+                    console.error('Stack:', error.stack);
                   }              
                 } else {
                   const errorMessage = currentLang === 'ar' 
