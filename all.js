@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.9 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.0 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4304,6 +4304,7 @@ observer.observe(document.body, {
                 })
               }
               cartPromise.then(function(response) {
+                console.log('🛒 Promise .then() called');
                 console.log('🛒 Upsell cartPromise response:', response);
                 if (response.status === 'success') {
                   console.log('✅ Upsell product added successfully');
@@ -4379,8 +4380,11 @@ observer.observe(document.body, {
                 }
               })
               .catch(function(error) {
+                console.error('❌ UpsellcartPromise catch error:', error);
+                console.error('Error details:', error.message, error.stack);
               })
               .finally(function() {
+                console.log('🛒 Upsell finally block');
                 addToCartBtn.textContent = originalText;
                 addToCartBtn.disabled = false;
                 addToCartBtn.style.opacity = '1';
