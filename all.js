@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.7.7 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4311,6 +4311,16 @@ observer.observe(document.body, {
                     const priceText = priceElement.textContent.replace(/[^0-9.]/g, '');
                     const price = parseFloat(priceText) || 0;
               
+                    console.log('📊 Upsell tracking - cart_add (form submit):', {
+                      productId,
+                      productName,
+                      quantity,
+                      price,
+                      campaignId: currentCampaign.id,
+                      campaignName: currentCampaign.name,
+                      vitrin: window.vitrin === true
+                    });
+
                     fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
                       method: 'POST',
                       headers: {
@@ -4328,9 +4338,13 @@ observer.observe(document.body, {
                         vitrin: window.vitrin === true,
                         timestamp: new Date().toISOString()
                       })
+                    }).then(res => {
+                      console.log('✅ Upsell cart_add response:', res.status);
                     }).catch(error => {
+                      console.error('❌ Upsell cart_add error:', error);
                     });
                   } catch (error) {
+                    console.error('❌ Upsell tracking error:', error);
                   }              
                 } else {
                   const errorMessage = currentLang === 'ar' 
@@ -4498,6 +4512,12 @@ observer.observe(document.body, {
         }
         
         try {
+          console.log('📊 Upsell tracking - popup_open:', {
+            campaignId: campaign.id,
+            campaignName: campaign.name,
+            vitrin: window.vitrin === true
+          });
+
           await fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
             method: 'POST',
             headers: {
@@ -4512,7 +4532,9 @@ observer.observe(document.body, {
               timestamp: new Date().toISOString()
             })
           });
+          console.log('✅ Upsell popup_open tracked');
         } catch (error) {
+          console.error('❌ Upsell popup_open error:', error);
         }
       
         const currentLang = getCurrentLanguage();
@@ -4651,6 +4673,16 @@ observer.observe(document.body, {
                         setCartBadge(response.data.cart.products_count);
                       }
           
+                      console.log('📊 Upsell tracking - cart_add (promise):', {
+                        productId,
+                        productName,
+                        quantity,
+                        price,
+                        campaignId: campaign.id,
+                        campaignName: campaign.name,
+                        vitrin: window.vitrin === true
+                      });
+
                       fetch('https://europe-west3-hmstudio-85f42.cloudfunctions.net/trackUpsellStats', {
                         method: 'POST',
                         headers: {
@@ -4668,7 +4700,11 @@ observer.observe(document.body, {
                           vitrin: window.vitrin === true,
                           timestamp: new Date().toISOString()
                         })
-                      }).catch(error => {});
+                      }).then(res => {
+                        console.log('✅ Upsell cart_add (promise) response:', res.status);
+                      }).catch(error => {
+                        console.error('❌ Upsell cart_add (promise) error:', error);
+                      });
                     }
                     resolve();
                   })
