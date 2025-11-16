@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.0 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.1 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4306,11 +4306,16 @@ observer.observe(document.body, {
               cartPromise.then(function(response) {
                 console.log('🛒 Promise .then() called');
                 console.log('🛒 Upsell cartPromise response:', response);
-                if (response.status === 'success') {
+                
+                // Check for success - Vitrin returns item/cart_items_quantity, Legacy returns status
+                const isSuccess = response.status === 'success' || (response.item && response.cart_items_quantity !== undefined);
+                
+                if (isSuccess) {
                   console.log('✅ Upsell product added successfully');
                   console.log('🛒 Entering tracking try block');
                   if (typeof setCartBadge === 'function') {
-                    setCartBadge(response.data.cart.products_count);
+                    const cartCount = response.data?.cart?.products_count || response.cart_items_quantity || 0;
+                    setCartBadge(cartCount);
                   }
               
                   try {
@@ -4373,10 +4378,11 @@ observer.observe(document.body, {
                     console.error('Stack:', error.stack);
                   }              
                 } else {
-                  const errorMessage = currentLang === 'ar' 
-                    ? response.data.message || 'فشل إضافة المنتج إلى السلة'
-                    : response.data.message || 'Failed to add product to cart';
-                  alert(errorMessage);
+                  console.log('❌ Product add failed, response:', response);
+                  const errorMessage = (response.data?.message || response.message || 'Failed to add product to cart');
+                  alert(currentLang === 'ar' 
+                    ? errorMessage 
+                    : errorMessage);
                 }
               })
               .catch(function(error) {
