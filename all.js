@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.3 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.4 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
 // Created by HMStudio
 
 (function() {
@@ -4715,8 +4715,8 @@ observer.observe(document.body, {
                         productName,
                         quantity,
                         price,
-                        campaignId: currentCampaign.id,
-                        campaignName: currentCampaign.name,
+                        campaignId: campaign.id,
+                        campaignName: campaign.name,
                         vitrin: window.vitrin === true
                       });
 
@@ -4732,8 +4732,8 @@ observer.observe(document.body, {
                           productName,
                           quantity,
                           price,
-                          campaignId: currentCampaign.id,
-                          campaignName: currentCampaign.name,
+                          campaignId: campaign.id,
+                          campaignName: campaign.name,
                           vitrin: window.vitrin === true,
                           timestamp: new Date().toISOString()
                         })
@@ -4869,7 +4869,7 @@ observer.observe(document.body, {
         window.addEventListener('resize', () => {
           if (this.currentModal) {
             const content = this.currentModal.querySelector('.hmstudio-upsell-content');
-            if (content) {
+            if (content) {v2.7.6 (nzoyd Zid updates 29-10 | no direct API calling for products) - hadi hiya update dyal version 2.5.2 li khdama f aln7l ila bghit ndir backend w ikhdm dakshi.[trying to fix analytics.]
               content.style.maxHeight = `${window.innerHeight * 0.9}px`;
             }
           }
