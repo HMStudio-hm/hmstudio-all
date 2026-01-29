@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.8 (nzoyd Zid updates 29-10) - All working - hadi hoya update dyal version 2.5.6 li fiha Direct API calling. [Last working version for Direct API calling working stores.]
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9
 // Created by HMStudio
 
 (function() {
@@ -2205,9 +2205,9 @@ if (params.smartCart) {
         '.product.position-relative',  // Assayl theme - carousel/slider products
         'product position-relative',
         'item text-center slick-slide slick-active',
-        '.item text-center slick-slide slick-active'
+        '.item text-center slick-slide slick-active',
+        '.product-item'                    // Glory theme
     ];
-
 
     
       let allProductCards = [];
@@ -2236,12 +2236,14 @@ if (params.smartCart) {
           '.js-add-to-cart',
           'form#product-form input#product-id',
           '#product-form #product-id',
+          '[data-product-id]'               // Glory theme
         ];
     
         for (const idSelector of idSelectors) {
           const element = card.querySelector(idSelector);
           if (element) {
             productId = element.getAttribute('data-wishlist-id') || 
+                       element.getAttribute('data-product-id') ||
                        element.getAttribute('onclick')?.match(/\'(.*?)\'/)?.[1] || 
                        element.value;
             break;
@@ -2275,11 +2277,20 @@ if (productTitle) {
   return;
 }
 
-// Assayl theme - NEW ADDITION
+// Assayl theme
 const productBottom = card.querySelector('.product-bottom, .product-details, product-bottom product-style-2 pt-2, .product-bottom product-style-2 pt-2, product-details p-2 pb-2 bg-white, .product-details p-2 pb-2 bg-white');
 if (productBottom) {
   if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
     productBottom.parentNode.insertBefore(timer, productBottom);
+  }
+  return;
+}
+
+// Glory theme
+const productAllContent = card.querySelector('.product-all-content');
+if (productAllContent) {
+  if (!document.getElementById(`hmstudio-card-countdown-${productId}`)) {
+    productAllContent.parentNode.insertBefore(timer, productAllContent);
   }
   return;
 }
