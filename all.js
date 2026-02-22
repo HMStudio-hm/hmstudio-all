@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.0'
 // Created by HMStudio
 
 (function() {
@@ -4832,4 +4832,339 @@ observer.observe(document.body, {
       UpsellManager.initialize();
     }
   }
+
+// Quantity Breaks Feature Script
+
+if (params.quantityBreaks) {
+  console.log('Initializing Quantity Breaks feature');
+
+  function getCurrentLanguage() {
+    return document.documentElement.lang || 'ar';
+  }
+
+  function isMobile() {
+    return window.innerWidth <= 768;
+  }
+
+  const QuantityBreaks = {
+    campaigns: [],
+    currentProductId: null,
+    containerElement: null,
+
+    async fetchCampaigns() {
+      try {
+        const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getQuantityBreaksData?storeId=${storeId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch campaigns: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        this.campaigns = data.activeCampaigns || [];
+        return this.campaigns;
+      } catch (error) {
+        console.error('Error fetching Quantity Breaks campaigns:', error);
+        return [];
+      }
+    },
+
+    createContainer() {
+      if (this.containerElement) {
+        this.containerElement.remove();
+      }
+
+      const container = document.createElement('div');
+      container.id = 'hmstudio-quantity-breaks';
+      container.style.cssText = `
+        width: 100%;
+        padding: ${isMobile() ? '12px' : '20px'};
+        margin: ${isMobile() ? '12px 0' : '20px 0'};
+        background: white;
+        border-radius: 8px;
+        direction: ${getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};
+      `;
+
+      this.containerElement = container;
+      return container;
+    },
+
+    renderTier(tier, campaign, isSelected, index) {
+      const tierDiv = document.createElement('div');
+      tierDiv.style.cssText = `
+        display: flex;
+        align-items: center;
+        padding: ${isMobile() ? '12px' : '16px'};
+        margin-bottom: 12px;
+        border: 2px solid ${isSelected ? '#272067' : '#ddd'};
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: ${isSelected ? '#f8f6ff' : '#fff'};
+      `;
+
+      tierDiv.onmouseover = () => {
+        if (!isSelected) tierDiv.style.borderColor = '#bbb';
+      };
+      tierDiv.onmouseout = () => {
+        if (!isSelected) tierDiv.style.borderColor = '#ddd';
+      };
+
+      // Radio button
+      const radioDiv = document.createElement('div');
+      radioDiv.style.cssText = `
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid ${isSelected ? '#272067' : '#ddd'};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-${getCurrentLanguage() === 'ar' ? 'left' : 'right'}: 12px;
+      `;
+
+      if (isSelected) {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+          width: 12px;
+          height: 12px;
+          background: #272067;
+          border-radius: 50%;
+        `;
+        radioDiv.appendChild(dot);
+      }
+
+      // Tier content
+      const contentDiv = document.createElement('div');
+      contentDiv.style.cssText = `
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      `;
+
+      const leftDiv = document.createElement('div');
+      const tierTitle = document.createElement('div');
+      tierTitle.textContent = tier.titleEn || `Tier ${index + 1}`;
+      tierTitle.style.cssText = `
+        font-weight: 600;
+        font-size: 16px;
+        color: #222;
+      `;
+      leftDiv.appendChild(tierTitle);
+
+      const tierSubtitle = document.createElement('div');
+      tierSubtitle.textContent = tier.subtitleEn || '';
+      tierSubtitle.style.cssText = `
+        font-size: 14px;
+        color: #666;
+        margin-top: 4px;
+      `;
+      leftDiv.appendChild(tierSubtitle);
+
+      // Price section
+      const priceDiv = document.createElement('div');
+      priceDiv.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: ${getCurrentLanguage() === 'ar' ? 'flex-start' : 'flex-end'};
+        gap: 4px;
+      `;
+
+      // Badge if present
+      if (tier.badgeText) {
+        const badge = document.createElement('div');
+        badge.textContent = tier.badgeText;
+        badge.style.cssText = `
+          background: #16a34a;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+        `;
+        priceDiv.appendChild(badge);
+      }
+
+      // Quantity indicator
+      const qtyIndicator = document.createElement('div');
+      qtyIndicator.textContent = `${getCurrentLanguage() === 'ar' ? 'الكمية' : 'Qty'}: ${tier.quantity}x`;
+      qtyIndicator.style.cssText = `
+        font-size: 12px;
+        color: #999;
+      `;
+      priceDiv.appendChild(qtyIndicator);
+
+      // Price (placeholder - will be filled when Zid API ready)
+      const priceText = document.createElement('div');
+      priceText.textContent = `$${(tier.price || 0).toFixed(2)}`;
+      priceText.style.cssText = `
+        font-size: 18px;
+        font-weight: 700;
+        color: #272067;
+      `;
+      priceDiv.appendChild(priceText);
+
+      contentDiv.appendChild(leftDiv);
+      contentDiv.appendChild(priceDiv);
+
+      tierDiv.appendChild(radioDiv);
+      tierDiv.appendChild(contentDiv);
+
+      tierDiv.addEventListener('click', () => {
+        this.selectTier(tier, campaign);
+      });
+
+      return tierDiv;
+    },
+
+    async selectTier(tier, campaign) {
+      try {
+        const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
+        const productId = productIdInput?.value || this.currentProductId;
+
+        if (!productId) {
+          console.error('Product ID not found');
+          return;
+        }
+
+        const quantity = tier.quantity || 1;
+        const form = document.querySelector('form');
+
+        // Try Vitrin API first, fallback to Legacy
+        if (window.vitrin === true && zid.cart?.addProduct) {
+          await zid.cart.addProduct({
+            product_id: productId,
+            quantity: quantity,
+            showErrorNotification: true
+          });
+        } else if (zid.store?.cart?.addProduct) {
+          await zid.store.cart.addProduct({
+            formId: form?.id,
+            showErrorNotification: true
+          });
+        }
+
+        // Update cart badge
+        if (typeof setCartBadge === 'function') {
+          setCartBadge();
+        }
+
+        // Re-render to show selected tier
+        this.render(campaign, this.currentProductId);
+      } catch (error) {
+        console.error('Error selecting tier:', error);
+      }
+    },
+
+    render(campaign, productId) {
+      // Don't render if campaign doesn't match product
+      if (!campaign.selectedProducts?.some(p => p.id === productId)) {
+        return;
+      }
+
+      this.currentProductId = productId;
+
+      // Clear existing container
+      if (this.containerElement) {
+        this.containerElement.innerHTML = '';
+      } else {
+        this.createContainer();
+      }
+
+      // Title
+      const titleDiv = document.createElement('div');
+      titleDiv.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      `;
+
+      const titleText = document.createElement('h3');
+      titleText.textContent = campaign.titleEn || 'Bundle & Save';
+      titleText.style.cssText = `
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #222;
+      `;
+
+      const divider = document.createElement('div');
+      divider.style.cssText = `
+        flex: 1;
+        height: 1px;
+        background: #ddd;
+        margin: 0 12px;
+      `;
+
+      titleDiv.appendChild(divider);
+      titleDiv.appendChild(titleText);
+      titleDiv.appendChild(divider.cloneNode());
+
+      this.containerElement.appendChild(titleDiv);
+
+      // Render tiers
+      if (campaign.tiers && campaign.tiers.length > 0) {
+        campaign.tiers.forEach((tier, index) => {
+          const tierElement = this.renderTier(tier, campaign, false, index);
+          this.containerElement.appendChild(tierElement);
+        });
+      }
+
+      // Insert into DOM after price section
+      const priceSection = document.querySelector('.product-price, .price-section, [data-price]');
+      if (priceSection && priceSection.parentNode) {
+        priceSection.parentNode.insertBefore(this.containerElement, priceSection.nextSibling);
+      } else {
+        document.body.appendChild(this.containerElement);
+      }
+    },
+
+    initialize() {
+      this.fetchCampaigns().then(campaigns => {
+        if (campaigns.length === 0) return;
+
+        // Watch for product page loads
+        const observer = new MutationObserver(() => {
+          const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
+          const productId = productIdInput?.value;
+
+          if (productId && productId !== this.currentProductId) {
+            const matchingCampaign = campaigns.find(c => 
+              c.selectedProducts?.some(p => p.id === productId) && c.status === 'active'
+            );
+
+            if (matchingCampaign) {
+              this.render(matchingCampaign, productId);
+            } else if (this.containerElement) {
+              this.containerElement.remove();
+              this.containerElement = null;
+            }
+          }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Initial check
+        const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
+        const productId = productIdInput?.value;
+        if (productId) {
+          const matchingCampaign = campaigns.find(c => 
+            c.selectedProducts?.some(p => p.id === productId) && c.status === 'active'
+          );
+          if (matchingCampaign) {
+            this.render(matchingCampaign, productId);
+          }
+        }
+      });
+    }
+  };
+
+  QuantityBreaks.initialize();
+}
+
+
+
 })();
