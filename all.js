@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.0'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.1'
 // Created by HMStudio
 
 (function() {
@@ -4833,18 +4833,12 @@ observer.observe(document.body, {
     }
   }
 
-// Quantity Breaks Feature Script
+
+
+ // =============== QUANTITY BREAKS FEATURE ===============
 
 if (params.quantityBreaks) {
   console.log('Initializing Quantity Breaks feature');
-
-  function getCurrentLanguage() {
-    return document.documentElement.lang || 'ar';
-  }
-
-  function isMobile() {
-    return window.innerWidth <= 768;
-  }
 
   const QuantityBreaks = {
     campaigns: [],
@@ -4854,315 +4848,143 @@ if (params.quantityBreaks) {
     async fetchCampaigns() {
       try {
         const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getQuantityBreaksData?storeId=${storeId}`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch campaigns: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Failed: ${response.statusText}`);
         
         const data = await response.json();
         this.campaigns = data.activeCampaigns || [];
+        console.log('QB Campaigns:', this.campaigns);
         return this.campaigns;
       } catch (error) {
-        console.error('Error fetching Quantity Breaks campaigns:', error);
+        console.error('Error fetching QB campaigns:', error);
         return [];
       }
     },
 
-    createContainer() {
-      if (this.containerElement) {
-        this.containerElement.remove();
-      }
-
-      const container = document.createElement('div');
-      container.id = 'hmstudio-quantity-breaks';
-      container.style.cssText = `
-        width: 100%;
-        padding: ${isMobile() ? '12px' : '20px'};
-        margin: ${isMobile() ? '12px 0' : '20px 0'};
-        background: white;
-        border-radius: 8px;
-        direction: ${getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};
-      `;
-
-      this.containerElement = container;
-      return container;
+    findActiveCampaignForProduct(productId) {
+      return this.campaigns.find(c => 
+        c.status === 'active' && 
+        c.selectedProducts?.some(p => p.id === productId)
+      );
     },
 
-    renderTier(tier, campaign, isSelected, index) {
-      const tierDiv = document.createElement('div');
-      tierDiv.style.cssText = `
-        display: flex;
-        align-items: center;
-        padding: ${isMobile() ? '12px' : '16px'};
-        margin-bottom: 12px;
-        border: 2px solid ${isSelected ? '#272067' : '#ddd'};
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-        background: ${isSelected ? '#f8f6ff' : '#fff'};
-      `;
+    getProductId() {
+      const selectors = [
+        '#product-parent-id',
+        '#product-form #product-id',
+        'form#product-form input#product-id',
+        'input[name="product_id"]'
+      ];
 
-      tierDiv.onmouseover = () => {
-        if (!isSelected) tierDiv.style.borderColor = '#bbb';
-      };
-      tierDiv.onmouseout = () => {
-        if (!isSelected) tierDiv.style.borderColor = '#ddd';
-      };
-
-      // Radio button
-      const radioDiv = document.createElement('div');
-      radioDiv.style.cssText = `
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 2px solid ${isSelected ? '#272067' : '#ddd'};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-${getCurrentLanguage() === 'ar' ? 'left' : 'right'}: 12px;
-      `;
-
-      if (isSelected) {
-        const dot = document.createElement('div');
-        dot.style.cssText = `
-          width: 12px;
-          height: 12px;
-          background: #272067;
-          border-radius: 50%;
-        `;
-        radioDiv.appendChild(dot);
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) return el.value || el.getAttribute('value');
       }
-
-      // Tier content
-      const contentDiv = document.createElement('div');
-      contentDiv.style.cssText = `
-        flex: 1;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-      `;
-
-      const leftDiv = document.createElement('div');
-      const tierTitle = document.createElement('div');
-      tierTitle.textContent = tier.titleEn || `Tier ${index + 1}`;
-      tierTitle.style.cssText = `
-        font-weight: 600;
-        font-size: 16px;
-        color: #222;
-      `;
-      leftDiv.appendChild(tierTitle);
-
-      const tierSubtitle = document.createElement('div');
-      tierSubtitle.textContent = tier.subtitleEn || '';
-      tierSubtitle.style.cssText = `
-        font-size: 14px;
-        color: #666;
-        margin-top: 4px;
-      `;
-      leftDiv.appendChild(tierSubtitle);
-
-      // Price section
-      const priceDiv = document.createElement('div');
-      priceDiv.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        align-items: ${getCurrentLanguage() === 'ar' ? 'flex-start' : 'flex-end'};
-        gap: 4px;
-      `;
-
-      // Badge if present
-      if (tier.badgeText) {
-        const badge = document.createElement('div');
-        badge.textContent = tier.badgeText;
-        badge.style.cssText = `
-          background: #16a34a;
-          color: white;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 600;
-        `;
-        priceDiv.appendChild(badge);
-      }
-
-      // Quantity indicator
-      const qtyIndicator = document.createElement('div');
-      qtyIndicator.textContent = `${getCurrentLanguage() === 'ar' ? 'الكمية' : 'Qty'}: ${tier.quantity}x`;
-      qtyIndicator.style.cssText = `
-        font-size: 12px;
-        color: #999;
-      `;
-      priceDiv.appendChild(qtyIndicator);
-
-      // Price (placeholder - will be filled when Zid API ready)
-      const priceText = document.createElement('div');
-      priceText.textContent = `$${(tier.price || 0).toFixed(2)}`;
-      priceText.style.cssText = `
-        font-size: 18px;
-        font-weight: 700;
-        color: #272067;
-      `;
-      priceDiv.appendChild(priceText);
-
-      contentDiv.appendChild(leftDiv);
-      contentDiv.appendChild(priceDiv);
-
-      tierDiv.appendChild(radioDiv);
-      tierDiv.appendChild(contentDiv);
-
-      tierDiv.addEventListener('click', () => {
-        this.selectTier(tier, campaign);
-      });
-
-      return tierDiv;
-    },
-
-    async selectTier(tier, campaign) {
-      try {
-        const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
-        const productId = productIdInput?.value || this.currentProductId;
-
-        if (!productId) {
-          console.error('Product ID not found');
-          return;
-        }
-
-        const quantity = tier.quantity || 1;
-        const form = document.querySelector('form');
-
-        // Try Vitrin API first, fallback to Legacy
-        if (window.vitrin === true && zid.cart?.addProduct) {
-          await zid.cart.addProduct({
-            product_id: productId,
-            quantity: quantity,
-            showErrorNotification: true
-          });
-        } else if (zid.store?.cart?.addProduct) {
-          await zid.store.cart.addProduct({
-            formId: form?.id,
-            showErrorNotification: true
-          });
-        }
-
-        // Update cart badge
-        if (typeof setCartBadge === 'function') {
-          setCartBadge();
-        }
-
-        // Re-render to show selected tier
-        this.render(campaign, this.currentProductId);
-      } catch (error) {
-        console.error('Error selecting tier:', error);
-      }
+      return null;
     },
 
     render(campaign, productId) {
-      // Don't render if campaign doesn't match product
-      if (!campaign.selectedProducts?.some(p => p.id === productId)) {
-        return;
-      }
+      if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
 
-      this.currentProductId = productId;
-
-      // Clear existing container
       if (this.containerElement) {
         this.containerElement.innerHTML = '';
       } else {
-        this.createContainer();
+        this.containerElement = document.createElement('div');
+        this.containerElement.id = `hmstudio-quantity-breaks-${productId}`;
+        this.containerElement.style.cssText = `
+          width: 100%;
+          padding: 20px;
+          margin: 20px 0;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+        `;
       }
 
       // Title
-      const titleDiv = document.createElement('div');
-      titleDiv.style.cssText = `
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      `;
-
-      const titleText = document.createElement('h3');
-      titleText.textContent = campaign.titleEn || 'Bundle & Save';
-      titleText.style.cssText = `
-        margin: 0;
-        font-size: 18px;
-        font-weight: 700;
-        color: #222;
-      `;
-
-      const divider = document.createElement('div');
-      divider.style.cssText = `
-        flex: 1;
-        height: 1px;
-        background: #ddd;
-        margin: 0 12px;
-      `;
-
-      titleDiv.appendChild(divider);
-      titleDiv.appendChild(titleText);
-      titleDiv.appendChild(divider.cloneNode());
-
-      this.containerElement.appendChild(titleDiv);
+      const title = document.createElement('h3');
+      title.textContent = campaign.titleEn || 'Bundle & Save';
+      title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px;';
+      this.containerElement.appendChild(title);
 
       // Render tiers
-      if (campaign.tiers && campaign.tiers.length > 0) {
-        campaign.tiers.forEach((tier, index) => {
-          const tierElement = this.renderTier(tier, campaign, false, index);
-          this.containerElement.appendChild(tierElement);
+      if (campaign.tiers?.length) {
+        campaign.tiers.forEach((tier, idx) => {
+          const tierDiv = document.createElement('div');
+          tierDiv.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+          `;
+
+          tierDiv.innerHTML = `
+            <input type="radio" name="tier" value="${tier.id}" style="margin-right: 12px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">${tier.titleEn}</div>
+              <div style="font-size: 12px; color: #666;">Qty: ${tier.quantity}x</div>
+            </div>
+            <div style="font-weight: 700; color: #272067; font-size: 16px;">$${tier.price}</div>
+          `;
+
+          tierDiv.addEventListener('click', () => {
+            document.querySelector(`input[value="${tier.id}"]`).checked = true;
+          });
+
+          this.containerElement.appendChild(tierDiv);
         });
       }
 
-      // Insert into DOM after price section
-      const priceSection = document.querySelector('.product-price, .price-section, [data-price]');
-      if (priceSection && priceSection.parentNode) {
-        priceSection.parentNode.insertBefore(this.containerElement, priceSection.nextSibling);
+      // Insert after .section-out-of-stock-notify-me
+      const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
+      if (insertPoint?.parentNode) {
+        insertPoint.parentNode.insertBefore(this.containerElement, insertPoint.nextSibling);
       } else {
-        document.body.appendChild(this.containerElement);
+        const form = document.querySelector('#product-form');
+        if (form) form.appendChild(this.containerElement);
       }
     },
 
-    initialize() {
-      this.fetchCampaigns().then(campaigns => {
-        if (campaigns.length === 0) return;
+    async initialize() {
+      await this.fetchCampaigns();
 
-        // Watch for product page loads
-        const observer = new MutationObserver(() => {
-          const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
-          const productId = productIdInput?.value;
+      // Check if on product page
+      const isProductPage = !!document.querySelector('#product-form');
+      if (!isProductPage) return;
 
-          if (productId && productId !== this.currentProductId) {
-            const matchingCampaign = campaigns.find(c => 
-              c.selectedProducts?.some(p => p.id === productId) && c.status === 'active'
-            );
+      const productId = this.getProductId();
+      if (!productId) return;
 
-            if (matchingCampaign) {
-              this.render(matchingCampaign, productId);
-            } else if (this.containerElement) {
-              this.containerElement.remove();
-              this.containerElement = null;
-            }
-          }
-        });
+      const campaign = this.findActiveCampaignForProduct(productId);
+      if (campaign) {
+        this.render(campaign, productId);
+      }
 
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // Initial check
-        const productIdInput = document.querySelector('#product-id, input[name="product_id"], input[name="id"]');
-        const productId = productIdInput?.value;
-        if (productId) {
-          const matchingCampaign = campaigns.find(c => 
-            c.selectedProducts?.some(p => p.id === productId) && c.status === 'active'
-          );
-          if (matchingCampaign) {
-            this.render(matchingCampaign, productId);
+      // Watch for DOM changes
+      const observer = new MutationObserver(() => {
+        const newProductId = this.getProductId();
+        if (newProductId && newProductId !== this.currentProductId) {
+          this.currentProductId = newProductId;
+          const newCampaign = this.findActiveCampaignForProduct(newProductId);
+          if (newCampaign) {
+            this.render(newCampaign, newProductId);
+          } else if (this.containerElement) {
+            this.containerElement.remove();
           }
         }
       });
+
+      observer.observe(document.body, { childList: true, subtree: true });
     }
   };
 
-  QuantityBreaks.initialize();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => QuantityBreaks.initialize());
+  } else {
+    QuantityBreaks.initialize();
+  }
 }
 
 
