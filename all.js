@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.1'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.2'
 // Created by HMStudio
 
 (function() {
@@ -4848,23 +4848,24 @@ if (params.quantityBreaks) {
     async fetchCampaigns() {
       try {
         const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getQuantityBreaksData?storeId=${storeId}`);
-        if (!response.ok) throw new Error(`Failed: ${response.statusText}`);
-        
         const data = await response.json();
         this.campaigns = data.activeCampaigns || [];
-        console.log('QB Campaigns:', this.campaigns);
+        console.log('QB Campaigns fetched:', this.campaigns);
         return this.campaigns;
       } catch (error) {
-        console.error('Error fetching QB campaigns:', error);
+        console.error('QB Error fetching campaigns:', error);
         return [];
       }
     },
 
     findActiveCampaignForProduct(productId) {
-      return this.campaigns.find(c => 
+      console.log('QB Looking for campaign for product:', productId);
+      const campaign = this.campaigns.find(c => 
         c.status === 'active' && 
         c.selectedProducts?.some(p => p.id === productId)
       );
+      console.log('QB Found campaign:', campaign);
+      return campaign;
     },
 
     getProductId() {
@@ -4877,13 +4878,23 @@ if (params.quantityBreaks) {
 
       for (const selector of selectors) {
         const el = document.querySelector(selector);
-        if (el) return el.value || el.getAttribute('value');
+        if (el) {
+          const id = el.value || el.getAttribute('value');
+          console.log('QB Found product ID:', id, 'from selector:', selector);
+          return id;
+        }
       }
+      console.log('QB No product ID found');
       return null;
     },
 
     render(campaign, productId) {
-      if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
+      console.log('QB Rendering for product:', productId, 'campaign:', campaign);
+      
+      if (!campaign?.selectedProducts?.some(p => p.id === productId)) {
+        console.log('QB Campaign does not match product');
+        return;
+      }
 
       if (this.containerElement) {
         this.containerElement.innerHTML = '';
@@ -4895,49 +4906,71 @@ if (params.quantityBreaks) {
           padding: 20px;
           margin: 20px 0;
           background: white;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #ddd;
           border-radius: 8px;
         `;
       }
 
-      // Title
       const title = document.createElement('h3');
       title.textContent = campaign.titleEn || 'Bundle & Save';
-      title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px;';
+      title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;';
       this.containerElement.appendChild(title);
 
-      // Render tiers
       if (campaign.tiers?.length) {
-        campaign.tiers.forEach((tier, idx) => {
+        campaign.tiers.forEach((tier) => {
           const tierDiv = document.createElement('div');
           tierDiv.style.cssText = `
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: 16px;
             margin-bottom: 12px;
             border: 2px solid #ddd;
             border-radius: 8px;
             cursor: pointer;
+            transition: all 0.2s;
           `;
+          tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
+          tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
           tierDiv.innerHTML = `
-            <input type="radio" name="tier" value="${tier.id}" style="margin-right: 12px;">
+            <input type="radio" name="tier-${productId}" value="${tier.id}" style="margin-right: 16px; cursor: pointer;">
             <div style="flex: 1;">
-              <div style="font-weight: 600;">${tier.titleEn}</div>
-              <div style="font-size: 12px; color: #666;">Qty: ${tier.quantity}x</div>
+              <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
+              <div style="font-size: 12px; color: #666; margin-top: 4px;">${tier.subtitleEn}</div>
             </div>
-            <div style="font-weight: 700; color: #272067; font-size: 16px;">$${tier.price}</div>
+            <div style="text-align: right;">
+              ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
+              <div style="font-weight: 700; color: #272067; font-size: 18px;">$${parseFloat(tier.price).toFixed(2)}</div>
+            </div>
           `;
 
           tierDiv.addEventListener('click', () => {
-            document.querySelector(`input[value="${tier.id}"]`).checked = true;
+            document.querySelector(`input[name="tier-${productId}"][value="${tier.id}"]`).checked = true;
           });
 
           this.containerElement.appendChild(tierDiv);
         });
+
+        // Add to cart button
+        const btnDiv = document.createElement('div');
+        btnDiv.style.cssText = 'margin-top: 16px;';
+        const btn = document.createElement('button');
+        btn.textContent = 'Add Selected Tier to Cart';
+        btn.style.cssText = `
+          width: 100%;
+          padding: 12px;
+          background: #16a34a;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        `;
+        btn.onclick = () => this.handleAddToCart(productId);
+        btnDiv.appendChild(btn);
+        this.containerElement.appendChild(btnDiv);
       }
 
-      // Insert after .section-out-of-stock-notify-me
       const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
       if (insertPoint?.parentNode) {
         insertPoint.parentNode.insertBefore(this.containerElement, insertPoint.nextSibling);
@@ -4945,33 +4978,72 @@ if (params.quantityBreaks) {
         const form = document.querySelector('#product-form');
         if (form) form.appendChild(this.containerElement);
       }
+      console.log('QB Rendered successfully');
+    },
+
+    async handleAddToCart(productId) {
+      console.log('QB Adding to cart for product:', productId);
+      const selectedTier = document.querySelector(`input[name="tier-${productId}"]:checked`);
+      if (!selectedTier) {
+        alert('Please select a tier');
+        return;
+      }
+
+      const qty = selectedTier.value; // tier quantity
+      const form = document.querySelector('#product-form');
+      
+      try {
+        if (window.vitrin === true) {
+          await zid.cart.addProduct({
+            product_id: productId,
+            quantity: qty,
+            showErrorNotification: true
+          });
+        } else {
+          await zid.store.cart.addProduct({
+            formId: form?.id,
+            showErrorNotification: true
+          });
+        }
+        console.log('QB Product added to cart');
+      } catch (error) {
+        console.error('QB Error adding to cart:', error);
+      }
     },
 
     async initialize() {
+      console.log('QB Initialize called');
       await this.fetchCampaigns();
 
-      // Check if on product page
       const isProductPage = !!document.querySelector('#product-form');
-      if (!isProductPage) return;
+      console.log('QB Is product page:', isProductPage);
+      if (!isProductPage) {
+        console.log('QB Not a product page, exiting');
+        return;
+      }
 
       const productId = this.getProductId();
-      if (!productId) return;
+      console.log('QB Got product ID:', productId);
+      if (!productId) {
+        console.log('QB No product ID found, exiting');
+        return;
+      }
 
       const campaign = this.findActiveCampaignForProduct(productId);
       if (campaign) {
         this.render(campaign, productId);
+      } else {
+        console.log('QB No active campaign found');
       }
 
-      // Watch for DOM changes
       const observer = new MutationObserver(() => {
         const newProductId = this.getProductId();
         if (newProductId && newProductId !== this.currentProductId) {
+          console.log('QB Product changed to:', newProductId);
           this.currentProductId = newProductId;
           const newCampaign = this.findActiveCampaignForProduct(newProductId);
           if (newCampaign) {
             this.render(newCampaign, newProductId);
-          } else if (this.containerElement) {
-            this.containerElement.remove();
           }
         }
       });
@@ -4980,6 +5052,7 @@ if (params.quantityBreaks) {
     }
   };
 
+  console.log('QB About to initialize');
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => QuantityBreaks.initialize());
   } else {
