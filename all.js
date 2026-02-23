@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.4'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.5'
 // Created by HMStudio
 
 (function() {
@@ -4889,11 +4889,27 @@ if (params.quantityBreaks) {
       return null;
     },
 
-    render(campaign, productId) {
+    async render(campaign, productId) {
   if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
 
   const lang = getCurrentLanguage();
   const isArabic = lang === 'ar';
+
+  // Fetch full product data to get correct price
+  let productData;
+  try {
+    if (window.vitrin === true) {
+      productData = await zid.products.get(productId);
+    } else {
+      const response = await zid.store.product.fetch(productId);
+      productData = response.data.product;
+    }
+  } catch (error) {
+    console.error('QB Error fetching product:', error);
+    return;
+  }
+
+  const basePrice = productData.price || productData.gross_price || 0;
 
   if (this.containerElement) {
     this.containerElement.innerHTML = '';
@@ -4903,7 +4919,6 @@ if (params.quantityBreaks) {
     this.containerElement.style.cssText = `width: 100%; padding: 20px; margin: 20px 0; background: white; border: 1px solid #ddd; border-radius: 8px;`;
   }
 
-  // Use Arabic title if available
   const title = document.createElement('h3');
   title.textContent = isArabic ? (campaign.titleAr || campaign.titleEn) : (campaign.titleEn || campaign.titleAr);
   title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;';
@@ -4911,9 +4926,6 @@ if (params.quantityBreaks) {
 
   if (campaign.tiers?.length) {
     campaign.tiers.forEach((tier) => {
-      // Get product price from selectedProducts
-      const selectedProduct = campaign.selectedProducts?.find(p => p.id === productId);
-      const basePrice = parseFloat(selectedProduct?.price || 0);
       const tierPrice = parseFloat(tier.price || basePrice);
 
       const tierDiv = document.createElement('div');
@@ -4924,8 +4936,8 @@ if (params.quantityBreaks) {
       tierDiv.innerHTML = `
         <input type="radio" name="tier-${productId}" value="${tier.quantity}" style="margin-right: 16px; cursor: pointer;">
         <div style="flex: 1;">
-          <div style="font-weight: 600; font-size: 16px;">${isArabic ? (tier.titleAr || tier.titleEn) : (tier.titleEn || tier.titleAr)}</div>
-          <div style="font-size: 12px; color: #666; margin-top: 4px;">${isArabic ? (tier.subtitleAr || tier.subtitleEn || '') : (tier.subtitleEn || tier.subtitleAr || '')}</div>
+          <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">${tier.subtitleEn || ''}</div>
         </div>
         <div style="text-align: right;">
           ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
@@ -4957,6 +4969,7 @@ if (params.quantityBreaks) {
     const form = document.querySelector('#product-form');
     if (form) form.appendChild(this.containerElement);
   }
+
 
       console.log('QB Rendered successfully');
     },
