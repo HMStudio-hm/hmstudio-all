@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.7'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.8'
 // Created by HMStudio
 
 (function() {
@@ -4903,12 +4903,21 @@ if (params.quantityBreaks) {
       const response = await zid.store.product.fetch(productId);
       productData = response.data.product;
     }
+    console.log('QB Product data:', productData);
   } catch (error) {
     console.error('QB Error fetching product:', error);
     return;
   }
 
-  const basePrice = productData.price || 0;
+  // Extract price from formatted_price like Upsell does
+  let basePrice = 0;
+  if (productData.formatted_price) {
+    const priceText = productData.formatted_price.replace(/[^\d.]/g, '');
+    basePrice = parseFloat(priceText) || 0;
+  } else if (productData.price) {
+    basePrice = parseFloat(productData.price) || 0;
+  }
+
   const currency = productData.currency_symbol || '$';
   const variants = productData.variants || productData.options || [];
 
@@ -4930,11 +4939,10 @@ if (params.quantityBreaks) {
       const tierPrice = parseFloat(tier.price || basePrice);
 
       const tierDiv = document.createElement('div');
-      tierDiv.style.cssText = `display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;`;
+      tierDiv.style.cssText = `display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px;`;
       tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
       tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
-      // Top row: radio + title + price
       const topRow = document.createElement('div');
       topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
       
@@ -4952,11 +4960,10 @@ if (params.quantityBreaks) {
 
       tierDiv.appendChild(topRow);
 
-      // Add variant selectors if product has variants
+      // Add variants if any
       if (variants.length > 0) {
         const variantsRow = document.createElement('div');
         variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
-        variantsRow.className = `tier-variants-${tier.id}`;
 
         variants.forEach((variant) => {
           if (!variant.choices || variant.choices.length === 0) return;
@@ -5012,6 +5019,7 @@ if (params.quantityBreaks) {
     const form = document.querySelector('#product-form');
     if (form) form.appendChild(this.containerElement);
   }
+
 
   
       console.log('QB Rendered successfully');
