@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.8'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.9'
 // Created by HMStudio
 
 (function() {
@@ -4903,20 +4903,31 @@ if (params.quantityBreaks) {
       const response = await zid.store.product.fetch(productId);
       productData = response.data.product;
     }
-    console.log('QB Product data:', productData);
+    console.log('QB Full product data:', JSON.stringify(productData, null, 2));
   } catch (error) {
     console.error('QB Error fetching product:', error);
     return;
   }
 
-  // Extract price from formatted_price like Upsell does
+  console.log('QB Raw price:', productData.price);
+  console.log('QB Raw formatted_price:', productData.formatted_price);
+  console.log('QB Raw effective_price:', productData.effective_price);
+
   let basePrice = 0;
   if (productData.formatted_price) {
     const priceText = productData.formatted_price.replace(/[^\d.]/g, '');
-    basePrice = parseFloat(priceText) || 0;
+    console.log('QB After regex remove non-numeric:', priceText);
+    basePrice = parseFloat(priceText);
+    console.log('QB Parsed basePrice from formatted_price:', basePrice);
+  } else if (productData.effective_price) {
+    basePrice = parseFloat(productData.effective_price);
+    console.log('QB Using effective_price:', basePrice);
   } else if (productData.price) {
-    basePrice = parseFloat(productData.price) || 0;
+    basePrice = parseFloat(productData.price);
+    console.log('QB Using price:', basePrice);
   }
+
+  console.log('QB Final basePrice:', basePrice);
 
   const currency = productData.currency_symbol || '$';
   const variants = productData.variants || productData.options || [];
@@ -4937,6 +4948,7 @@ if (params.quantityBreaks) {
   if (campaign.tiers?.length) {
     campaign.tiers.forEach((tier) => {
       const tierPrice = parseFloat(tier.price || basePrice);
+      console.log(`QB Tier: ${tier.titleEn} - tier.price: ${tier.price}, basePrice: ${basePrice}, final: ${tierPrice}`);
 
       const tierDiv = document.createElement('div');
       tierDiv.style.cssText = `display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px;`;
@@ -4960,7 +4972,6 @@ if (params.quantityBreaks) {
 
       tierDiv.appendChild(topRow);
 
-      // Add variants if any
       if (variants.length > 0) {
         const variantsRow = document.createElement('div');
         variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
@@ -5020,8 +5031,6 @@ if (params.quantityBreaks) {
     if (form) form.appendChild(this.containerElement);
   }
 
-
-  
       console.log('QB Rendered successfully');
     },
 
