@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.6'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.7'
 // Created by HMStudio
 
 (function() {
@@ -4892,8 +4892,6 @@ if (params.quantityBreaks) {
     async render(campaign, productId) {
   if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
 
-  console.log('QB Rendering for product:', productId);
-
   const lang = getCurrentLanguage();
   const isArabic = lang === 'ar';
 
@@ -4905,16 +4903,14 @@ if (params.quantityBreaks) {
       const response = await zid.store.product.fetch(productId);
       productData = response.data.product;
     }
-    console.log('QB Full product data:', productData);
-    console.log('QB Product price:', productData.price);
-    console.log('QB Product gross_price:', productData.gross_price);
   } catch (error) {
     console.error('QB Error fetching product:', error);
     return;
   }
 
-  const basePrice = productData.price || productData.gross_price || 0;
-  console.log('QB Base price used:', basePrice);
+  const basePrice = productData.price || 0;
+  const currency = productData.currency_symbol || '$';
+  const variants = productData.variants || productData.options || [];
 
   if (this.containerElement) {
     this.containerElement.innerHTML = '';
@@ -4932,24 +4928,65 @@ if (params.quantityBreaks) {
   if (campaign.tiers?.length) {
     campaign.tiers.forEach((tier) => {
       const tierPrice = parseFloat(tier.price || basePrice);
-      console.log('QB Tier:', tier.titleEn, 'tierPrice:', tierPrice, 'basePrice:', basePrice);
 
       const tierDiv = document.createElement('div');
-      tierDiv.style.cssText = `display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;`;
+      tierDiv.style.cssText = `display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;`;
       tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
       tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
-      tierDiv.innerHTML = `
-        <input type="radio" name="tier-${productId}" value="${tier.quantity}" style="margin-right: 16px; cursor: pointer;">
+      // Top row: radio + title + price
+      const topRow = document.createElement('div');
+      topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
+      
+      topRow.innerHTML = `
+        <input type="radio" name="tier-${productId}" value="${tier.quantity}" style="cursor: pointer;">
         <div style="flex: 1;">
           <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
-          <div style="font-size: 12px; color: #666; margin-top: 4px;">${tier.subtitleEn || ''}</div>
+          <div style="font-size: 12px; color: #666;">${tier.subtitleEn || ''}</div>
         </div>
         <div style="text-align: right;">
           ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
-          <div style="font-weight: 700; color: #272067; font-size: 18px;">$${tierPrice.toFixed(2)}</div>
+          <div style="font-weight: 700; color: #272067; font-size: 18px;">${currency}${tierPrice.toFixed(2)}</div>
         </div>
       `;
+
+      tierDiv.appendChild(topRow);
+
+      // Add variant selectors if product has variants
+      if (variants.length > 0) {
+        const variantsRow = document.createElement('div');
+        variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
+        variantsRow.className = `tier-variants-${tier.id}`;
+
+        variants.forEach((variant) => {
+          if (!variant.choices || variant.choices.length === 0) return;
+
+          const selectWrapper = document.createElement('div');
+          selectWrapper.style.cssText = `flex: 1; min-width: 150px;`;
+
+          const select = document.createElement('select');
+          select.className = `variant-select-${tier.id}`;
+          select.style.cssText = `width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;`;
+          select.name = variant.slug || variant.name;
+
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = isArabic ? `اختر ${variant.name}` : `Select ${variant.name}`;
+          select.appendChild(placeholder);
+
+          variant.choices.forEach(choice => {
+            const option = document.createElement('option');
+            option.value = choice;
+            option.textContent = choice;
+            select.appendChild(option);
+          });
+
+          selectWrapper.appendChild(select);
+          variantsRow.appendChild(selectWrapper);
+        });
+
+        tierDiv.appendChild(variantsRow);
+      }
 
       tierDiv.addEventListener('click', () => {
         document.querySelector(`input[name="tier-${productId}"][value="${tier.quantity}"]`).checked = true;
@@ -4975,33 +5012,42 @@ if (params.quantityBreaks) {
     const form = document.querySelector('#product-form');
     if (form) form.appendChild(this.containerElement);
   }
+
   
       console.log('QB Rendered successfully');
     },
 
     async handleAddToCart(productId) {
-      console.log('QB Adding to cart for product:', productId);
-      const selectedTier = document.querySelector(`input[name="tier-${productId}"]:checked`);
-      if (!selectedTier) {
-        alert('Please select a tier');
-        return;
-      }
+  const selectedTier = document.querySelector(`input[name="tier-${productId}"]:checked`);
+  if (!selectedTier) {
+    alert('Please select a tier');
+    return;
+  }
 
-      const qty = selectedTier.value; // tier quantity
-      const form = document.querySelector('#product-form');
-      
-      try {
-        if (window.vitrin === true) {
-          await zid.cart.addProduct({
-            product_id: productId,
-            quantity: qty,
-            showErrorNotification: true
-          });
-        } else {
-          await zid.store.cart.addProduct({
-            formId: form?.id,
-            showErrorNotification: true
-          });
+  const qty = parseInt(selectedTier.value);
+  
+  // Collect variant selections if any
+  const variantSelects = document.querySelectorAll(`[class*="variant-select-"]`);
+  const selectedVariants = {};
+  variantSelects.forEach(select => {
+    if (select.value) {
+      selectedVariants[select.name] = select.value;
+    }
+  });
+
+  console.log('QB Selected variants:', selectedVariants);
+
+  try {
+    if (window.vitrin === true) {
+      await zid.cart.addProduct({
+        product_id: productId,
+        quantity: qty,
+        showErrorNotification: true
+      });
+    } else {
+      await zid.store.cart.addProduct({
+        showErrorNotification: true
+      });
         }
         console.log('QB Product added to cart');
       } catch (error) {
