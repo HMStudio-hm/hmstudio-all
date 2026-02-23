@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.3'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.4'
 // Created by HMStudio
 
 (function() {
@@ -4890,95 +4890,74 @@ if (params.quantityBreaks) {
     },
 
     render(campaign, productId) {
-      console.log('QB Rendering for product:', productId, 'campaign:', campaign);
-      
-      if (!campaign?.selectedProducts?.some(p => p.id === productId)) {
-        console.log('QB Campaign does not match product');
-        return;
-      }
+  if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
 
-      if (this.containerElement) {
-        this.containerElement.innerHTML = '';
-      } else {
-        this.containerElement = document.createElement('div');
-        this.containerElement.id = `hmstudio-quantity-breaks-${productId}`;
-        this.containerElement.style.cssText = `
-          width: 100%;
-          padding: 20px;
-          margin: 20px 0;
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-        `;
-      }
+  const lang = getCurrentLanguage();
+  const isArabic = lang === 'ar';
 
-      const title = document.createElement('h3');
-      title.textContent = campaign.titleEn || 'Bundle & Save';
-      title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;';
-      this.containerElement.appendChild(title);
+  if (this.containerElement) {
+    this.containerElement.innerHTML = '';
+  } else {
+    this.containerElement = document.createElement('div');
+    this.containerElement.id = `hmstudio-quantity-breaks-${productId}`;
+    this.containerElement.style.cssText = `width: 100%; padding: 20px; margin: 20px 0; background: white; border: 1px solid #ddd; border-radius: 8px;`;
+  }
 
-      if (campaign.tiers?.length) {
-        campaign.tiers.forEach((tier) => {
-          const tierDiv = document.createElement('div');
-          tierDiv.style.cssText = `
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-          `;
-          tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
-          tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
+  // Use Arabic title if available
+  const title = document.createElement('h3');
+  title.textContent = isArabic ? (campaign.titleAr || campaign.titleEn) : (campaign.titleEn || campaign.titleAr);
+  title.style.cssText = 'font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;';
+  this.containerElement.appendChild(title);
 
-          tierDiv.innerHTML = `
-            <input type="radio" name="tier-${productId}" value="${tier.id}" style="margin-right: 16px; cursor: pointer;">
-            <div style="flex: 1;">
-              <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
-              <div style="font-size: 12px; color: #666; margin-top: 4px;">${tier.subtitleEn}</div>
-            </div>
-            <div style="text-align: right;">
-              ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
-              <div style="font-weight: 700; color: #272067; font-size: 18px;">$${parseFloat(tier.price).toFixed(2)}</div>
-            </div>
-          `;
+  if (campaign.tiers?.length) {
+    campaign.tiers.forEach((tier) => {
+      // Get product price from selectedProducts
+      const selectedProduct = campaign.selectedProducts?.find(p => p.id === productId);
+      const basePrice = parseFloat(selectedProduct?.price || 0);
+      const tierPrice = parseFloat(tier.price || basePrice);
 
-          tierDiv.addEventListener('click', () => {
-            document.querySelector(`input[name="tier-${productId}"][value="${tier.id}"]`).checked = true;
-          });
+      const tierDiv = document.createElement('div');
+      tierDiv.style.cssText = `display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;`;
+      tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
+      tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
-          this.containerElement.appendChild(tierDiv);
-        });
+      tierDiv.innerHTML = `
+        <input type="radio" name="tier-${productId}" value="${tier.quantity}" style="margin-right: 16px; cursor: pointer;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; font-size: 16px;">${isArabic ? (tier.titleAr || tier.titleEn) : (tier.titleEn || tier.titleAr)}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">${isArabic ? (tier.subtitleAr || tier.subtitleEn || '') : (tier.subtitleEn || tier.subtitleAr || '')}</div>
+        </div>
+        <div style="text-align: right;">
+          ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
+          <div style="font-weight: 700; color: #272067; font-size: 18px;">$${tierPrice.toFixed(2)}</div>
+        </div>
+      `;
 
-        // Add to cart button
-        const btnDiv = document.createElement('div');
-        btnDiv.style.cssText = 'margin-top: 16px;';
-        const btn = document.createElement('button');
-        btn.textContent = 'Add Selected Tier to Cart';
-        btn.style.cssText = `
-          width: 100%;
-          padding: 12px;
-          background: #16a34a;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-        `;
-        btn.onclick = () => this.handleAddToCart(productId);
-        btnDiv.appendChild(btn);
-        this.containerElement.appendChild(btnDiv);
-      }
+      tierDiv.addEventListener('click', () => {
+        document.querySelector(`input[name="tier-${productId}"][value="${tier.quantity}"]`).checked = true;
+      });
 
-      const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
-      if (insertPoint?.parentNode) {
-        insertPoint.parentNode.insertBefore(this.containerElement, insertPoint.nextSibling);
-      } else {
-        const form = document.querySelector('#product-form');
-        if (form) form.appendChild(this.containerElement);
-      }
+      this.containerElement.appendChild(tierDiv);
+    });
+
+    const btnDiv = document.createElement('div');
+    btnDiv.style.cssText = 'margin-top: 16px;';
+    const btn = document.createElement('button');
+    btn.textContent = isArabic ? 'إضافة إلى السلة' : 'Add to Cart';
+    btn.style.cssText = `width: 100%; padding: 12px; background: #16a34a; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;`;
+    btn.onclick = () => this.handleAddToCart(productId);
+    btnDiv.appendChild(btn);
+    this.containerElement.appendChild(btnDiv);
+  }
+
+  const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
+  if (insertPoint?.parentNode) {
+    insertPoint.parentNode.insertBefore(this.containerElement, insertPoint.nextSibling);
+  } else {
+    const form = document.querySelector('#product-form');
+    if (form) form.appendChild(this.containerElement);
+  }
+
       console.log('QB Rendered successfully');
     },
 
