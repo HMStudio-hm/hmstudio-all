@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.2'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.3'
 // Created by HMStudio
 
 (function() {
@@ -15,8 +15,9 @@
       smartCart: scriptUrl.searchParams.get('smartCart') === 'true',
       slidingCart: scriptUrl.searchParams.get('slidingCart') === 'true',
       upsell: scriptUrl.searchParams.get('upsell') === 'true',
+      quantityBreaks: scriptUrl.searchParams.get('quantityBreaks') === 'true', 
       campaigns: scriptUrl.searchParams.get('campaigns'),
-      upsellCampaigns: scriptUrl.searchParams.get('upsellCampaigns')
+      upsellCampaigns: scriptUrl.searchParams.get('upsellCampaigns'),
     };
   }
 
