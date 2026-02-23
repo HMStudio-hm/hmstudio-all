@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.1'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.2'
 // Created by HMStudio
 
 (function() {
@@ -4903,6 +4903,7 @@ if (params.quantityBreaks) {
       const response = await zid.store.product.fetch(productId);
       productData = response.data.product;
     }
+    console.log('QB Product data:', productData);
   } catch (error) {
     console.error('QB Error fetching product:', error);
     return;
@@ -4919,7 +4920,10 @@ if (params.quantityBreaks) {
   }
 
   const currency = productData.currency_symbol || '$';
-  const variants = productData.variants || productData.options || [];
+  
+  // Use options like Upsell does - this is the correct field
+  const variants = productData.options && productData.options.length > 0 ? productData.options : [];
+  console.log('QB Variants/Options found:', variants);
 
   if (this.containerElement) {
     this.containerElement.innerHTML = '';
@@ -4943,7 +4947,6 @@ if (params.quantityBreaks) {
       tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
       tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
-      // Top row: radio + title + price
       const topRow = document.createElement('div');
       topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
       
@@ -4961,36 +4964,41 @@ if (params.quantityBreaks) {
 
       tierDiv.appendChild(topRow);
 
-      // Variants section - show under tier title
+      // Add variants if product has options
+      console.log('QB Creating variants for tier, options length:', variants.length);
       if (variants.length > 0) {
         const variantsRow = document.createElement('div');
         variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
 
-        variants.forEach((variant) => {
-          if (!variant.choices || variant.choices.length === 0) return;
+        variants.forEach((option) => {
+          console.log('QB Option:', option);
+          if (!option.choices || option.choices.length === 0) {
+            console.log('QB Option has no choices, skipping');
+            return;
+          }
 
           const selectWrapper = document.createElement('div');
           selectWrapper.style.cssText = `flex: 1; min-width: 120px;`;
 
           const label = document.createElement('label');
           label.style.cssText = `display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #333;`;
-          label.textContent = variant.name || variant.slug;
+          label.textContent = option.name || option.slug;
 
           const select = document.createElement('select');
           select.className = `variant-select-${tier.id}`;
           select.style.cssText = `width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;`;
-          select.name = variant.slug || variant.name;
+          select.name = option.slug || option.name;
 
           const placeholder = document.createElement('option');
           placeholder.value = '';
-          placeholder.textContent = isArabic ? `اختر ${variant.name}` : `Select ${variant.name}`;
+          placeholder.textContent = isArabic ? `اختر ${option.name}` : `Select ${option.name}`;
           select.appendChild(placeholder);
 
-          variant.choices.forEach(choice => {
-            const option = document.createElement('option');
-            option.value = choice;
-            option.textContent = choice;
-            select.appendChild(option);
+          option.choices.forEach(choice => {
+            const opt = document.createElement('option');
+            opt.value = choice;
+            opt.textContent = choice;
+            select.appendChild(opt);
           });
 
           selectWrapper.appendChild(label);
@@ -5025,7 +5033,6 @@ if (params.quantityBreaks) {
     const form = document.querySelector('#product-form');
     if (form) form.appendChild(this.containerElement);
   }
-
 
 
       console.log('QB Rendered successfully');
