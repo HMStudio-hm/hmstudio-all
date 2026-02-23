@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.5'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '2.9.6'
 // Created by HMStudio
 
 (function() {
@@ -4892,10 +4892,11 @@ if (params.quantityBreaks) {
     async render(campaign, productId) {
   if (!campaign?.selectedProducts?.some(p => p.id === productId)) return;
 
+  console.log('QB Rendering for product:', productId);
+
   const lang = getCurrentLanguage();
   const isArabic = lang === 'ar';
 
-  // Fetch full product data to get correct price
   let productData;
   try {
     if (window.vitrin === true) {
@@ -4904,12 +4905,16 @@ if (params.quantityBreaks) {
       const response = await zid.store.product.fetch(productId);
       productData = response.data.product;
     }
+    console.log('QB Full product data:', productData);
+    console.log('QB Product price:', productData.price);
+    console.log('QB Product gross_price:', productData.gross_price);
   } catch (error) {
     console.error('QB Error fetching product:', error);
     return;
   }
 
   const basePrice = productData.price || productData.gross_price || 0;
+  console.log('QB Base price used:', basePrice);
 
   if (this.containerElement) {
     this.containerElement.innerHTML = '';
@@ -4927,6 +4932,7 @@ if (params.quantityBreaks) {
   if (campaign.tiers?.length) {
     campaign.tiers.forEach((tier) => {
       const tierPrice = parseFloat(tier.price || basePrice);
+      console.log('QB Tier:', tier.titleEn, 'tierPrice:', tierPrice, 'basePrice:', basePrice);
 
       const tierDiv = document.createElement('div');
       tierDiv.style.cssText = `display: flex; align-items: center; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;`;
@@ -4969,8 +4975,7 @@ if (params.quantityBreaks) {
     const form = document.querySelector('#product-form');
     if (form) form.appendChild(this.containerElement);
   }
-
-
+  
       console.log('QB Rendered successfully');
     },
 
