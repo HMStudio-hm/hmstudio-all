@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.0'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.1'
 // Created by HMStudio
 
 (function() {
@@ -4943,6 +4943,7 @@ if (params.quantityBreaks) {
       tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
       tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
+      // Top row: radio + title + price
       const topRow = document.createElement('div');
       topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
       
@@ -4960,6 +4961,7 @@ if (params.quantityBreaks) {
 
       tierDiv.appendChild(topRow);
 
+      // Variants section - show under tier title
       if (variants.length > 0) {
         const variantsRow = document.createElement('div');
         variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
@@ -4968,11 +4970,15 @@ if (params.quantityBreaks) {
           if (!variant.choices || variant.choices.length === 0) return;
 
           const selectWrapper = document.createElement('div');
-          selectWrapper.style.cssText = `flex: 1; min-width: 150px;`;
+          selectWrapper.style.cssText = `flex: 1; min-width: 120px;`;
+
+          const label = document.createElement('label');
+          label.style.cssText = `display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #333;`;
+          label.textContent = variant.name || variant.slug;
 
           const select = document.createElement('select');
           select.className = `variant-select-${tier.id}`;
-          select.style.cssText = `width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;`;
+          select.style.cssText = `width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;`;
           select.name = variant.slug || variant.name;
 
           const placeholder = document.createElement('option');
@@ -4987,6 +4993,7 @@ if (params.quantityBreaks) {
             select.appendChild(option);
           });
 
+          selectWrapper.appendChild(label);
           selectWrapper.appendChild(select);
           variantsRow.appendChild(selectWrapper);
         });
@@ -5021,9 +5028,9 @@ if (params.quantityBreaks) {
 
 
 
-
       console.log('QB Rendered successfully');
     },
+
 
     async handleAddToCart(productId) {
   const selectedTier = document.querySelector(`input[name="tier-${productId}"]:checked`);
