@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.4'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.5'
 // Created by HMStudio
 
 (function() {
@@ -5025,32 +5025,44 @@ if (params.quantityBreaks) {
 
   // Helper function to match variant
   const matchAndUpdateVariant = (prodId, tierId) => {
-    const selectedValues = {};
-    const options = variants || [];
-    
-    document.querySelectorAll(`select[class*="variant-select-${tierId}"]`).forEach((select, index) => {
-      if (select.value && options[index]) {
-        selectedValues[options[index].slug] = select.value;
-      }
-    });
-
-    const selectedVariant = allVariants.find(variant => {
-      if (!variant.attributes || !variant.id) return false;
-      
-      return variant.attributes.every(attr => {
-        const selected = selectedValues[attr.slug];
-        return selected === attr.value;
-      });
-    });
-
-    if (selectedVariant && selectedVariant.id) {
-      const hiddenInput = document.querySelector('#product-id') || 
-                         document.querySelector('input[name="product_id"]');
-      if (hiddenInput) {
-        hiddenInput.value = selectedVariant.id;
-      }
+  const selectedValues = {};
+  const options = variants || [];
+  
+  // Get all selects for this tier
+  const tiersSelects = document.querySelectorAll(`select[class*="variant-select-${tierId}"]`);
+  
+  tiersSelects.forEach((select, index) => {
+    if (select.value && options[index]) {
+      selectedValues[options[index].slug] = select.value;
+      console.log(`QB Variant [${options[index].slug}]: ${select.value}`);
     }
-  };
+  });
+
+  console.log('QB Selected values:', selectedValues);
+
+  const selectedVariant = allVariants.find(variant => {
+    if (!variant.attributes || !variant.id) return false;
+    
+    const match = variant.attributes.every(attr => {
+      const selected = selectedValues[attr.slug];
+      return selected === attr.value;
+    });
+    
+    if (match) {
+      console.log('QB Found matching variant ID:', variant.id);
+    }
+    return match;
+  });
+
+  if (selectedVariant && selectedVariant.id) {
+    const hiddenInput = document.querySelector('input[name="product_id"]') || 
+                       document.querySelector('#product-id');
+    if (hiddenInput) {
+      hiddenInput.value = selectedVariant.id;
+      console.log('QB Updated product_id to variant:', selectedVariant.id);
+    }
+  }
+};
 
   const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
   if (insertPoint?.parentNode) {
@@ -5086,11 +5098,18 @@ if (params.quantityBreaks) {
   try {
     let response;
     if (window.vitrin === true) {
-      const variantInput = form?.querySelector('input[name="product_id"]');
-      const addProductId = variantInput?.value || productId;
+      // Get product ID from form (variant ID if selected, otherwise base product ID)
+      let finalProductId = productId;
+      const formProductInput = form?.querySelector('input[name="product_id"]') || 
+                               form?.querySelector('#product-id');
+      if (formProductInput?.value) {
+        finalProductId = formProductInput.value;
+      }
+      
+      console.log('QB Adding to cart - Product ID:', finalProductId, 'Qty:', qty);
       
       response = await zid.cart.addProduct({
-        product_id: addProductId,
+        product_id: finalProductId,
         quantity: qty,
         showErrorNotification: false
       });
@@ -5117,9 +5136,12 @@ if (params.quantityBreaks) {
       document.body.appendChild(toast);
       
       setTimeout(() => toast.remove(), 3000);
+    } else {
+      throw new Error('Add to cart failed: ' + JSON.stringify(response));
     }
   } catch (error) {
     console.error('QB Error:', error);
+    alert('Error adding to cart: ' + error.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = originalText;
