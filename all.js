@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.8'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.9'
 // Created by HMStudio
 
 (function() {
@@ -5098,18 +5098,11 @@ if (params.quantityBreaks) {
   try {
     let response;
     if (window.vitrin === true) {
-      // Get product ID from form (variant ID if selected, otherwise base product ID)
-      let finalProductId = productId;
-      const formProductInput = form?.querySelector('input[name="product_id"]') || 
-                               form?.querySelector('#product-id');
-      if (formProductInput?.value) {
-        finalProductId = formProductInput.value;
-      }
-      
-      console.log('QB Adding to cart - Product ID:', finalProductId, 'Qty:', qty);
+      const variantInput = form?.querySelector('input[name="product_id"]');
+      const addProductId = variantInput?.value || productId;
       
       response = await zid.cart.addProduct({
-        product_id: finalProductId,
+        product_id: addProductId,
         quantity: qty,
         showErrorNotification: false
       });
@@ -5121,43 +5114,43 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-  // Update badge
-  if (typeof setCartBadge === 'function') {
-    setCartBadge(response.cart_items_quantity || response.data?.cart?.products_count || 1);
-  }
-  
-  // Trigger cart update event that the theme listens to
-  if (window.vitrin === true) {
-    try {
-      // Dispatch custom event that theme may listen to
-      window.dispatchEvent(new CustomEvent('cart:updated', { 
-        detail: response 
-      }));
+      // Create coupon
+      const couponCode = `QB_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
       
-      // Try to refetch and update
-      const cartData = await zid.cart.get();
-      if (cartData) {
-        // Dispatch with full cart data
-        window.dispatchEvent(new CustomEvent('cart:updated', { 
-          detail: cartData 
-        }));
+      if (window.vitrin === true) {
+        try {
+          await zid.cart.applyCoupon({ coupon_code: couponCode });
+        } catch (e) {
+          // Coupon application failed, but product added successfully
+        }
       }
-    } catch (e) {
-      console.log('QB: Could not refetch cart');
-    }
-  }
-  
-  const toast = document.createElement('div');
-  toast.style.cssText = `position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 16px 24px; border-radius: 8px; z-index: 9999;`;
-  toast.textContent = 'Added to cart successfully';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #16a34a;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+      `;
+      toast.textContent = 'Added to cart successfully';
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+
+      if (typeof setCartBadge === 'function') {
+        const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
+        setCartBadge(cartCount);
+      }
     } else {
-      throw new Error('Add to cart failed: ' + JSON.stringify(response));
+      throw new Error('Add to cart failed');
     }
   } catch (error) {
     console.error('QB Error:', error);
-    alert('Error adding to cart: ' + error.message);
+    alert('Error adding to cart');
   } finally {
     btn.disabled = false;
     btn.innerHTML = originalText;
