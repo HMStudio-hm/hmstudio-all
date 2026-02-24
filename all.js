@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.2'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.3'
 // Created by HMStudio
 
 (function() {
@@ -5047,35 +5047,38 @@ if (params.quantityBreaks) {
   }
 
   const qty = parseInt(selectedTier.value);
+  const form = document.querySelector('#product-form');
   
-  // Collect variant selections if any
-  const variantSelects = document.querySelectorAll(`[class*="variant-select-"]`);
-  const selectedVariants = {};
-  variantSelects.forEach(select => {
-    if (select.value) {
-      selectedVariants[select.name] = select.value;
-    }
-  });
-
-  console.log('QB Selected variants:', selectedVariants);
-
   try {
     if (window.vitrin === true) {
-      await zid.cart.addProduct({
+      const response = await zid.cart.addProduct({
         product_id: productId,
         quantity: qty,
         showErrorNotification: true
       });
+      
+      if (response && (response.status === 'success' || response.item)) {
+        console.log('QB Product added to cart');
+        // Don't refresh - just notify
+        alert('Added to cart successfully');
+      }
     } else {
-      await zid.store.cart.addProduct({
+      // Legacy mode
+      const response = await zid.store.cart.addProduct({
+        formId: form?.id,
         showErrorNotification: true
       });
-        }
+      
+      if (response && response.status === 'success') {
         console.log('QB Product added to cart');
-      } catch (error) {
-        console.error('QB Error adding to cart:', error);
+        alert('Added to cart successfully');
       }
-    },
+    }
+  } catch (error) {
+    console.error('QB Error adding to cart:', error);
+    alert('Error adding to cart');
+  }
+},
 
     async initialize() {
       console.log('QB Initialize called');
