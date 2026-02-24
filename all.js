@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.3'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.4'
 // Created by HMStudio
 
 (function() {
@@ -4920,10 +4920,8 @@ if (params.quantityBreaks) {
   }
 
   const currency = productData.currency_symbol || '$';
-  
-  // Use options like Upsell does - this is the correct field
   const variants = productData.options && productData.options.length > 0 ? productData.options : [];
-  console.log('QB Variants/Options found:', variants);
+  const allVariants = productData.variants || [];
 
   if (this.containerElement) {
     this.containerElement.innerHTML = '';
@@ -4964,18 +4962,12 @@ if (params.quantityBreaks) {
 
       tierDiv.appendChild(topRow);
 
-      // Add variants if product has options
-      console.log('QB Creating variants for tier, options length:', variants.length);
       if (variants.length > 0) {
         const variantsRow = document.createElement('div');
         variantsRow.style.cssText = `display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;`;
 
-        variants.forEach((option) => {
-          console.log('QB Option:', option);
-          if (!option.choices || option.choices.length === 0) {
-            console.log('QB Option has no choices, skipping');
-            return;
-          }
+        variants.forEach((option, optionIndex) => {
+          if (!option.choices || option.choices.length === 0) return;
 
           const selectWrapper = document.createElement('div');
           selectWrapper.style.cssText = `flex: 1; min-width: 120px;`;
@@ -4988,6 +4980,7 @@ if (params.quantityBreaks) {
           select.className = `variant-select-${tier.id}`;
           select.style.cssText = `width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;`;
           select.name = option.slug || option.name;
+          select.dataset.optionIndex = optionIndex;
 
           const placeholder = document.createElement('option');
           placeholder.value = '';
@@ -4999,6 +4992,10 @@ if (params.quantityBreaks) {
             opt.value = choice;
             opt.textContent = choice;
             select.appendChild(opt);
+          });
+
+          select.addEventListener('change', () => {
+            matchAndUpdateVariant(productId, tier.id);
           });
 
           selectWrapper.appendChild(label);
@@ -5021,10 +5018,39 @@ if (params.quantityBreaks) {
     const btn = document.createElement('button');
     btn.textContent = isArabic ? 'إضافة إلى السلة' : 'Add to Cart';
     btn.style.cssText = `width: 100%; padding: 12px; background: #16a34a; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;`;
-    btn.onclick = () => this.handleAddToCart(productId);
+    btn.onclick = (e) => this.handleAddToCart(e, productId, allVariants, variants);
     btnDiv.appendChild(btn);
     this.containerElement.appendChild(btnDiv);
   }
+
+  // Helper function to match variant
+  const matchAndUpdateVariant = (prodId, tierId) => {
+    const selectedValues = {};
+    const options = variants || [];
+    
+    document.querySelectorAll(`select[class*="variant-select-${tierId}"]`).forEach((select, index) => {
+      if (select.value && options[index]) {
+        selectedValues[options[index].slug] = select.value;
+      }
+    });
+
+    const selectedVariant = allVariants.find(variant => {
+      if (!variant.attributes || !variant.id) return false;
+      
+      return variant.attributes.every(attr => {
+        const selected = selectedValues[attr.slug];
+        return selected === attr.value;
+      });
+    });
+
+    if (selectedVariant && selectedVariant.id) {
+      const hiddenInput = document.querySelector('#product-id') || 
+                         document.querySelector('input[name="product_id"]');
+      if (hiddenInput) {
+        hiddenInput.value = selectedVariant.id;
+      }
+    }
+  };
 
   const insertPoint = document.querySelector('.section-out-of-stock-notify-me');
   if (insertPoint?.parentNode) {
@@ -5035,11 +5061,14 @@ if (params.quantityBreaks) {
   }
 
 
+
       console.log('QB Rendered successfully');
     },
 
 
-    async handleAddToCart(productId) {
+    async handleAddToCart(e, productId, allVariants, variants) {
+  e.preventDefault();
+  
   const selectedTier = document.querySelector(`input[name="tier-${productId}"]:checked`);
   if (!selectedTier) {
     alert('Please select a tier');
@@ -5048,35 +5077,52 @@ if (params.quantityBreaks) {
 
   const qty = parseInt(selectedTier.value);
   const form = document.querySelector('#product-form');
+  const btn = e.target;
+  const originalText = btn.textContent;
   
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
   try {
+    let response;
     if (window.vitrin === true) {
-      const response = await zid.cart.addProduct({
-        product_id: productId,
+      const variantInput = form?.querySelector('input[name="product_id"]');
+      const addProductId = variantInput?.value || productId;
+      
+      response = await zid.cart.addProduct({
+        product_id: addProductId,
         quantity: qty,
-        showErrorNotification: true
+        showErrorNotification: false
       });
-      
-      if (response && (response.status === 'success' || response.item)) {
-        console.log('QB Product added to cart');
-        // Don't refresh - just notify
-        alert('Added to cart successfully');
-      }
     } else {
-      // Legacy mode
-      const response = await zid.store.cart.addProduct({
+      response = await zid.store.cart.addProduct({
         formId: form?.id,
-        showErrorNotification: true
+        showErrorNotification: false
       });
+    }
+
+    if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #16a34a;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+      `;
+      toast.textContent = 'Added to cart successfully';
+      document.body.appendChild(toast);
       
-      if (response && response.status === 'success') {
-        console.log('QB Product added to cart');
-        alert('Added to cart successfully');
-      }
+      setTimeout(() => toast.remove(), 3000);
     }
   } catch (error) {
-    console.error('QB Error adding to cart:', error);
-    alert('Error adding to cart');
+    console.error('QB Error:', error);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
 },
 
