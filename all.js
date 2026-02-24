@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.5'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.6'
 // Created by HMStudio
 
 (function() {
@@ -5121,21 +5121,28 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-      const toast = document.createElement('div');
-      toast.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #16a34a;
-        color: white;
-        padding: 16px 24px;
-        border-radius: 8px;
-        z-index: 9999;
-      `;
-      toast.textContent = 'Added to cart successfully';
-      document.body.appendChild(toast);
-      
-      setTimeout(() => toast.remove(), 3000);
+  // Update cart badge if function exists
+  if (typeof setCartBadge === 'function') {
+    const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
+    setCartBadge(cartCount);
+  }
+  
+  // Show toast
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #16a34a;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    z-index: 9999;
+  `;
+  toast.textContent = 'Added to cart successfully';
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.remove(), 3000);
     } else {
       throw new Error('Add to cart failed: ' + JSON.stringify(response));
     }
