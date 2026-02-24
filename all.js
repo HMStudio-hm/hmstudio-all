@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.7'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.8'
 // Created by HMStudio
 
 (function() {
@@ -5121,38 +5121,36 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-  // Update cart badge
+  // Update badge
   if (typeof setCartBadge === 'function') {
     setCartBadge(response.cart_items_quantity || response.data?.cart?.products_count || 1);
   }
   
-  // Refetch cart to get updated price
+  // Trigger cart update event that the theme listens to
   if (window.vitrin === true) {
     try {
+      // Dispatch custom event that theme may listen to
+      window.dispatchEvent(new CustomEvent('cart:updated', { 
+        detail: response 
+      }));
+      
+      // Try to refetch and update
       const cartData = await zid.cart.get();
-      if (cartData && window.updateCartDisplay) {
-        window.updateCartDisplay(cartData);
+      if (cartData) {
+        // Dispatch with full cart data
+        window.dispatchEvent(new CustomEvent('cart:updated', { 
+          detail: cartData 
+        }));
       }
     } catch (e) {
       console.log('QB: Could not refetch cart');
     }
   }
   
-  // Show toast
   const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #16a34a;
-    color: white;
-    padding: 16px 24px;
-    border-radius: 8px;
-    z-index: 9999;
-  `;
+  toast.style.cssText = `position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 16px 24px; border-radius: 8px; z-index: 9999;`;
   toast.textContent = 'Added to cart successfully';
   document.body.appendChild(toast);
-  
   setTimeout(() => toast.remove(), 3000);
     } else {
       throw new Error('Add to cart failed: ' + JSON.stringify(response));
