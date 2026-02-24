@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.9'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.0'
 // Created by HMStudio
 
 (function() {
@@ -5007,8 +5007,9 @@ if (params.quantityBreaks) {
       }
 
       tierDiv.addEventListener('click', () => {
-        document.querySelector(`input[name="tier-${productId}"][value="${tier.quantity}"]`).checked = true;
-      });
+  this.currentTier = tier; // Store current tier
+  document.querySelector(`input[name="tier-${productId}"][value="${tier.quantity}"]`).checked = true;
+});
 
       this.containerElement.appendChild(tierDiv);
     });
@@ -5114,14 +5115,12 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-      // Create coupon
-      const couponCode = `QB_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
-      
-      if (window.vitrin === true) {
+      // Apply coupon if it exists
+      if (this.currentTier?.couponCode && window.vitrin === true) {
         try {
-          await zid.cart.applyCoupon({ coupon_code: couponCode });
+          await zid.cart.applyCoupon({ coupon_code: this.currentTier.couponCode });
         } catch (e) {
-          // Coupon application failed, but product added successfully
+          console.error('Coupon application failed:', e);
         }
       }
 
@@ -5145,8 +5144,6 @@ if (params.quantityBreaks) {
         const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
         setCartBadge(cartCount);
       }
-    } else {
-      throw new Error('Add to cart failed');
     }
   } catch (error) {
     console.error('QB Error:', error);
