@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.6'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.0.7'
 // Created by HMStudio
 
 (function() {
@@ -5121,10 +5121,21 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-  // Update cart badge if function exists
+  // Update cart badge
   if (typeof setCartBadge === 'function') {
-    const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
-    setCartBadge(cartCount);
+    setCartBadge(response.cart_items_quantity || response.data?.cart?.products_count || 1);
+  }
+  
+  // Refetch cart to get updated price
+  if (window.vitrin === true) {
+    try {
+      const cartData = await zid.cart.get();
+      if (cartData && window.updateCartDisplay) {
+        window.updateCartDisplay(cartData);
+      }
+    } catch (e) {
+      console.log('QB: Could not refetch cart');
+    }
   }
   
   // Show toast
