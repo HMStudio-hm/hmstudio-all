@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.0'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.1'
 // Created by HMStudio
 
 (function() {
@@ -4949,7 +4949,7 @@ if (params.quantityBreaks) {
       topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
       
       topRow.innerHTML = `
-        <input type="radio" name="tier-${productId}" value="${tier.quantity}" style="cursor: pointer;">
+  <input type="radio" name="tier-${productId}" value="${tier.quantity}" data-tierId="${tier.id}" style="cursor: pointer;">
         <div style="flex: 1;">
           <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
           <div style="font-size: 12px; color: #666;">${tier.subtitleEn || ''}</div>
@@ -5097,13 +5097,36 @@ if (params.quantityBreaks) {
   btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
   try {
+    // Get the selected tier to find its coupon code
+    const campaign = this.campaigns.find(c => 
+      c.status === 'active' && 
+      c.selectedProducts?.some(p => p.id === productId)
+    );
+
+    let couponCode = null;
+    if (campaign && campaign.coupons) {
+      const tierCoupon = campaign.coupons.find(coupon => coupon.tierId === selectedTier.dataset.tierId);
+      if (tierCoupon) {
+        couponCode = tierCoupon.code;
+      }
+    }
+
+    // Add coupon if exists
+    if (couponCode && window.vitrin === true) {
+      await zid.cart.applyCoupon(couponCode);
+    }
+
     let response;
     if (window.vitrin === true) {
-      const variantInput = form?.querySelector('input[name="product_id"]');
-      const addProductId = variantInput?.value || productId;
+      let finalProductId = productId;
+      const formProductInput = form?.querySelector('input[name="product_id"]') || 
+                               form?.querySelector('#product-id');
+      if (formProductInput?.value) {
+        finalProductId = formProductInput.value;
+      }
       
       response = await zid.cart.addProduct({
-        product_id: addProductId,
+        product_id: finalProductId,
         quantity: qty,
         showErrorNotification: false
       });
@@ -5115,15 +5138,11 @@ if (params.quantityBreaks) {
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
-      // Apply coupon if it exists
-      if (this.currentTier?.couponCode && window.vitrin === true) {
-        try {
-          await zid.cart.applyCoupon({ coupon_code: this.currentTier.couponCode });
-        } catch (e) {
-          console.error('Coupon application failed:', e);
-        }
+      if (typeof setCartBadge === 'function') {
+        const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
+        setCartBadge(cartCount);
       }
-
+      
       const toast = document.createElement('div');
       toast.style.cssText = `
         position: fixed;
@@ -5139,15 +5158,10 @@ if (params.quantityBreaks) {
       document.body.appendChild(toast);
       
       setTimeout(() => toast.remove(), 3000);
-
-      if (typeof setCartBadge === 'function') {
-        const cartCount = response.cart_items_quantity || response.data?.cart?.products_count || 1;
-        setCartBadge(cartCount);
-      }
     }
   } catch (error) {
     console.error('QB Error:', error);
-    alert('Error adding to cart');
+    alert('Error adding to cart: ' + error.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = originalText;
