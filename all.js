@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.4'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.5'
 // Created by HMStudio
 
 (function() {
@@ -5097,14 +5097,21 @@ if (params.quantityBreaks) {
   btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
   try {
-    console.log('QB handleAddToCart started for product:', productId);
+    // Get the parent product ID from the form (handles variants)
+    const formProductInput = form?.querySelector('input[name="product_id"]') || 
+                             form?.querySelector('#product-id');
+    const parentProductId = formProductInput?.value || productId;
+
+    console.log('QB handleAddToCart started for product:', productId, 'parent:', parentProductId);
     console.log('QB Tier ID:', selectedTier.dataset.tierid);
     console.log('QB Campaigns:', this.campaigns);
     
-    // Get coupon code for selected tier
+    // Get coupon code for selected tier — match on either variant ID or parent product ID
     const campaign = this.campaigns.find(c => {
       console.log('QB Checking campaign:', c.id, 'status:', c.status);
-      return c.status === 'active' && c.selectedProducts?.some(p => p.id === productId);
+      return c.status === 'active' && c.selectedProducts?.some(p => 
+        p.id === productId || p.id === parentProductId
+      );
     });
 
     console.log('QB Found campaign:', campaign);
@@ -5113,7 +5120,7 @@ if (params.quantityBreaks) {
     if (campaign && campaign.coupons) {
       console.log('QB Campaign coupons:', campaign.coupons);
       const tierCoupon = campaign.coupons.find(coupon => {
-        console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierId);
+        console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierid);
         return coupon.tierId === parseInt(selectedTier.dataset.tierid);
       });
       if (tierCoupon) {
@@ -5129,16 +5136,9 @@ if (params.quantityBreaks) {
     let response;
     if (window.vitrin === true) {
       console.log('QB Vitrin mode');
-      let finalProductId = productId;
-      const formProductInput = form?.querySelector('input[name="product_id"]') || 
-                               form?.querySelector('#product-id');
-      if (formProductInput?.value) {
-        finalProductId = formProductInput.value;
-      }
-      
-      console.log('QB Adding product:', finalProductId, 'qty:', qty);
+      console.log('QB Adding product:', parentProductId, 'qty:', qty);
       response = await zid.cart.addProduct({
-        product_id: finalProductId,
+        product_id: parentProductId,
         quantity: qty,
         showErrorNotification: false
       });
