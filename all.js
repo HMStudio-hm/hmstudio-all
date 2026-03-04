@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.2'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.3'
 // Created by HMStudio
 
 (function() {
@@ -5097,24 +5097,38 @@ if (params.quantityBreaks) {
   btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
   try {
+    console.log('QB handleAddToCart started for product:', productId);
+    console.log('QB Tier ID:', selectedTier.dataset.tierId);
+    console.log('QB Campaigns:', this.campaigns);
+    
     // Get coupon code for selected tier
-    const campaign = this.campaigns.find(c => 
-      c.status === 'active' && 
-      c.selectedProducts?.some(p => p.id === productId)
-    );
+    const campaign = this.campaigns.find(c => {
+      console.log('QB Checking campaign:', c.id, 'status:', c.status);
+      return c.status === 'active' && c.selectedProducts?.some(p => p.id === productId);
+    });
+
+    console.log('QB Found campaign:', campaign);
 
     let couponCode = null;
     if (campaign && campaign.coupons) {
-      const tierCoupon = campaign.coupons.find(coupon => coupon.tierId === selectedTier.dataset.tierId);
+      console.log('QB Campaign coupons:', campaign.coupons);
+      const tierCoupon = campaign.coupons.find(coupon => {
+        console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierId);
+        return coupon.tierId === parseInt(selectedTier.dataset.tierId);
+      });
       if (tierCoupon) {
         couponCode = tierCoupon.code;
         console.log('QB Found coupon code:', couponCode);
+      } else {
+        console.log('QB No coupon found for this tier');
       }
+    } else {
+      console.log('QB Campaign has no coupons');
     }
 
     let response;
     if (window.vitrin === true) {
-      // Vitrin (New)
+      console.log('QB Vitrin mode');
       let finalProductId = productId;
       const formProductInput = form?.querySelector('input[name="product_id"]') || 
                                form?.querySelector('#product-id');
@@ -5122,33 +5136,40 @@ if (params.quantityBreaks) {
         finalProductId = formProductInput.value;
       }
       
+      console.log('QB Adding product:', finalProductId, 'qty:', qty);
       response = await zid.cart.addProduct({
         product_id: finalProductId,
         quantity: qty,
         showErrorNotification: false
       });
 
+      console.log('QB Add to cart response:', response);
+
       // Apply coupon after adding product
       if (couponCode && response && (response.status === 'success' || response.item)) {
         try {
+          console.log('QB Applying coupon:', couponCode);
           await zid.cart.applyCoupon({ coupon_code: couponCode });
-          console.log('QB Coupon applied:', couponCode);
+          console.log('QB Coupon applied successfully');
         } catch (couponError) {
           console.error('QB Error applying coupon:', couponError);
         }
       }
     } else {
-      // Legacy (Old)
+      console.log('QB Legacy mode');
       response = await zid.store.cart.addProduct({
         formId: form?.id,
         showErrorNotification: false
       });
 
+      console.log('QB Add to cart response:', response);
+
       // Apply coupon after adding product
       if (couponCode && response && response.status === 'success') {
         try {
+          console.log('QB Applying coupon:', couponCode);
           await zid.store.cart.redeemCoupon(couponCode);
-          console.log('QB Coupon applied:', couponCode);
+          console.log('QB Coupon applied successfully');
         } catch (couponError) {
           console.error('QB Error applying coupon:', couponError);
         }
