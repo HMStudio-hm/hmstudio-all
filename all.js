@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.1'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.2'
 // Created by HMStudio
 
 (function() {
@@ -4847,17 +4847,17 @@ if (params.quantityBreaks) {
     containerElement: null,
 
     async fetchCampaigns() {
-      try {
-        const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getQuantityBreaksData?storeId=${storeId}`);
-        const data = await response.json();
-        this.campaigns = data.activeCampaigns || [];
-        console.log('QB Campaigns fetched:', this.campaigns);
-        return this.campaigns;
-      } catch (error) {
-        console.error('QB Error fetching campaigns:', error);
-        return [];
-      }
-    },
+  try {
+    const response = await fetch(`https://europe-west3-hmstudio-85f42.cloudfunctions.net/getQuantityBreaksData?storeId=${storeId}`);
+    const data = await response.json();
+    this.campaigns = data.activeCampaigns || [];
+    console.log('QB Campaigns fetched with coupons:', this.campaigns);
+    return this.campaigns;
+  } catch (error) {
+    console.error('QB Error fetching campaigns:', error);
+    return [];
+  }
+},
 
     findActiveCampaignForProduct(productId) {
       console.log('QB Looking for campaign for product:', productId);
@@ -5097,7 +5097,7 @@ if (params.quantityBreaks) {
   btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
   try {
-    // Get the selected tier to find its coupon code
+    // Get coupon code for selected tier
     const campaign = this.campaigns.find(c => 
       c.status === 'active' && 
       c.selectedProducts?.some(p => p.id === productId)
@@ -5108,16 +5108,13 @@ if (params.quantityBreaks) {
       const tierCoupon = campaign.coupons.find(coupon => coupon.tierId === selectedTier.dataset.tierId);
       if (tierCoupon) {
         couponCode = tierCoupon.code;
+        console.log('QB Found coupon code:', couponCode);
       }
-    }
-
-    // Add coupon if exists
-    if (couponCode && window.vitrin === true) {
-      await zid.cart.applyCoupon(couponCode);
     }
 
     let response;
     if (window.vitrin === true) {
+      // Vitrin (New)
       let finalProductId = productId;
       const formProductInput = form?.querySelector('input[name="product_id"]') || 
                                form?.querySelector('#product-id');
@@ -5130,11 +5127,32 @@ if (params.quantityBreaks) {
         quantity: qty,
         showErrorNotification: false
       });
+
+      // Apply coupon after adding product
+      if (couponCode && response && (response.status === 'success' || response.item)) {
+        try {
+          await zid.cart.applyCoupon({ coupon_code: couponCode });
+          console.log('QB Coupon applied:', couponCode);
+        } catch (couponError) {
+          console.error('QB Error applying coupon:', couponError);
+        }
+      }
     } else {
+      // Legacy (Old)
       response = await zid.store.cart.addProduct({
         formId: form?.id,
         showErrorNotification: false
       });
+
+      // Apply coupon after adding product
+      if (couponCode && response && response.status === 'success') {
+        try {
+          await zid.store.cart.redeemCoupon(couponCode);
+          console.log('QB Coupon applied:', couponCode);
+        } catch (couponError) {
+          console.error('QB Error applying coupon:', couponError);
+        }
+      }
     }
 
     if (response && (response.status === 'success' || response.item || response.cart_items_quantity)) {
