@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.3'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.4'
 // Created by HMStudio
 
 (function() {
@@ -5098,7 +5098,7 @@ if (params.quantityBreaks) {
 
   try {
     console.log('QB handleAddToCart started for product:', productId);
-    console.log('QB Tier ID:', selectedTier.dataset.tierId);
+    console.log('QB Tier ID:', selectedTier.dataset.tierid);
     console.log('QB Campaigns:', this.campaigns);
     
     // Get coupon code for selected tier
@@ -5114,7 +5114,7 @@ if (params.quantityBreaks) {
       console.log('QB Campaign coupons:', campaign.coupons);
       const tierCoupon = campaign.coupons.find(coupon => {
         console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierId);
-        return coupon.tierId === parseInt(selectedTier.dataset.tierId);
+        return coupon.tierId === parseInt(selectedTier.dataset.tierid);
       });
       if (tierCoupon) {
         couponCode = tierCoupon.code;
