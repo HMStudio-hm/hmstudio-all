@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.6'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.7'
 // Created by HMStudio
 
 (function() {
@@ -5097,21 +5097,14 @@ if (params.quantityBreaks) {
   btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
   try {
-    // Get the parent product ID from the form (handles variants)
-    const formProductInput = form?.querySelector('input[name="product_id"]') || 
-                             form?.querySelector('#product-id');
-    const parentProductId = formProductInput?.value || productId;
-
-    console.log('QB handleAddToCart started for product:', productId, 'parent:', parentProductId);
+    console.log('QB handleAddToCart started for product:', productId);
     console.log('QB Tier ID:', selectedTier.dataset.tierid);
     console.log('QB Campaigns:', this.campaigns);
     
-    // Get coupon code for selected tier — match on either variant ID or parent product ID
+    // Get coupon code for selected tier
     const campaign = this.campaigns.find(c => {
       console.log('QB Checking campaign:', c.id, 'status:', c.status);
-      return c.status === 'active' && c.selectedProducts?.some(p => 
-        p.id === productId || p.id === parentProductId
-      );
+      return c.status === 'active' && c.selectedProducts?.some(p => p.id === productId);
     });
 
     console.log('QB Found campaign:', campaign);
@@ -5136,19 +5129,44 @@ if (params.quantityBreaks) {
     let response;
     if (window.vitrin === true) {
       console.log('QB Vitrin mode');
-      console.log('QB Adding product:', parentProductId, 'qty:', qty);
+      let finalProductId = productId;
+      const tierId = parseInt(selectedTier.dataset.tierid);
+      const tierSelects = document.querySelectorAll(`select[class*="variant-select-${tierId}"]`);
+
+      if (tierSelects.length > 0) {
+        const selectedValues = {};
+        tierSelects.forEach((select) => {
+          if (select.value && select.name) {
+            selectedValues[select.name] = select.value;
+          }
+        });
+        const matchedVariant = allVariants.find(variant =>
+          variant.attributes?.every(attr => selectedValues[attr.slug] === attr.value)
+        );
+        if (matchedVariant?.id) {
+          finalProductId = matchedVariant.id;
+          console.log('QB Using variant ID:', finalProductId);
+        }
+      } else {
+        const formProductInput = form?.querySelector('input[name="product_id"]') || 
+                                 form?.querySelector('#product-id');
+        if (formProductInput?.value) {
+          finalProductId = formProductInput.value;
+        }
+      }
+      
+      console.log('QB Adding product:', finalProductId, 'qty:', qty);
       response = await zid.cart.addProduct({
-        product_id: parentProductId,
+        product_id: finalProductId,
         quantity: qty,
         showErrorNotification: false
       });
 
       console.log('QB Add to cart response:', response);
 
-      // Apply coupon after adding product (Vitrin)
+      // Apply coupon after adding product
       if (couponCode && response && (response.status === 'success' || response.item)) {
         try {
-          await new Promise(resolve => setTimeout(resolve, 500));
           console.log('QB Applying coupon:', couponCode);
           await zid.cart.applyCoupon({ coupon_code: couponCode });
           console.log('QB Coupon applied successfully');
@@ -5165,7 +5183,7 @@ if (params.quantityBreaks) {
 
       console.log('QB Add to cart response:', response);
 
-      // Apply coupon after adding product (Legacy)
+      // Apply coupon after adding product
       if (couponCode && response && response.status === 'success') {
         try {
           console.log('QB Applying coupon:', couponCode);
@@ -5250,11 +5268,19 @@ if (params.quantityBreaks) {
   };
 
   console.log('QB About to initialize');
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => QuantityBreaks.initialize());
-  } else {
+function waitForZidQB() {
+  if (typeof zid !== 'undefined') {
     QuantityBreaks.initialize();
+  } else {
+    setTimeout(waitForZidQB, 100);
   }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', waitForZidQB);
+} else {
+  waitForZidQB();
+}
 }
 
 
