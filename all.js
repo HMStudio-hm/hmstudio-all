@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.8'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.9'
 // Created by HMStudio
 
 (function() {
@@ -5113,7 +5113,7 @@ if (params.quantityBreaks) {
     if (campaign && campaign.coupons) {
       console.log('QB Campaign coupons:', campaign.coupons);
       const tierCoupon = campaign.coupons.find(coupon => {
-        console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierid);
+        console.log('QB Checking coupon tierId:', coupon.tierId, 'against:', selectedTier.dataset.tierId);
         return coupon.tierId === parseInt(selectedTier.dataset.tierid);
       });
       if (tierCoupon) {
@@ -5130,29 +5130,10 @@ if (params.quantityBreaks) {
     if (window.vitrin === true) {
       console.log('QB Vitrin mode');
       let finalProductId = productId;
-      const tierId = parseInt(selectedTier.dataset.tierid);
-      const tierSelects = document.querySelectorAll(`select[class*="variant-select-${tierId}"]`);
-
-      if (tierSelects.length > 0) {
-        const selectedValues = {};
-        tierSelects.forEach((select) => {
-          if (select.value && select.name) {
-            selectedValues[select.name] = select.value;
-          }
-        });
-        const matchedVariant = allVariants.find(variant =>
-          variant.attributes?.every(attr => selectedValues[attr.slug] === attr.value)
-        );
-        if (matchedVariant?.id) {
-          finalProductId = matchedVariant.id;
-          console.log('QB Using variant ID:', finalProductId);
-        }
-      } else {
-        const formProductInput = form?.querySelector('input[name="product_id"]') || 
-                                 form?.querySelector('#product-id');
-        if (formProductInput?.value) {
-          finalProductId = formProductInput.value;
-        }
+      const formProductInput = form?.querySelector('input[name="product_id"]') || 
+                               form?.querySelector('#product-id');
+      if (formProductInput?.value) {
+        finalProductId = formProductInput.value;
       }
       
       console.log('QB Adding product:', finalProductId, 'qty:', qty);
@@ -5168,15 +5149,11 @@ if (params.quantityBreaks) {
       if (couponCode && response && (response.status === 'success' || response.item)) {
         try {
           console.log('QB Applying coupon:', couponCode);
-const cartCheck = await zid.cart.get();
-console.log('QB Cart contents before coupon:', JSON.stringify(cartCheck));
-await new Promise(resolve => setTimeout(resolve, 500));
-await zid.cart.applyCoupon({ coupon_code: couponCode });
+          await zid.cart.applyCoupon({ coupon_code: couponCode });
           console.log('QB Coupon applied successfully');
         } catch (couponError) {
-  console.error('QB Error applying coupon:', couponError);
-  console.error('QB Coupon error details:', JSON.stringify(couponError, null, 2));
-}
+          console.error('QB Error applying coupon:', couponError);
+        }
       }
     } else {
       console.log('QB Legacy mode');
@@ -5271,7 +5248,8 @@ await zid.cart.applyCoupon({ coupon_code: couponCode });
     }
   };
 
-  console.log('QB About to initialize');
+
+console.log('QB About to initialize');
 function waitForZidQB() {
   if (typeof zid !== 'undefined') {
     QuantityBreaks.initialize();
@@ -5286,7 +5264,6 @@ if (document.readyState === 'loading') {
   waitForZidQB();
 }
 }
-
 
 
 })();
