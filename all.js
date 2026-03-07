@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.7'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.8'
 // Created by HMStudio
 
 (function() {
@@ -5168,11 +5168,15 @@ if (params.quantityBreaks) {
       if (couponCode && response && (response.status === 'success' || response.item)) {
         try {
           console.log('QB Applying coupon:', couponCode);
-          await zid.cart.applyCoupon({ coupon_code: couponCode });
+const cartCheck = await zid.cart.get();
+console.log('QB Cart contents before coupon:', JSON.stringify(cartCheck));
+await new Promise(resolve => setTimeout(resolve, 500));
+await zid.cart.applyCoupon({ coupon_code: couponCode });
           console.log('QB Coupon applied successfully');
         } catch (couponError) {
-          console.error('QB Error applying coupon:', couponError);
-        }
+  console.error('QB Error applying coupon:', couponError);
+  console.error('QB Coupon error details:', JSON.stringify(couponError, null, 2));
+}
       }
     } else {
       console.log('QB Legacy mode');
