@@ -1,4 +1,4 @@
-// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.1.9'
+// lmilfad iga win smungh kulu lmizat ghyat lblast v2.8.9 | Quantity Breaks Store test: '3079580': '3.2.0'
 // Created by HMStudio
 
 (function() {
@@ -4941,24 +4941,37 @@ if (params.quantityBreaks) {
       const tierPrice = parseFloat(tier.price?.fullPrice || tier.price || basePrice);
 
       const tierDiv = document.createElement('div');
-      tierDiv.style.cssText = `display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; border: 2px solid #ddd; border-radius: 8px;`;
+      tierDiv.style.cssText = `position: relative; display: flex; flex-direction: column; padding: 16px; margin-bottom: 12px; margin-top: ${tier.badgeText ? '16px' : '0'}; border: 2px solid #ddd; border-radius: 8px;`;
       tierDiv.onmouseover = () => tierDiv.style.borderColor = '#272067';
       tierDiv.onmouseout = () => tierDiv.style.borderColor = '#ddd';
 
       const topRow = document.createElement('div');
       topRow.style.cssText = `display: flex; align-items: center; gap: 16px;`;
       
-      topRow.innerHTML = `
-  <input type="radio" name="tier-${productId}" value="${tier.quantity}" data-tierId="${tier.id}" style="cursor: pointer;">
-        <div style="flex: 1;">
-          <div style="font-weight: 600; font-size: 16px;">${tier.titleEn}</div>
-          <div style="font-size: 12px; color: #666;">${tier.subtitleEn || ''}</div>
-        </div>
-        <div style="text-align: right;">
-          ${tier.badgeText ? `<div style="background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;">${tier.badgeText}</div>` : ''}
-          <div style="font-weight: 700; color: #272067; font-size: 18px;">${currency}${tierPrice.toFixed(2)}</div>
-        </div>
-      `;
+      const originalPrice = basePrice * tier.quantity;
+const hasDiscount = tier.priceOption !== 'full' && tierPrice < originalPrice;
+const priceDisplay = isArabic
+  ? `${tierPrice.toFixed(2)} ${currency}`
+  : `${currency}${tierPrice.toFixed(2)}`;
+const originalPriceDisplay = isArabic
+  ? `${originalPrice.toFixed(2)} ${currency}`
+  : `${currency}${originalPrice.toFixed(2)}`;
+
+topRow.innerHTML = `
+  <input type="radio" name="tier-${productId}" value="${tier.quantity}" data-tierid="${tier.id}" style="cursor: pointer;">
+  <div style="flex: 1;">
+    <div style="font-weight: 600; font-size: 16px;">${isArabic ? (tier.titleAr || tier.titleEn) : (tier.titleEn || tier.titleAr)}</div>
+    <div style="font-size: 12px; color: #666;">${isArabic ? (tier.subtitleAr || tier.subtitleEn || '') : (tier.subtitleEn || tier.subtitleAr || '')}</div>
+  </div>
+  <div style="position: relative; text-align: ${isArabic ? 'left' : 'right'};">
+    ${tier.badgeText ? `
+      <div style="position: absolute; top: -28px; ${isArabic ? 'left' : 'right'}: -10px; background: #111; color: white; padding: 3px 10px; border-radius: 4px 4px 0 4px; font-size: 11px; font-weight: 700; white-space: nowrap;">
+        ${tier.badgeText}
+      </div>` : ''}
+    <div style="font-weight: 700; color: #272067; font-size: 18px;">${priceDisplay}</div>
+    ${hasDiscount ? `<div style="font-size: 13px; color: #999; text-decoration: line-through;">${originalPriceDisplay}</div>` : ''}
+  </div>
+`;s
 
       tierDiv.appendChild(topRow);
 
